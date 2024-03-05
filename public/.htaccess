@@ -1,0 +1,66 @@
+#Turn this off for security reasons
+ServerSignature Off
+
+#Sets default charset and language options
+AddDefaultCharset UTF-8
+DefaultLanguage es-MX
+
+#As in the previous case, also try to disable the directory index. You must
+#set this directive in the VirtualHost configuration file:
+#Options -Indexes
+
+<IfModule !mod_php7.c>
+    <FilesMatch ".+\.php$">
+        Require all denied
+    </FilesMatch>
+    <Else>
+        php_value session.gc_maxlifetime 3600
+        php_value session.cookie_lifetime 3600
+    </Else>
+</IfModule>
+
+#Some information and security headers
+<IfModule mod_headers.c>
+    Header always set Cache-Control "private, no-cache, no-store, max-age=1800, must-revalidate"
+    Header always set Content-Security-Policy "default-src https: 'self'; style-src https: 'self' 'unsafe-inline'; frame-ancestors 'none'"
+    Header always set Feature-Policy "accelerometer 'none'; camera 'none'; payment 'none'; usb 'none'; sync-xhr 'none'; microphone 'none'; speaker 'none'; fullscreen 'none'"
+    Header always set Pragma "no-cache"
+    Header always set Referrer-Policy "no-referrer"
+#    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Permitted-Cross-Domain-Policies "none"
+    Header always set X-UA-Compatible "IE=edge"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Max-Age "1800"
+    Header always set X-Served-By "API-Integramed"
+    Header append Vary Origin
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    #Denies access if the HTTP method is not accepted
+    RewriteCond %{REQUEST_METHOD} !(GET|POST|PATCH|PUT|DELETE|OPTIONS)  [NC]
+    RewriteRule .+ - [F]
+
+    RewriteCond %{THE_REQUEST}  ^.*(\\r|\\n|%0A|%0D).*                  [OR]
+    RewriteCond %{REQUEST_URI}  ^.*('|%0A|%0D|%27|%3C|%3E|%00)          [OR]
+    RewriteCond %{REQUEST_URI}  ^.*(,|;|:|<|>|\"|\.\.\.|\.\.)           [OR]
+    RewriteCond %{REQUEST_URI}  ^.*(\=|\@|\[|\]|\^|\`|\{|\}|\~|\*)      [OR]
+    RewriteCond %{HTTP_REFERER} ^(.*)(<|>|'|%0A|%0D|%27|%3C|%3E|%00).*  [OR]
+    RewriteCond %{HTTP_COOKIE}  ^.*('|<|>|%0A|%0D|%27|%3C|%3E|%00).*    [OR]
+    RewriteCond %{QUERY_STRING} ^.*(localhost|loopback|127\.0\.0\.1).*	[NC,OR]
+    RewriteCond %{QUERY_STRING} ^.*(\.|\*|;|<|>|'|"|\)|%0A|%0D|%22).*   [OR]
+    RewriteCond %{QUERY_STRING} ^.*(%27|%3C|%3E|%00).*                  [OR]
+    RewriteCond %{QUERY_STRING} ^.*(union|select|insert|cast|set).*     [NC,OR]
+    RewriteCond %{QUERY_STRING} ^.*(declare|drop|update|javascript).*   [NC,OR]
+    RewriteCond %{QUERY_STRING} ^.*(exec|cmd|query|md5|benchmark).*     [NC]
+    RewriteRule .+ - [F]
+
+    #Redirects request to index.php
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php/$1/ [NC,QSD,L]
+</IfModule>

@@ -1,0 +1,464 @@
+* {
+    font-family: 'Saira Semi Condensed', helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+header {
+    display: block;
+    background-color: rgba(94, 95, 99, 1);
+    height: 50px;
+}
+header > #headerMenu {
+    height: 46px;
+    text-align: center;
+    line-height: 46px;
+    color: white;
+    font-size: 20px;
+}
+header > #headerLine {
+    background-color: rgba(223, 24, 140, 1);
+    height: 4px;
+}
+header > #headerLogo {
+    display: inline-block;
+    position: absolute;
+    background-image: url('../img/logo_white.png');
+    background-repeat: no-repeat;
+    background-position: top left;
+    background-size: contain;
+    width: 200px;
+    height: 46px;
+}
+header > #headerLogo > a {
+    display: block;
+    height: 46px;
+}
+
+#content {
+    display: flex;
+    flex: 1;
+}
+#content > article {
+    padding: 20px;
+    flex: 1 0 66%;
+    order: 2;
+    max-height: calc(100vh - 50px - 50px);
+    overflow: visible;
+    overflow-x: hidden;
+}
+#content > nav {
+    padding: 5px;
+    flex: 1 0 18%;
+    order: 1;
+    background-color: rgba(230, 230, 230, 1);
+    max-height: calc(100vh - 50px - 50px);
+    overflow-y: visible;
+    overflow-x: hidden;
+}
+#content > nav.reg {
+    background-color: #FFF;
+}
+#content > aside {
+    padding: 20px;
+    padding-right: 5px;
+    flex: 1 0 16%;
+    order: 3;
+}
+
+article > a[name] > h1, article > h1 {
+    font-size: 36px;
+    margin: 0;
+    padding: 0;
+    line-height: 40px;
+    font-family: Raleway, helvetica, sans-serif;
+}
+article > p.img {
+    text-align: center;
+}
+article > p {
+    margin-bottom: 20px;
+    color: rgba(94, 95, 99, 1);
+}
+article > p.contentTitleInfo {
+    font-size: 12px;
+    font-weight: normal;
+    color: rgba(94, 95, 99, 1);
+    line-height: 14px;
+    margin-top: 2px;
+    margin-bottom: 30px;
+}
+article > p.button {
+    text-align: center;
+}
+article > p.regInst {
+    margin-top: 30px;
+}
+article a[href] {
+    text-decoration: none;
+    color: rgb(124, 193, 66);
+}
+article a[href]:hover {
+    color: rgb(51, 167, 132);
+}
+article a.button {
+    display: inline-block;
+    color: #FFF;
+    background-color: rgb(51, 167, 132);
+    padding: 5px 40px;
+    font-size: 18px;
+    border-radius: 20px;
+}
+article a.button:hover {
+    background-color: rgb(124, 193, 66);
+    color: #FFF;
+}
+article form input[type="text"],
+article form input[type="email"] {
+    outline: none;
+}
+article > table {
+    color: rgba(94, 95, 99, 1);
+    margin-bottom: 20px;
+}
+article > table > thead {
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #000;
+}
+article > table > thead td {
+    padding: 0px 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid rgba(223, 24, 140, 1);
+    white-space: nowrap;
+}
+article > table > tbody {
+    font-size: 14px;
+}
+article > table > tbody td {
+    padding: 2px 10px;
+    border-bottom: 1px solid rgba(200, 200, 200, 1);
+}
+article > table > tbody tr:hover {
+    background-color: rgba(240, 240, 240, 1);
+}
+article > ul {
+    margin-left: 20px;
+    color: rgba(94, 95, 99, 1);
+    list-style: none;
+}
+article > ul > li:before {
+    content: '\02058';
+    color: rgb(51, 167, 132);
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 0.5em;
+    line-height: 16px;
+    vertical-align: top;
+    margin-top: 3px;
+    display: inline-block;
+}
+article > ol {
+    margin-left: 20px;
+    color: rgba(94, 95, 99, 1);
+    margin-bottom: 20px;
+    list-style: none;
+    counter-reset: li;
+}
+article > ol.img {
+    display: block;
+    margin: 0 auto !important;
+    margin-bottom: 20px !important;
+    width: 510px;
+    margin-top: -30px !important;
+}
+article > ol > li:before {
+    content: counter(li);
+    color: rgb(51, 167, 132);
+    display: inline-block;
+    text-align: right;
+    font-weight: bold;
+    font-size: 13px;
+    margin-right: 0.5em;
+    line-height: 16px;
+    vertical-align: top;
+    margin-top: 4px;
+    width: 0.7em;
+}
+article > ol > li {
+    counter-increment: li;
+}
+article > a[name] > h2 {
+    margin-bottom: 15px;
+    font-family: Raleway, helvetica, sans-serif;
+}
+article > a[name] > h3 {
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-family: Raleway, helvetica, sans-serif;
+}
+article > a[name] > h3:before {
+    content: '\02261';
+    color: rgb(124, 194, 67);
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 0.5em;
+    line-height: 16px;
+    vertical-align: top;
+    margin-top: 1px;
+    display: inline-block;
+}
+
+article.register h1, article.register h3 {
+    margin: 0;
+    margin-bottom: 10px;
+    padding: 0;
+    font-family: Raleway, helvetica, sans-serif;
+}
+article.register p {
+    margin: 0;
+    margin-bottom: 10px;
+}
+article.register form {
+    display: inline-block;
+    background-color: rgb(240, 240, 240);
+    padding: 15px;
+    border-radius: 15px;
+    width: 100%;
+}
+article.register div.table-row {
+    padding: 5px 0;
+}
+article.register div.table-row:last-child {
+    text-align: right;
+    padding: 0;
+    padding-top: 20px;
+}
+article.register div.table-row:last-child a {
+    float: left;
+    margin-top: 6px;
+    margin-right: 10px;
+}
+article.register label {
+    display: inline-block;
+    width: 20%;
+}
+article.register input {
+    padding: 5px;
+    border: 1px solid #888;
+    border-radius: 10px;
+    text-transform: uppercase;
+    width: 79.5%;
+}
+article.register input[type="submit"] {
+    padding: 5px 40px;
+    border-radius: 20px;
+    background-color: rgb(51, 167, 132);
+    color: #FFF;
+    font-size: 18px;
+    border: none;
+    text-transform: capitalize;
+    width: auto;
+}
+article.register input[type="email"] {
+    text-transform: none;
+}
+
+article.login {
+    text-align: center;
+}
+article.login input[type="email"], article.login input[type="password"] {
+    font-size: 16px;
+    width: 280px;
+    line-height: 30px;
+    padding: 2px 5px;
+    margin-bottom: 10px;
+}
+article.login input[type="submit"] {
+    color: #FFF;
+    background-color: rgb(51, 167, 132);
+    padding: 5px 40px;
+    font-size: 18px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+}
+article.login input[type="submit"]:hover {
+    background-color: rgb(124, 193, 66);
+}
+article.login p.login {
+    margin-top: 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgb(230, 230, 230);
+    padding-bottom: 30px;
+}
+article span.code, article pre {
+    background-color: rgb(50, 50, 50);
+    font-family: monospace;
+    line-height: 16px;
+    color: rgb(220, 220, 220);
+    vertical-align: middle;
+    padding: 2px 4px;
+}
+article span.code > b, article pre > b {
+    font-family: inherit;
+    color: #FFF;
+}
+article .nowrap {
+    white-space: nowrap;
+}
+article #message {
+    width: 60%;
+    margin: 0 auto;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    padding: 3px;
+}
+article #message.error {
+    border: 1px solid #F00;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background-color: rgb(255, 100, 100);
+    color: #FFF;
+}
+
+nav > ul {
+    list-style: none;
+    font-size: 14px;
+    margin-top: 35px;
+}
+nav > ul > li {
+    display: block;
+    padding: 5px;
+    padding-left: 40px;
+}
+nav > ul > li.overview {
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 18px;
+}
+nav > ul > li > a {
+    text-decoration: none;
+    color: rgba(94, 95, 99, 1);
+}
+nav > ul > li.selected > a {
+    color: rgb(45, 54, 138);
+    font-weight: bold;
+}
+nav > ul > li.selected:before {
+    content: '\000BB';
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 0.5em;
+    color: rgb(220, 24, 138);
+}
+nav > ul > li > a:hover {
+    color: #000;
+}
+nav > ul > li ul.submenu {
+    display: none;
+}
+
+nav > ul > li.selected ul.submenu {
+    /*display: block;*/
+    background-color: rgb(200, 200, 200);
+    list-style: none;
+    margin-top: 5px;
+    margin-right: -10px;
+    margin-left: -45px;
+    padding-left: 56px;
+    border-top: 1px solid rgb(180, 180, 180);
+    border-bottom: 1px solid rgb(180, 180, 180);
+    font-size: 13px;
+}
+nav > ul > li.selected ul.submenu > li {
+    padding: 2px;
+}
+nav > ul > li.selected ul.submenu > li > a {
+    text-decoration: none;
+    color: rgb(45, 54, 138);
+}
+nav > ul > li.selected ul.submenu > li > a:hover {
+    color: #000;
+}
+
+aside > h3 {
+    margin: 0;
+    margin-bottom: 10px;
+    font-family: Raleway, helvetica, sans-serif;
+    font-size: 18px;
+}
+aside > ul {
+    margin-left: 0px;
+    font-size: 14px;
+    list-style: none;
+}
+aside > ul > li {
+    display: block;
+    padding: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 180px;
+}
+aside > ul > li:before {
+    content: '\000BB';
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 0.5em;
+    color: rgb(220, 24, 138);
+}
+aside > ul > li > a {
+    text-decoration: none;
+    color: rgb(45, 54, 138);
+}
+aside > ul > li > a:hover {
+    color: #000;
+}
+
+footer {
+    display: block;
+    background-color: rgba(94, 95, 99, 1);
+    height: 50px;
+    font-size: 12px;
+    padding: 5px;
+    flex-flow: column;
+    color: #FFF;
+}
+footer > #copyright, footer > #links {
+    float: left;
+    width: 50%;
+    height: 25px;
+    line-height: 25px;
+    vertical-align: middle;
+    margin-top: 8px;
+}
+footer > #copyright {
+    text-align: left;
+    padding-left: 20px;
+}
+footer > #links {
+    text-align: right;
+}
+footer a {
+    display: inline-block;
+    color: #FFF;
+    text-decoration: none;
+    border-right: 1px solid #000;
+    padding: 0 15px;
+}
+footer a:hover {
+    color: rgb(124, 193, 66);
+}
+footer a:last-child {
+    border: none;
+}
+
