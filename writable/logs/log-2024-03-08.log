@@ -1,0 +1,18 @@
+CRITICAL - 2024-03-08 18:02:51 --> Error: Class "App\Controllers\UserModel" not found
+in APPPATH\Controllers\Auth.php on line 19.
+ 1 SYSTEMPATH\CodeIgniter.php(941): App\Controllers\Auth->register()
+ 2 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+ 3 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 4 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+ 5 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('C:\\xampp\\htdocs\\apisolve\\public\\index.php')
+CRITICAL - 2024-03-08 18:06:20 --> CodeIgniter\Validation\Exceptions\ValidationException: "validateUser" is not a valid rule.
+in SYSTEMPATH\Validation\Validation.php on line 336.
+ 1 SYSTEMPATH\Validation\Validation.php(336): CodeIgniter\Validation\Exceptions\ValidationException::forRuleNotFound('validateUser')
+ 2 SYSTEMPATH\Validation\Validation.php(200): CodeIgniter\Validation\Validation->processRules('password', 'password', '12345678', [...], [...])
+ 3 APPPATH\Controllers\BaseController.php(66): CodeIgniter\Validation\Validation->run([...])
+ 4 APPPATH\Controllers\Auth.php(35): App\Controllers\BaseController->validateRequest([...], [...], [...])
+ 5 SYSTEMPATH\CodeIgniter.php(941): App\Controllers\Auth->login()
+ 6 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Auth))
+ 7 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 8 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+ 9 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('C:\\xampp\\htdocs\\apisolve\\public\\index.php')
