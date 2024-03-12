@@ -44,11 +44,11 @@
 				return $this->getResponse ( [
 					'message' => 'Usuario autenticado satisfactoriamente',
 					'access_token' => [ $jwt ],
-				] );
+				], ResponseInterface::HTTP_OK);
 			} catch ( \Exception $e ) {
 				return $this->getResponse ( [
 					'error' => $e->getMessage (),
-				], ResponseInterface::HTTP_OK );
+				], ResponseInterface::HTTP_UNAUTHORIZED );
 			}
 		}
 	}
