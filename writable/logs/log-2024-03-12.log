@@ -140,3 +140,24 @@ in APPPATH\Helpers\jwt_helper.php on line 38.
  5 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
  6 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
  7 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('C:\\xampp\\htdocs\\apisolve\\public\\index.php')
+CRITICAL - 2024-03-12 16:10:36 --> ErrorException: Attempt to read property "argumentos" on array
+in APPPATH\Controllers\Client.php on line 87.
+ 1 APPPATH\Controllers\Client.php(87): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Attempt to read property "argumentos" on array', 'C:\\web\\apps\\apisolve\\app\\Controllers\\Client.php', 87)
+ 2 SYSTEMPATH\CodeIgniter.php(941): App\Controllers\Client->getClientByArgs()
+ 3 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Client))
+ 4 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2024-03-12 16:11:43 --> ErrorException: Undefined variable $input
+in APPPATH\Controllers\Client.php on line 90.
+ 1 APPPATH\Controllers\Client.php(90): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined variable $input', 'C:\\web\\apps\\apisolve\\app\\Controllers\\Client.php', 90)
+ 2 SYSTEMPATH\CodeIgniter.php(941): App\Controllers\Client->getClientByArgs()
+ 3 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Client))
+ 4 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+CRITICAL - 2024-03-12 16:18:19 --> ErrorException: Undefined array key 0
+in APPPATH\Controllers\Client.php on line 91.
+ 1 APPPATH\Controllers\Client.php(91): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Undefined array key 0', 'C:\\web\\apps\\apisolve\\app\\Controllers\\Client.php', 91)
+ 2 SYSTEMPATH\CodeIgniter.php(941): App\Controllers\Client->getClientByArgs()
+ 3 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Client))
+ 4 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()

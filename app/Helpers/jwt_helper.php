@@ -18,6 +18,12 @@
 		return explode ( ' ', $authenticationHeader )[ 1 ];
 	}
 	
+	/**
+	 * @param string $encodedToken
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
 	function validateJWTFromRequest ( string $encodedToken ) {
 		$key = Services::getSecretKey ();
 		$decodedToken = JWT::decode ( $encodedToken, new Key( $key, 'HS256' ) );
@@ -25,6 +31,11 @@
 		$user = $userModel->findUserByEmailAddress ( $decodedToken->email );
 	}
 	
+	/**
+	 * @param string $email
+	 *
+	 * @return array
+	 */
 	function getSignedJWTForUser ( string $email ): array {
 		$key = Services::getSecretKey ();
 		$issuedAtTime = time ();

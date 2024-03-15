@@ -41,9 +41,10 @@
 			// E.g.: $this->session = \Config\Services::session();
 		}
 		public function getResponse ( array $responseBody, int $code = ResponseInterface::HTTP_OK ): ResponseInterface {
-			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody );
+			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )->setHeader ('Access-Control-Allow-Origin','*');
 		}
 		public function getRequestInput ( IncomingRequest $request ) {
+			
 			$input = $request->getPost ();
 			if ( empty( $input ) ) {
 				$input = json_decode ( $request->getBody (), TRUE );

@@ -84,6 +84,11 @@
 			}
 		}
 		public function getClientByArgs(){
-		
+			$args = $this->getRequestInput ( $this->request )['argumentos'];
+			$client = new ClientModel();
+			$res = $client->getClientByArgs ($args);
+			return $this->getResponse ( [
+				$res
+			], ResponseInterface::HTTP_NOT_FOUND );
 		}
 	}
