@@ -44,11 +44,25 @@
 				return $this->getResponse ( [
 					'message' => 'Usuario autenticado satisfactoriamente',
 					'access_token' => [ $jwt ],
-				], ResponseInterface::HTTP_OK);
+				], ResponseInterface::HTTP_OK );
 			} catch ( \Exception $e ) {
 				return $this->getResponse ( [
 					'error' => $e->getMessage (),
 				], ResponseInterface::HTTP_UNAUTHORIZED );
 			}
+		}
+		public function getSign () {
+			$privateKey = $this->getCertified ();
+			$binarySign = "C0ntR4S3NIa4F1nt3CHACc355";
+			openssl_sign ( $this->cadenaOriginal, $binarySign, $privateKey, "RSA-SHA256" );
+			$sign = base64_encode ( $binarySign );
+			openssl_free_key ( $privateKey );
+			return $sign;
+		}
+		private function getCertified () {
+			$fp = fopen ( $this->privatekey, "r" );
+			$privateKey = fread ( $fp, filesize ( $this->privatekey ) );
+			fclose ( $fp );
+			return openssl_get_privatekey ( $privateKey, $this->passphrase );
 		}
 	}
