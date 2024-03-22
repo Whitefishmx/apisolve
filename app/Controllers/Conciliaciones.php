@@ -10,8 +10,14 @@
 	use ZipArchive;
 	
 	class Conciliaciones extends BaseController {
-		private string $enviroment = 'SANDBOX';
+		private string $environment = 'SANDBOX';
 		public function uploadCFDIPlus () {
+//			var_dump (  json_encode ($_SERVER));
+			
+//			var_dump ( $_SERVER['HTTP_REFERER']);
+//			var_dump ($_SERVER['HTTP_ORIGIN']);
+			var_dump ($this->getHost ($this->request));
+			die();
 			$input = $this->getRequestInput ( $this->request );
 			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
 			$user = json_decode ( base64_decode ( $input[ 'user' ] ), TRUE );
@@ -41,10 +47,14 @@
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
 						$user = $cfdi->createTmpInvoices ( $filesOk, 'SANDBOX' );
-						return $this->getResponse ( [
-							'conciliaciones' => $user,
+						$conciliaciones = [
+							'conciliaciones' => $user[ 'conciliaciones' ],
 							'error' => $filesErr,
-						], ResponseInterface::HTTP_OK );
+						];
+						if ( isset ( $user[ 'errors' ] ) ) {
+							$conciliaciones[ 'db_errors' ] = $user[ 'errors' ];
+						}
+						return $this->getResponse ( $conciliaciones, ResponseInterface::HTTP_OK );
 					} else {
 						$dato[ 'error' ] = "zip";
 					}
@@ -68,7 +78,7 @@
 		 */
 		public function validaComprobantePlus ( array $factura, int $tipo, array $company, array $user, string $env = NULL, float $monto = NULL ): array {
 			//Se selecciona el ambiente a trabajar
-			$env = $env === NULL ? $this->enviroment : $env;
+			$env = $env === NULL ? $this->environment : $env;
 			//Se verífica que el emisor de la factura sea el mismo que la compañía del usuario activo
 			if ( ( $factura[ 'emisor' ][ 'rfc' ] === $company[ 'rfc' ] ) || ( $factura[ 'receptor' ][ 'rfc' ] === $company[ 'rfc' ] ) ) {
 				return [

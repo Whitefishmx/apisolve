@@ -23,7 +23,7 @@
 		 * @param array       $data Arreglo de documentos para generar conciliaciones
 		 * @param string|NULL $env  Entorno en el que se va a trabajar
 		 *
-		 * @return array Arreglo con las conciliaciones que se pueden crear
+		 * @return array $res Arreglo con las conciliaciones que se pueden crear
 		 * @throws Exception Error que se genera
 		 */
 		public function createTmpInvoices ( array $data, string $env = NULL ): array {
@@ -83,7 +83,12 @@ FROM (SELECT sender_rfc, receiver_rfc
 							$item [] = $res[ $i ];
 						}
 					}
-					return $item;
+					$conciliaciones  [ 'conciliaciones' ] = $item;
+					$query = "DROP TABLE apisolve_sandbox.invoices_$tmpName";
+					if ( !$this->db->query ( $query ) ) {
+						$conciliaciones[ 'errors' ] = 'tabla temporal persiste';
+					}
+					return $conciliaciones;
 				}
 				throw new Exception( 'No se lograron formar los grupos de conciliaciones' );
 			}

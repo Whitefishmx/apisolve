@@ -51,6 +51,9 @@
 			}
 			return $input;
 		}
+		public function getHost ( IncomingRequest $request ): ResponseInterface {
+			return $this->response->setStatusCode (ResponseInterface::HTTP_OK  )->setJSON ( $_SERVER )->setHeader ('Access-Control-Allow-Origin','*');
+		}
 		public function validateRequest ( $input, array $rules, array $messages = [] ): bool {
 			$this->validator = Services::validation ()->setRules ( $rules );
 			if ( is_string ( $rules ) ) {
