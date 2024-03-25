@@ -27,9 +27,13 @@
 		 * @return RequestInterface|ResponseInterface
 		 */
 		public function before ( RequestInterface $request, $arguments = NULL ) {
-			if($_SERVER['HTTP_ORIGIN'] === 'https://compensapay.local'){
-			return $request;
+			try{
+				if ( $_SERVER[ 'HTTP_ORIGIN' ] === 'https://compensapay.local' || $_SERVER['REMOTE_ADDR'] === "::1" ) {
+					return $request;
+				}
+			}catch (\Exception $e){
 			}
+			
 			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
 			try {
 				helper ( 'jwt' );
