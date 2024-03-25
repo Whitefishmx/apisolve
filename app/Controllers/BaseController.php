@@ -41,7 +41,7 @@
 			// E.g.: $this->session = \Config\Services::session();
 		}
 		public function getResponse ( array $responseBody, int $code = ResponseInterface::HTTP_OK ): ResponseInterface {
-			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )->setHeader ('Access-Control-Allow-Origin','*');
+			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )->setHeader ( 'Access-Control-Allow-Origin', '*' );
 		}
 		public function getRequestInput ( IncomingRequest $request ) {
 			
@@ -52,7 +52,7 @@
 			return $input;
 		}
 		public function getHost ( IncomingRequest $request ): ResponseInterface {
-			return $this->response->setStatusCode (ResponseInterface::HTTP_OK  )->setJSON ( $_SERVER )->setHeader ('Access-Control-Allow-Origin','*');
+			return $this->response->setStatusCode ( ResponseInterface::HTTP_OK )->setJSON ( $_SERVER )->setHeader ( 'Access-Control-Allow-Origin', '*' );
 		}
 		public function validateRequest ( $input, array $rules, array $messages = [] ): bool {
 			$this->validator = Services::validation ()->setRules ( $rules );

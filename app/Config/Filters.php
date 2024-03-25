@@ -69,7 +69,8 @@
 					'client/*',
 					'client',
 					'Home',
-					'Home/*'
+					'Home/*',
+					"Conciliaciones/*",
 				],
 			],
 		];

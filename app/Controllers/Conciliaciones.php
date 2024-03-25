@@ -11,13 +11,10 @@
 	
 	class Conciliaciones extends BaseController {
 		private string $environment = 'SANDBOX';
+		/**
+		 * @throws \Exception
+		 */
 		public function uploadCFDIPlus () {
-//			var_dump (  json_encode ($_SERVER));
-			
-//			var_dump ( $_SERVER['HTTP_REFERER']);
-//			var_dump ($_SERVER['HTTP_ORIGIN']);
-			var_dump ($this->getHost ($this->request));
-			die();
 			$input = $this->getRequestInput ( $this->request );
 			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
 			$user = json_decode ( base64_decode ( $input[ 'user' ] ), TRUE );
@@ -40,7 +37,7 @@
 							if ( $validation[ 'code' ] === 200 ) {
 								$filesOk[ $doc[ 'uuid' ] ] = $doc;
 							} else {
-								$filesErr [ $doc[ 'uuid' ] ] = $validation;
+								$filesErr [] = $validation;
 							}
 							unlink ( $file );
 						};
@@ -88,6 +85,7 @@
 				];
 			}
 			return [
+				'uuid' => $factura['uuid'],
 				'userOrigin' => $company[ 'rfc' ],
 				'emisor' => $factura[ 'emisor' ][ 'rfc' ],
 				'receptor' => $factura[ 'receptor' ][ 'rfc' ],
