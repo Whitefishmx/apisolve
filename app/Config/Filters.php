@@ -71,7 +71,6 @@
 					'Home',
 					'Home/*',
 					"Conciliaciones/*",
-					"Conciliaciones",
 					"uploadCFDIPlus"
 				],
 			],

@@ -85,7 +85,7 @@
 				];
 			}
 			return [
-				'uuid' => $factura['uuid'],
+				'uuid' => $factura[ 'uuid' ],
 				'userOrigin' => $company[ 'rfc' ],
 				'emisor' => $factura[ 'emisor' ][ 'rfc' ],
 				'receptor' => $factura[ 'receptor' ][ 'rfc' ],
