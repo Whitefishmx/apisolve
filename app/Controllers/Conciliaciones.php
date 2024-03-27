@@ -91,7 +91,7 @@
 				'receptor' => $factura[ 'receptor' ][ 'rfc' ],
 				'code' => 500,
 				'reason' => 'RFC incorrecto',
-				'message' => 'El RFC del emisor es diferente al que se registro para la empresa actual',
+				'message' => 'El RFC del emisor y receptor no coinciden con el que se registro para la empresa actual',
 			];
 		}
 	}

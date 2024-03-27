@@ -49,7 +49,7 @@
 						throw new Exception( 'No se pudieron insertar los registros.' );
 					}
 				}
-				$query = "SELECT t1.sender_rfc AS sender, t1.receiver_rfc AS receiver, w.W, s.S,
+				$query = "SELECT t1.sender_rfc AS sender, t1.receiver_rfc AS receiver, w.W AS 'in', s.S AS 'out',
        (IF(w.W > s.S, w.W - s.S, s.S - w.W)) AS difference,
        (IF(w.W > s.S, 'Favor', 'Contra')) AS saldo
 FROM (SELECT sender_rfc, receiver_rfc
@@ -69,7 +69,6 @@ FROM (SELECT sender_rfc, receiver_rfc
 					$item = [];
 					$res = $res->getResultArray ();
 					$rfcCompanies = $this->getCompaniesRegisters ( $env );
-//					var_dump ( $rfcCompanies );
 					for ( $i = 0; $i < count ( $res ); $i++ ) {
 						if ( count ( $item ) > 0 ) {
 							$counter = 0;
@@ -80,9 +79,10 @@ FROM (SELECT sender_rfc, receiver_rfc
 								}
 							}
 							if ( $counter === 0 ) {
-								$item[] = $res[ $i ];
+								$res[ $i ][ 'tmp' ] = "invoices_$tmpName";
 							}
 						} else {
+							$res[ $i ][ 'tmp' ] = "invoices_$tmpName";
 							$item [] = $res[ $i ];
 						}
 					}
@@ -105,10 +105,10 @@ FROM (SELECT sender_rfc, receiver_rfc
 					if ( !empty( $finalItemErr ) ) {
 						$conciliaciones  [ 'errors' ] = $finalItemErr;
 					}
-					$query = "DROP TABLE $this->base.invoices_$tmpName";
-					if ( !$this->db->query ( $query ) ) {
-						$conciliaciones[ 'errors' ] = 'tabla temporal persiste';
-					}
+//					$query = "DROP TABLE $this->base.invoices_$tmpName";
+//					if ( !$this->db->query ( $query ) ) {
+//						$conciliaciones[ 'errors' ] = 'tabla temporal persiste';
+//					}
 					return $conciliaciones;
 				}
 				throw new Exception( 'No se lograron formar los grupos de conciliaciones' );
