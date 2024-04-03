@@ -5,11 +5,13 @@
 	use App\Models\UserModel;
 	
 	class UserRules {
-		function cifrarAES ( $mensaje ) {
-			$clave = 'R$#9pL@z&*Q!7k#J2';
-			$iv = hex2bin ( '845e409135219b45a30ca1c60a7e0c77' );
-			$cifrado = openssl_encrypt ( $mensaje, 'AES-256-CBC', $clave, 0, $iv );
-			return base64_encode ( $cifrado );
+		function cifrarAES ( $id ) {
+			$clave = 'D0170rN07T#3r31sN07Tr&';
+			$datos = $id;
+			$metodo = 'aes-256-cbc';
+			$iv = hex2bin('34857d973953e44afb49ea9d61104d8c');
+			
+			return openssl_encrypt($datos, $metodo, $clave, 0, $iv);
 		}
 		public function validateUser ( string $str, string $fields, array $data ): bool {
 			try {

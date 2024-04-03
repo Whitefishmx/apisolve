@@ -7,14 +7,17 @@
 	use App\Models\UserModel;
 	use CodeIgniter\HTTP\IncomingRequest;
 	use CodeIgniter\HTTP\ResponseInterface;
+	use Exception;
 	use ZipArchive;
 	
 	class Conciliaciones extends BaseController {
 		private string $environment = 'SANDBOX';
 		/**
-		 * @throws \Exception
+		 * Function para cargar la información de archivo xml en tabla temporal para su procesamiento, devuelve las
+		 * posibles conciliaciones que se pueden realizar
+		 * @throws Exception
 		 */
-		public function uploadCFDIPlus () {
+		public function uploadCFDIPlus (): ResponseInterface {
 			$input = $this->getRequestInput ( $this->request );
 			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
 			$user = json_decode ( base64_decode ( $input[ 'user' ] ), TRUE );
@@ -61,6 +64,10 @@
 					], ResponseInterface::HTTP_BAD_REQUEST );
 				}
 			}
+			return $this->getResponse ( [
+				'error' => 'No se pudo cargar el archivo zip',
+				'reasons' => $_FILES[ 'file' ][ 'error' ] ],
+				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
 		}
 		/**
 		 * Función para validar el tipo de comprobante (Factura, Nora de débito)
@@ -85,6 +92,7 @@
 				];
 			}
 			return [
+				'tipo' => $factura[ 'tipo' ],
 				'uuid' => $factura[ 'uuid' ],
 				'userOrigin' => $company[ 'rfc' ],
 				'emisor' => $factura[ 'emisor' ][ 'rfc' ],
@@ -93,5 +101,22 @@
 				'reason' => 'RFC incorrecto',
 				'message' => 'El RFC del emisor y receptor no coinciden con el que se registro para la empresa actual',
 			];
+		}
+		public function chosenConciliation () {
+			$input = $this->getRequestInput ( $this->request );
+			$conciliations = $input[ 'conciliaciones' ];
+			if ( isset( $conciliations ) ) {
+				$conciliations = explode ( ',', $conciliations );
+				if ( count ( $conciliations ) > 0 ) {
+					$item = [];
+					foreach ( $conciliations as $row ) {
+						$item[] = explode ( '|', $row );
+					}
+					$conciliations = $item;
+				}
+				$cfdi = new CfdiModel();
+				$ids = $cfdi->savePermanentCfdi ( $conciliations, 'SANDBOX' );
+				var_dump ( $ids );
+			}
 		}
 	}

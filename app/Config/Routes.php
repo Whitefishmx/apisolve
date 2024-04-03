@@ -18,6 +18,7 @@
 	$routes->get ( 'token', 'Auth::login' );
 	//========================|| POST ||========================
 	$routes->post ( 'uploadCFDIPlus', 'Conciliaciones::uploadCFDIPlus' );
+	$routes->post ('chosenConciliation', 'Conciliaciones::chosenConciliation');
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================
