@@ -81,11 +81,11 @@
 	 *
 	 * @return string serial en base32
 	 */
-	function serialize32 ( array $args ): string {
+	function serialize32 ( array $data ): string {
 		$binded = '';
 		$delimiters = 'WXYZ';
-		for ( $i = 0; $i < count ( $args ); $i++ ) {
-			$binded .= encode32 ( $args[ $i ] ) . substr ( str_shuffle ( $delimiters ), 0, 1 );
+		for ( $i = 0; $i < count ( $data ); $i++ ) {
+			$binded .= encode32 ( $data[ $i ] ) . substr ( str_shuffle ( $delimiters ), 0, 1 );
 		}
 		$binded = substr ( $binded, 0, -1 );
 		return $binded;
