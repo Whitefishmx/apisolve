@@ -39,12 +39,12 @@
 	tipo VARCHAR(1) NOT NULL COLLATE 'utf8mb4_spanish_ci',
 	invoice_date VARCHAR(50) NOT NULL DEFAULT '' COLLATE 'utf8mb4_spanish_ci',
 	total DECIMAL(10,2) NOT NULL,
+	xml_document TEXT NULL DEFAULT NULL COLLATE 'utf8mb4_spanish_ci',
 	UNIQUE INDEX uuid (uuid) USING BTREE) COLLATE = 'utf8mb4_spanish_ci' ENGINE = InnoDB";
 			if ( $this->db->query ( $query ) ) {
 				foreach ( $data as $val ) {
 					$inDate = strtotime ( $val[ 'fecha' ] );
-					$query = "INSERT INTO apisolve_sandbox.invoices_$tmpName values ('{$val['emisor']['rfc']}', '{$val['receptor']['rfc']}', '{$val['uuid']}',
-                                                    '{$val['tipo']}','$inDate', '{$val['monto']}')";
+					$query = "INSERT INTO apisolve_sandbox.invoices_$tmpName values ('{$val['emisor']['rfc']}', '{$val['receptor']['rfc']}', '{$val['uuid']}', '{$val['tipo']}','$inDate', '{$val['monto']}', '{$val['xml']}')";
 					if ( !$this->db->query ( $query ) ) {
 						throw new Exception( 'No se pudieron insertar los registros.' );
 					}
@@ -68,12 +68,7 @@ FROM (SELECT sender_rfc, receiver_rfc
 					$res = $res->getResultArray ();
 					$rfcCompanies = $this->getCompaniesRegisters ( $env );
 					for ( $i = 0; $i < count ( $res ); $i++ ) {
-//						echo '============ITEM======='."\r\n";
-//						var_dump ($item);
-//						echo "============RES$i========\r\n";
-//						var_dump ($res[$i]);
 						if ( count ( $item ) > 0 ) {
-//							echo "============dentro de if========\r\n";
 							$counter = 0;
 							for ( $j = 0; $j < count ( $item ); $j++ ) {
 								if ( ( $res[ $i ][ 'sender' ] === $item[ $j ][ 'sender' ] || $res[ $i ][ 'sender' ] === $item[ $j ][ 'receiver' ] ) &&
@@ -90,9 +85,6 @@ FROM (SELECT sender_rfc, receiver_rfc
 							$item [] = $res[ $i ];
 						}
 					}
-//					echo "============final========\r\n";
-//					var_dump ($item);
-//					die();
 					$finalItem = [];
 					$finalItemErr = [];
 					for ( $i = 0; $i < count ( $item ); $i++ ) {
@@ -153,7 +145,7 @@ FROM (SELECT sender_rfc, receiver_rfc
 //			$ids = [];
 			$counter = 0;
 			foreach ( $data as $row ) {
-				$query = "INSERT INTO apisolve_sandbox.cfdi_plus (sender_rfc, receiver_rfc, uuid, tipo, invoice_date, total)
+				$query = "INSERT INTO apisolve_sandbox.cfdi_plus (sender_rfc, receiver_rfc, uuid, tipo, invoice_date, total, xml_document)
     (SELECT * FROM $row[2] WHERE (sender_rfc = '$row[0]' AND receiver_rfc = '$row[1]') OR (sender_rfc = '$row[1]' AND receiver_rfc = '$row[0]'))";
 				if ( $this->db->query ( $query ) ) {
 					$data[ $counter ][ 'insertedId' ] = $this->db->insertID ();
@@ -163,11 +155,11 @@ FROM (SELECT sender_rfc, receiver_rfc
 			}
 			if ( count ( $data ) > 0 ) {
 				$counter--;
-//				$query = "DROP TABLE $this->base.{$data[$counter][2]}";
-//				if ( $this->db->query ( $query ) ) {
+				$query = "DROP TABLE $this->base.{$data[$counter][2]}";
+				if ( $this->db->query ( $query ) ) {
 					return $data;
-//				}
-//				throw new Exception( '2.2 No se logro guardar la información requerida para las conciliaciones.' );
+				}
+				throw new Exception( '2.2 No se logro guardar la información requerida para las conciliaciones.' );
 			}
 			throw new Exception( '2.1 No se logro guardar la información requerida para las conciliaciones.' );
 		}

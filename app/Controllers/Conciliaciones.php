@@ -2,13 +2,11 @@
 	
 	namespace App\Controllers;
 	
-	use App\Controllers\BaseController;
-	use App\Models\CfdiModel;
-	use App\Models\UserModel;
-	use CodeIgniter\HTTP\IncomingRequest;
 	use CodeIgniter\HTTP\ResponseInterface;
-	use Exception;
+	use App\Models\ConciliacionModel;
+	use App\Models\CfdiModel;
 	use ZipArchive;
+	use Exception;
 	
 	class Conciliaciones extends BaseController {
 		private string $environment = 'SANDBOX';
@@ -43,7 +41,7 @@
 								$filesErr [] = $validation;
 							}
 							unlink ( $file );
-						};
+						}
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
 						$user = $cfdi->createTmpInvoices ( $filesOk, 'SANDBOX' );
@@ -54,7 +52,7 @@
 						if ( isset ( $user[ 'errors' ] ) ) {
 							$conciliaciones[ 'db_errors' ] = $user[ 'errors' ];
 						}
-						return $this->getResponse ( $conciliaciones, ResponseInterface::HTTP_OK );
+						return $this->getResponse ( $conciliaciones );
 					} else {
 						$dato[ 'error' ] = "zip";
 					}
@@ -83,7 +81,7 @@
 		public function validaComprobantePlus ( array $factura, int $tipo, array $company, array $user, string $env = NULL, float $monto = NULL ): array {
 			//Se selecciona el ambiente a trabajar
 			$env = $env === NULL ? $this->environment : $env;
-			//Se verífica que el emisor de la factura sea el mismo que la compañía del usuario activo
+			//Sé verífica que el emisor de la factura sea el mismo que la compañía del usuario activo
 			if ( ( $factura[ 'emisor' ][ 'rfc' ] === $company[ 'rfc' ] ) || ( $factura[ 'receptor' ][ 'rfc' ] === $company[ 'rfc' ] ) ) {
 				return [
 					'code' => 200,
@@ -102,9 +100,15 @@
 				'message' => 'El RFC del emisor y receptor no coinciden con el que se registro para la empresa actual',
 			];
 		}
-		public function chosenConciliation () {
+		/**
+		 * Guarda los CFDI que si serán utilizados para la creación de una conciliación y genera las diferentes operaciones seleccionadas
+		 * @return ResponseInterface
+		 * @throws Exception
+		 */
+		public function chosenConciliation (): ResponseInterface {
 			$input = $this->getRequestInput ( $this->request );
 			$conciliations = $input[ 'conciliaciones' ];
+			$user = $input[ 'user' ];
 			if ( isset( $conciliations ) ) {
 				$conciliations = explode ( ',', $conciliations );
 				if ( count ( $conciliations ) > 0 ) {
@@ -116,7 +120,27 @@
 				}
 				$cfdi = new CfdiModel();
 				$ids = $cfdi->savePermanentCfdi ( $conciliations, 'SANDBOX' );
-				var_dump ( $ids );
+				if ( empty( $ids ) ) {
+					return $this->getResponse ( [
+						'error' => 'No se pueden crear las conciliaciones',
+						'reasons' => 'Error al guardar información de CFDI' ],
+						ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+				}
+				$ids[ 'client' ] = $user;
+				$concilia = new ConciliacionModel();
+				$ops = $concilia->makeConciliationPlus ( $ids, 'SANDBOX' );
+				if ( empty( $ops ) ) {
+					return $this->getResponse ( [
+						'error' => 'No se pueden crear las conciliaciones',
+						'reasons' => 'Error al guardar información de CFDI' ],
+						ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+				}
+				return $this->getResponse ( [ $ops ] );
 			}
+			return $this->getResponse ( [
+				'error' => 'No se pueden crear las conciliaciones',
+				'reasons' => 'No se selecciono ningún grupo a conciliar' ],
+				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+			
 		}
 	}
