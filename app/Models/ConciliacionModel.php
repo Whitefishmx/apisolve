@@ -20,6 +20,7 @@
 		}
 		/**
 		 * Crea
+		 *
 		 * @param array       $args
 		 * @param string|NULL $env
 		 *
@@ -31,7 +32,6 @@
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$newConciliations = [];
 			$counter = 0;
 			foreach ( $args as $row ) {
 				helper ( 'tools_helper' );
@@ -40,11 +40,11 @@
 				$range = $row[ 'insertedId' ] + ( intval ( $row[ 'affected' ] ) - 1 );
 				$nexID = $this->getNexId ( 'conciliation_plus' );
 				$opNumber = MakeOperationNumber ( $nexID );
-				$data = [2, $nexID, $user[ 'id' ], $companies[ 'client' ][ 'id' ], $companies[ 'provider' ][ 'id' ], strtotime ( 'now' ) ];
+				$data = [ 2, $nexID, $user[ 'id' ], $companies[ 'client' ][ 'id' ], $companies[ 'provider' ][ 'id' ], strtotime ( 'now' ) ];
 				$folio = serialize32 ( $data );
 				$paymentDate = strtotime ( '+40 days' );
 				$query = "INSERT INTO $this->base.conciliation_plus (invoice_range, id_client, id_provider, reference_number, folio, entry_money, exit_money, payment_date, status)
-VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$companies['provider']['id']}', '$opNumber', '$folio', '{$row[3]}', '{$row[4]}', '{$paymentDate}', 0)";
+VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$companies['provider']['id']}', '$opNumber', '$folio', '$row[3]', '$row[4]', '$paymentDate', 0)";
 				if ( !$this->db->query ( $query ) ) {
 					throw new Exception( 'No se lograron crear las conciliaciones' );
 				}
