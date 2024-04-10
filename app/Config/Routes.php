@@ -1,6 +1,6 @@
 <?php
 	
-	namespace Config;
+	namespace CodeIgniter\Commands\Utilities\Routes;
 	
 	use CodeIgniter\Router\RouteCollection;
 	
@@ -17,8 +17,10 @@
 	//========================|| GET ||========================
 	$routes->get ( 'token', 'Auth::login' );
 	//========================|| POST ||========================
-	$routes->post ( 'uploadCFDIPlus', 'Conciliaciones::uploadCFDIPlus' );
-	$routes->post ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' );
+
+	$routes->post ( 'uploadCFDIPlus', to: 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus**/ );
+	$routes->post ( 'chosenConciliation', 'Conciliaciones::chosenConciliation'  /**@uses \App\Controllers\Conciliaciones::chosenConciliation**/ );
+	$routes->post ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion'  /**@uses \App\Controllers\Dispersiones::chosenForDispersion**/ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================

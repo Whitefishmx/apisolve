@@ -87,7 +87,7 @@ class Routing extends BaseRouting
      *
      * If FALSE, will stop searching and do NO automatic routing.
      */
-    public bool $autoRoute = TRUE;
+    public bool $autoRoute = False;
 
     /**
      * If TRUE, will enable the use of the 'prioritize' option
