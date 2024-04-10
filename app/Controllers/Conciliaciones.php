@@ -18,7 +18,6 @@
 		public function uploadCFDIPlus (): ResponseInterface {
 			$input = $this->getRequestInput ( $this->request );
 			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
-			$user = json_decode ( base64_decode ( $input[ 'user' ] ), TRUE );
 			if ( $_FILES[ 'file' ][ 'error' ] == UPLOAD_ERR_OK ) {
 				$uploadedFile = $_FILES[ 'file' ];
 				if ( pathinfo ( $uploadedFile[ 'name' ], PATHINFO_EXTENSION ) === 'zip' ) {
@@ -34,7 +33,7 @@
 							$xml = simplexml_load_file ( $file );
 							helper ( 'factura' );
 							$doc = XmlProcess ( $xml );
-							$validation = $this->validaComprobantePlus ( $doc, 1, $company, $user );
+							$validation = $this->validaComprobantePlus ( $doc, $company );
 							if ( $validation[ 'code' ] === 200 ) {
 								$filesOk[ $doc[ 'uuid' ] ] = $doc;
 							} else {
@@ -44,7 +43,7 @@
 						}
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
-						$user = $cfdi->createTmpInvoices ( $filesOk, 'SANDBOX' );
+						$user = $cfdi->createTmpInvoices ( $filesOk, $this->environment );
 						$conciliaciones = [
 							'conciliaciones' => $user[ 'conciliaciones' ],
 							'error' => $filesErr,
@@ -54,7 +53,9 @@
 						}
 						return $this->getResponse ( $conciliaciones );
 					} else {
-						$dato[ 'error' ] = "zip";
+						return $this->getResponse ( [
+							'error' => 'No se logro abrir el archivo',
+						], ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
 					}
 				} else {
 					return $this->getResponse ( [
@@ -71,16 +72,12 @@
 		 * Función para validar el tipo de comprobante (Factura, Nora de débito)
 		 * de acuerdo a las reglas de recepción para conciliaciones
 		 *
-		 * @param array       $factura Arreglo con los datos extraídos de factura_helper|XmlProcess
-		 * @param int         $tipo    Tipo de comprobante que se validara: 1 = Factura | 2 = Nota de debito
-		 * @param string|NULL $env     Ambiente en el que se trabajará “SANDBOX” | “LIVE”
-		 * @param float|null  $monto   En caso de escoger tipo de documento 2 poner el monto de la factura a conciliar para su comparación
+		 * @param array $factura Arreglo con los datos extraídos de factura_helper|XmlProcess
+		 * @param array $company
 		 *
 		 * @return array Devuelve el resultado de la validación con la descripcion caso de erro.
 		 */
-		public function validaComprobantePlus ( array $factura, int $tipo, array $company, array $user, string $env = NULL, float $monto = NULL ): array {
-			//Se selecciona el ambiente a trabajar
-			$env = $env === NULL ? $this->environment : $env;
+		public function validaComprobantePlus ( array $factura, array $company ): array {
 			//Sé verífica que el emisor de la factura sea el mismo que la compañía del usuario activo
 			if ( ( $factura[ 'emisor' ][ 'rfc' ] === $company[ 'rfc' ] ) || ( $factura[ 'receptor' ][ 'rfc' ] === $company[ 'rfc' ] ) ) {
 				return [
@@ -119,7 +116,7 @@
 					$conciliations = $item;
 				}
 				$cfdi = new CfdiModel();
-				$ids = $cfdi->savePermanentCfdi ( $conciliations, 'SANDBOX' );
+				$ids = $cfdi->savePermanentCfdi ( $conciliations, $this->environment );
 				if ( empty( $ids ) ) {
 					return $this->getResponse ( [
 						'error' => 'No se pueden crear las conciliaciones',
@@ -128,7 +125,7 @@
 				}
 				$ids[ 'client' ] = $user;
 				$concilia = new ConciliacionModel();
-				$ops = $concilia->makeConciliationPlus ( $ids, 'SANDBOX' );
+				$ops = $concilia->makeConciliationPlus ( $ids, $this->environment );
 				if ( empty( $ops ) ) {
 					return $this->getResponse ( [
 						'error' => 'No se pueden crear las conciliaciones',
