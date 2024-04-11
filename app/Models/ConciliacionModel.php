@@ -28,11 +28,13 @@
 		 * @throws Exception
 		 */
 		public function makeConciliationPlus ( array $args, string $env = NULL ): array {
+			$company = json_decode ( base64_decode ( array_pop ( $args ) ), TRUE );
 			$user = json_decode ( base64_decode ( array_pop ( $args ) ), TRUE );
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$counter = 0;
+			$autoApproved = [];
 			foreach ( $args as $row ) {
 				helper ( 'tools_helper' );
 				helper ( 'tetraoctal_helper' );
@@ -43,15 +45,19 @@
 				$data = [ 2, $nexID, $user[ 'id' ], $companies[ 'client' ][ 'id' ], $companies[ 'provider' ][ 'id' ], strtotime ( 'now' ) ];
 				$folio = serialize32 ( $data );
 				$paymentDate = strtotime ( '+40 days' );
+				$status = $company[ 'rfc' ] === $companies[ 'client' ][ 'rfc' ] ? 1 : 0;
 				$query = "INSERT INTO $this->base.conciliation_plus (invoice_range, id_client, id_provider, reference_number, folio, entry_money, exit_money, payment_date, status)
-VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$companies['provider']['id']}', '$opNumber', '$folio', '$row[3]', '$row[4]', '$paymentDate', 0)";
+VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$companies['provider']['id']}', '$opNumber', '$folio', '$row[3]', '$row[4]', '$paymentDate', $status)";
 				if ( !$this->db->query ( $query ) ) {
 					throw new Exception( 'No se lograron crear las conciliaciones' );
 				}
-				$args[ $counter ][ 'idConciliation' ] = $this->db->insertID ();
+				if ( $company[ 'rfc' ] === $companies[ 'client' ][ 'rfc' ] ) {
+					$args[ $counter ][ 'idConciliation' ] = $this->db->insertID ();
+					$autoApproved[] = $args[ $counter ];
+				}
 				$counter++;
 			}
-			return $args;
+			return $autoApproved;
 		}
 		/**
 		 * Obtiene la información de las empresas que estarán implicadas en las conciliaciones

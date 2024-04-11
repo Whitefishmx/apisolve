@@ -106,6 +106,7 @@
 			$input = $this->getRequestInput ( $this->request );
 			$conciliations = $input[ 'conciliaciones' ];
 			$user = $input[ 'user' ];
+			$company = $input[ 'company' ];
 			if ( isset( $conciliations ) ) {
 				$conciliations = explode ( ',', $conciliations );
 				if ( count ( $conciliations ) > 0 ) {
@@ -124,6 +125,7 @@
 						ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
 				}
 				$ids[ 'client' ] = $user;
+				$ids[ 'company' ] = $company;
 				$concilia = new ConciliacionModel();
 				$ops = $concilia->makeConciliationPlus ( $ids, $this->environment );
 				if ( empty( $ops ) ) {
