@@ -142,4 +142,23 @@
 				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
 			
 		}
+		/**
+		 * Regresa las conciliaciones plus de una empresa
+		 * @return ResponseInterface Respuesta con la información de las conciliaciones
+		 * @throws Exception Errores
+		 */
+		public function getConciliationPlus (): ResponseInterface {
+			$input = $this->getRequestInput ( $this->request );
+			$company = $input[ 'company' ] ?? NULL;
+			$env = $input[ 'environment' ] ?? 'SANDBOX';
+			if ( $company === NULL ) {
+				return $this->getResponse ( [
+					'error' => 'Petición incorrecta',
+					'reasons' => 'Se esperaba el ID de la compañía a buscar' ],
+					ResponseInterface::HTTP_BAD_REQUEST );
+			}
+			$conciliation = new ConciliacionModel();
+			$res = $conciliation->getConciliationsPlus ( $company, $env );
+			return $this->getResponse ( $res );
+		}
 	}

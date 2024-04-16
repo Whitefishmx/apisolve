@@ -66,12 +66,10 @@
 		public array $filters = [
 			'auth' => [
 				'before' => [
-					'client/*',
-					'client',
-					'Home',
-					'Home/*',
-					"Conciliaciones/*",
-					"uploadCFDIPlus"
+					"uploadCFDIPlus",
+					"chosenConciliation",
+					"chosenForDispersion",
+					"conciliationPlus",
 				],
 			],
 		];

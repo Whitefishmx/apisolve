@@ -22,9 +22,9 @@
 				$conciliations = explode ( ',', $conciliations );
 				$disp = new DispersionModel();
 				$dispersions = $disp->createDispersionCP ( $conciliations, $user, $company, $this->environment );
-				if (count ($dispersions)>0){
+				if ( count ( $dispersions ) > 0 ) {
 					return $this->getResponse ( [
-						'error' => 'Ok', 'Message' => 'Dispersion creada correctamente' ]);
+						'error' => NULL, 'Message' => 'Dispersion creada correctamente' ] );
 				}
 				return $this->getResponse ( [
 					'error' => 'No se logro crear la dispersion', 'reason' => 'No se selecciono ninguna conciliación' ],

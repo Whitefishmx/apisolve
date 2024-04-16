@@ -12,6 +12,7 @@
 		private string $APISandbox = '';
 		private string $APILive = '';
 		public string $base = '';
+		public string $urlSolve = "https://compensapay.local/";
 		public function __construct () {
 			parent::__construct ();
 			require 'conf.php';
@@ -105,5 +106,41 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			}
 			$res = $res->getResultArray ()[ 0 ][ 'id' ];
 			return $res === NULL ? 1 : intval ( $res + 1 );
+		}
+		/**
+		 * Obtiene las Conciliaciones Plus de una empresa
+		 *
+		 * @param mixed       $id  ID de la empresa a buscar conciliaciones
+		 * @param string|NULL $env ambiente en el que se trabajará
+		 *
+		 * @return array|array[] Arreglo con la información necesaria para mostrar las conciliaciones
+		 * @throws Exception Errores durante el proceso
+		 */
+		public function getConciliationsPlus ( mixed $id, string $env = NULL ): array {
+			//Se declara el ambiente a utilizar
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$url = $this->urlSolve . 'assets/factura/factura.php?idfactura=';
+			$query = "SELECT t1.id, t1.status, t3.arteria_clabe AS 'clabeTransferencia', t1.reference_number, t1.folio, t1.invoice_range, t1.entry_money, t1.exit_money,
+       DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%d-%m-%Y') AS 'payment_date', t4.short_name AS 'deudor', t5.short_name AS 'receptor', t4.rfc
+FROM $this->base.conciliation_plus t1
+    INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
+    INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
+    INNER JOIN $this->base.companies t4 ON t1.id_client = t4.id
+    INNER JOIN $this->base.companies t5 ON t1.id_provider = t5.id
+WHERE t1.id_client = $id OR t1.id_provider = $id";
+			if ( !$res = $this->db->query ( $query ) ) {
+				throw new Exception( 'No se encontró información de conciliaciones' );
+			}
+			$res = $res->getResultArray ();
+			for ( $i = 0; $i < count ( $res ); $i++ ) {
+				$range = explode ( '-', $res[ $i ][ 'invoice_range' ] );
+				$query = "SELECT *, CONCAT('$url', id) AS 'idurl' FROM apisolve_sandbox.cfdi_plus WHERE id BETWEEN $range[0] AND $range[1]";
+				if ( !$cfdi = $this->db->query ( $query ) ) {
+					throw new Exception( 'No se encontró información de los CFDI' );
+				}
+				$res[ $i ][ 'cfdi' ] = $cfdi->getResultArray ();
+			}
+			return $res;
 		}
 	}
