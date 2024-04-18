@@ -16,6 +16,7 @@
 	//========================|| Rutas ||========================
 	//========================|| GET ||========================
 	$routes->get ( 'token', 'Auth::login' );
+	$routes->post ( 'cobro', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
 	//========================|| POST ||========================
 	$routes->post ( 'uploadCFDIPlus', to: 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
 	$routes->post ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
