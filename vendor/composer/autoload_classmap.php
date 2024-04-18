@@ -220,6 +220,7 @@ return array(
     'CodeIgniter\\HTTP\\CURLRequest' => $vendorDir . '/codeigniter4/framework/system/HTTP/CURLRequest.php',
     'CodeIgniter\\HTTP\\ContentSecurityPolicy' => $vendorDir . '/codeigniter4/framework/system/HTTP/ContentSecurityPolicy.php',
     'CodeIgniter\\HTTP\\DownloadResponse' => $vendorDir . '/codeigniter4/framework/system/HTTP/DownloadResponse.php',
+    'CodeIgniter\\HTTP\\Exceptions\\BadRequestException' => $vendorDir . '/codeigniter4/framework/system/HTTP/Exceptions/BadRequestException.php',
     'CodeIgniter\\HTTP\\Exceptions\\HTTPException' => $vendorDir . '/codeigniter4/framework/system/HTTP/Exceptions/HTTPException.php',
     'CodeIgniter\\HTTP\\Exceptions\\RedirectException' => $vendorDir . '/codeigniter4/framework/system/HTTP/Exceptions/RedirectException.php',
     'CodeIgniter\\HTTP\\Files\\FileCollection' => $vendorDir . '/codeigniter4/framework/system/HTTP/Files/FileCollection.php',

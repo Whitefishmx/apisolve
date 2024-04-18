@@ -42,15 +42,15 @@ use stdClass;
  *      - process various callbacks
  *      - allow intermingling calls to the db connection
  *
- * @phpstan-type row_array array<int|string, float|int|null|object|string>
+ * @phpstan-type row_array               array<int|string, float|int|null|object|string>
  * @phpstan-type event_data_beforeinsert array{data: row_array}
- * @phpstan-type event_data_afterinsert array{id: int|string, data: row_array, result: bool}
- * @phpstan-type event_data_beforefind array{id?: int|string, method: string, singleton: bool, limit?: int, offset?: int}
- * @phpstan-type event_data_afterfind array{id: int|string|null|list<int|string>, data: row_array|list<row_array>|object|null, method: string, singleton: bool}
+ * @phpstan-type event_data_afterinsert  array{id: int|string, data: row_array, result: bool}
+ * @phpstan-type event_data_beforefind   array{id?: int|string, method: string, singleton: bool, limit?: int, offset?: int}
+ * @phpstan-type event_data_afterfind    array{id: int|string|null|list<int|string>, data: row_array|list<row_array>|object|null, method: string, singleton: bool}
  * @phpstan-type event_data_beforeupdate array{id: null|list<int|string>, data: row_array}
- * @phpstan-type event_data_afterupdate array{id: null|list<int|string>, data: row_array|object, result: bool}
+ * @phpstan-type event_data_afterupdate  array{id: null|list<int|string>, data: row_array|object, result: bool}
  * @phpstan-type event_data_beforedelete array{id: null|list<int|string>, purge: bool}
- * @phpstan-type event_data_afterdelete array{id: null|list<int|string>, data: null, purge: bool, result: bool}
+ * @phpstan-type event_data_afterdelete  array{id: null|list<int|string>, data: null, purge: bool, result: bool}
  */
 abstract class BaseModel
 {
@@ -98,7 +98,7 @@ abstract class BaseModel
      * An array of field names that are allowed
      * to be set by the user in inserts/updates.
      *
-     * @var array
+     * @var list<string>
      */
     protected $allowedFields = [];
 
@@ -173,11 +173,14 @@ abstract class BaseModel
     protected $db;
 
     /**
-     * Rules used to validate data in insert, update, and save methods.
+     * Rules used to validate data in insert(), update(), and save() methods.
+     *
      * The array must match the format of data passed to the Validation
      * library.
      *
-     * @var array|string
+     * @see https://codeigniter4.github.io/userguide/models/model.html#setting-validation-rules
+     *
+     * @var array<string, array<string, array<string, string>|string>|string>|string
      */
     protected $validationRules = [];
 
@@ -185,7 +188,7 @@ abstract class BaseModel
      * Contains any custom error messages to be
      * used during data validation.
      *
-     * @var array
+     * @var array<string, array<string, string>>
      */
     protected $validationMessages = [];
 
@@ -243,84 +246,84 @@ abstract class BaseModel
     /**
      * Callbacks for beforeInsert
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeInsert = [];
 
     /**
      * Callbacks for afterInsert
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterInsert = [];
 
     /**
      * Callbacks for beforeUpdate
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeUpdate = [];
 
     /**
      * Callbacks for afterUpdate
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterUpdate = [];
 
     /**
      * Callbacks for beforeInsertBatch
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeInsertBatch = [];
 
     /**
      * Callbacks for afterInsertBatch
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterInsertBatch = [];
 
     /**
      * Callbacks for beforeUpdateBatch
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeUpdateBatch = [];
 
     /**
      * Callbacks for afterUpdateBatch
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterUpdateBatch = [];
 
     /**
      * Callbacks for beforeFind
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeFind = [];
 
     /**
      * Callbacks for afterFind
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterFind = [];
 
     /**
      * Callbacks for beforeDelete
      *
-     * @var array
+     * @var list<string>
      */
     protected $beforeDelete = [];
 
     /**
      * Callbacks for afterDelete
      *
-     * @var array
+     * @var list<string>
      */
     protected $afterDelete = [];
 
@@ -439,7 +442,7 @@ abstract class BaseModel
      * @param int         $batchSize The size of the batch to run
      * @param bool        $returnSQL True means SQL is returned, false will execute the query
      *
-     * @return false|int|string[] Number of rows affected or FALSE on failure, SQL array when testMode
+     * @return false|int|list<string> Number of rows affected or FALSE on failure, SQL array when testMode
      *
      * @throws DatabaseException
      */
@@ -731,7 +734,7 @@ abstract class BaseModel
     {
         $id = $this->getIdValue($row);
 
-        return ! ($id === null || $id === []);
+        return ! ($id === null || $id === [] || $id === '');
     }
 
     /**
@@ -1005,7 +1008,7 @@ abstract class BaseModel
      * @param         int                         $batchSize The size of the batch to run
      * @param         bool                        $returnSQL True means SQL is returned, false will execute the query
      *
-     * @return false|int|string[] Number of rows affected or FALSE on failure, SQL array when testMode
+     * @return false|int|list<string> Number of rows affected or FALSE on failure, SQL array when testMode
      *
      * @throws DatabaseException
      * @throws ReflectionException
@@ -1448,7 +1451,7 @@ abstract class BaseModel
      * Allows to set (and reset) validation rules.
      * It could be used when you have to change default or override current validate rules.
      *
-     * @param array $validationRules Value
+     * @param array<string, array<string, array<string, string>|string>|string> $validationRules Value
      *
      * @return $this
      */

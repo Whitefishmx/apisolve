@@ -25,7 +25,7 @@ abstract class BaseResult implements ResultInterface
     /**
      * Connection ID
      *
-     * @var object|resource
+     * @var         object|resource
      * @phpstan-var TConnection
      */
     public $connID;
@@ -33,7 +33,7 @@ abstract class BaseResult implements ResultInterface
     /**
      * Result ID
      *
-     * @var false|object|resource
+     * @var         false|object|resource
      * @phpstan-var false|TResult
      */
     public $resultID;
@@ -41,14 +41,14 @@ abstract class BaseResult implements ResultInterface
     /**
      * Result Array
      *
-     * @var array[]
+     * @var list<array>
      */
     public $resultArray = [];
 
     /**
      * Result Object
      *
-     * @var object[]
+     * @var list<object>
      */
     public $resultObject = [];
 
@@ -185,7 +185,7 @@ abstract class BaseResult implements ResultInterface
             return [];
         }
 
-        if ($this->resultObject) {
+        if ($this->resultObject !== []) {
             foreach ($this->resultObject as $row) {
                 $this->resultArray[] = (array) $row;
             }
@@ -225,7 +225,7 @@ abstract class BaseResult implements ResultInterface
             return [];
         }
 
-        if ($this->resultArray) {
+        if ($this->resultArray !== []) {
             foreach ($this->resultArray as $row) {
                 $this->resultObject[] = (object) $row;
             }
@@ -260,8 +260,8 @@ abstract class BaseResult implements ResultInterface
      * @param         string                           $type The type of result object. 'array', 'object' or class name.
      * @phpstan-param class-string<T>|'array'|'object' $type
      *
-     * @return         array|object|stdClass|null
-     * @phpstan-return ($type is 'object' ? stdClass|null : ($type is 'array' ? array|null : T|null))
+     * @return         array|float|int|object|stdClass|string|null
+     * @phpstan-return ($n is string ? float|int|string|null : ($type is 'object' ? stdClass|null : ($type is 'array' ? array|null : T|null)))
      */
     public function getRow($n = 0, string $type = 'object')
     {
