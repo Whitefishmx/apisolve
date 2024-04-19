@@ -7,9 +7,9 @@
 	use Config\Database;
 
 //	use Exception;
-	class Stp extends Model {
-		private string $privateKey = './crypt/keyFish.pem';
-		private string $passphrase = 'C0ntR4S3NIa4F1nt3CHACc355';
+	class StpModel extends Model {
+		private string $privateKey = './crypt/llavePrivada.pem';
+		private string $passphrase = '12345678';
 		private string $environment = '';
 		private string $APISandbox = '';
 		private string $APILive = '';
@@ -29,38 +29,38 @@
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function dispersion ( string $env = NULL ): bool|string {
+		public function sendDispersion ( string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$url = ( $env == 'SANDBOX' ) ? $this->stpSandbox . 'ordenPago/registra' : $this->stpLive . 'ordenPago/registra';
 			$data = [
 				'bancoReceptor' => '90646',
 				'empresa' => 'WHITEFISH',
-				'fechaOperacion' => date ( 'Ymd', strtotime ( 'now' ) ),
-				'folioOrigen' => '123456789',
-				'claveRastreo' => '0034501',
+				'fechaOperacion' => '',
+				'folioOrigen' => '',
+				'claveRastreo' => '7777776',
 				'bancoOrigen' => '90646',
 				'monto' => '20.00',
 				'tipoPago' => 1,
 				'tipoCuentaOrigen' => 40,
 				'nombreOrigen' => 'NombreOrigen',
 				'cuentaOrigen' => '646180546900000003',
-				'rfcOrigen' => 'WST230202CQ2',
+				'rfcOrigen' => 'ND',
 				'tipoCuentaDestino' => 40,
 				'nombreDestino' => 'NombreDestino',
 				'cuentaDestino' => '646180110400000007',
-				'rfcDestino' => 'WST230202CQ2',
+				'rfcDestino' => 'ND',
 				'emailBenef' => '',
 				'tipoCuentaBenef2' => '',
 				'nombreBenef2' => '',
 				'cuentaBenef2' => '',
 				'rfcBenef2' => '',
-				'concepto' => "PruebaREST",
+				'concepto' => "PruebaREST2",
 				'concepto2' => '',
 				'claveCat1' => '',
 				'claveCat2' => '',
 				'clavePAgo' => '',
 				'refCobranza' => '',
-				'refNumeric' => '0034501',
+				'refNumeric' => '7777776',
 				'tipoOperacion' => '',
 				'topological' => '',
 				'usuario' => '',
@@ -70,11 +70,10 @@
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||' . $cadenaOriginal . '||';
-			var_dump ( $cadenaOriginal );
+//			var_dump ( $cadenaOriginal );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
-			var_dump ( $cadenaOriginal );
 			$body = [
-				"claveRastreo" => $data[ 'folioOrigen' ],
+				"claveRastreo" => $data[ 'claveRastreo' ],
 				"conceptoPago" => $data[ 'concepto' ],
 				"cuentaOrdenante" => $data[ 'cuentaOrigen' ],
 				"cuentaBeneficiario" => $data[ 'cuentaDestino' ],
@@ -84,7 +83,7 @@
 				"monto" => $data[ 'monto' ],
 				"nombreBeneficiario" => $data[ 'nombreDestino' ],
 				"nombreOrdenante" => $data[ 'nombreOrigen' ],
-				"referenciaNumerica" => $data[ 'refNumerica' ],
+				"referenciaNumerica" => $data[ 'refNumeric' ],
 				"rfcCurpBeneficiario" => $data[ 'rfcDestino' ],
 				"rfcCurpOrdenante" => $data[ 'rfcOrigen' ],
 				"tipoCuentaBeneficiario" => $data[ 'tipoCuentaDestino' ],
@@ -92,8 +91,33 @@
 				"tipoPago" => $data[ 'tipoPago' ],
 				"firma" => $cadenaOriginal,
 			];
-			var_dump ( json_encode ( $body ) );
-			return $this->sendRequest ( 'ordenPago/registra', $body, $env, 'PUT', 'JSON' );
+//			var_dump ( $cadenaOriginal, json_encode ( $body ) );
+//			die();
+			return $this->sendRequest ( $url, $body, $env, 'PUT', 'JSON' );
+		}
+		public function sendConsulta ( string $env = NULL ) {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$url = 'https://efws-dev.stpmex.com/efws/API/V2/conciliacion';
+			$data = [
+				'empresa' => 'WHITEFISH',
+				'tipoOrden' => 'E',
+				'fecha' => '',
+			];
+			$cadenaOriginal = implode ( '|', $data );
+			$cadenaOriginal = '||' . $cadenaOriginal . '||';
+//			var_dump ( $cadenaOriginal );
+			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
+//			var_dump ( $cadenaOriginal );
+			$body = [
+				"empresa" => $data[ 'empresa' ],
+				"firma" => $cadenaOriginal,
+				"page" => 0,
+				"tipoOrden" => "E",
+			];
+//			var_dump ( json_encode ( $body ) );
+//			die();
+			return $this->sendRequest ( $url, $body, $env, 'POST', 'JSON' );
 		}
 		/**
 		 * Genera la firma de la llave
@@ -129,9 +153,8 @@
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function sendRequest ( string $endpoint, mixed $data, string $env, ?string $method, ?string $dataType ): bool|string {
+		public function sendRequest ( string $url, mixed $data, string $env, ?string $method, ?string $dataType ): bool|string {
 			$env = strtoupper ( $env ) ?? 'SANDBOX';
-			$url = ( $env == 'SANDBOX' ) ? $this->stpSandbox : $this->stpLive;
 			$method = !empty( $method ) ? strtoupper ( $method ) : 'POST';
 			$data = json_encode ( $data );
 			$headers = [];
@@ -139,7 +162,7 @@
 				$headers[] = 'Content-Type: application/json; charset=utf-8';
 			}
 			if ( ( $ch = curl_init () ) ) {
-				curl_setopt ( $ch, CURLOPT_URL, $url . $endpoint );
+				curl_setopt ( $ch, CURLOPT_URL, $url );
 				curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, TRUE );
 				curl_setopt ( $ch, CURLOPT_ENCODING, '' );
 				curl_setopt ( $ch, CURLOPT_MAXREDIRS, 10 );

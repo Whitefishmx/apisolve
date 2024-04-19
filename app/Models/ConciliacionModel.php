@@ -110,7 +110,7 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		/**
 		 * Obtiene las Conciliaciones Plus de una empresa
 		 *
-		 * @param mixed       $id  ID de la empresa a buscar conciliaciones
+		 * @param mixed       $id  Id de la empresa a buscar conciliaciones
 		 * @param string|NULL $env ambiente en el que se trabajará
 		 *
 		 * @return array|array[] Arreglo con la información necesaria para mostrar las conciliaciones
