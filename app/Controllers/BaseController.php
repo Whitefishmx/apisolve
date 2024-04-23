@@ -45,6 +45,11 @@
 		public function getResponse ( array $responseBody, int $code = ResponseInterface::HTTP_OK ): ResponseInterface {
 			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )->setHeader ( 'Access-Control-Allow-Origin', '*' );
 		}
+		/**
+		 * @param IncomingRequest $request
+		 *
+		 * @return array|bool|float|int|mixed|object|string|null
+		 */
 		public function getRequestInput ( IncomingRequest $request ) {
 			
 			$input = $request->getPost ();

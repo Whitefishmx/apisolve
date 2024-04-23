@@ -17,14 +17,16 @@
 	 * @param string $logName Nombre del archivo log
 	 * @param string $message Contenido del Log
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	function createLog ( string $logName, string $message ): void {
+	function createLog ( string $logName, string $message ): bool {
 		$logDir = './logs/';
 		$logFile = fopen ( $logDir . $logName . '.log', 'a+' );
 		if ( $logFile !== FALSE ) {
 			$logMessage = '|' . date ( 'Y-m-d H:i:s' ) . '|   ' . $message . "\r\n";
 			fwrite ( $logFile, $logMessage );
 			fclose ( $logFile );
+			return true;
 		}
+		return false;
 	}

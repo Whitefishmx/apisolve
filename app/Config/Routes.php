@@ -1,30 +1,26 @@
 <?php
-	
 	namespace CodeIgniter\Commands\Utilities\Routes;
-	
 	use CodeIgniter\Router\RouteCollection;
-	
 	/**
 	 * @var RouteCollection $routes
 	 */
 	$routes->setDefaultNamespace ( 'App\Controllers' );
+	$routes->setTranslateURIDashes ( FALSE );
 	$routes->setDefaultController ( 'Home' );
 	$routes->setDefaultMethod ( 'index' );
-	$routes->setTranslateURIDashes ( FALSE );
-	$routes->set404Override ();
 	$routes->setAutoRoute ( FALSE );
 	//========================|| Rutas ||========================
 	//========================|| GET ||========================
-	$routes->get ( 'token', 'Auth::login' );
-	$routes->get ( '/', 'Home' );
+	$routes->add ( 'token', 'Auth::login' );
+	$routes->add ( '/', 'Home' );
 	//========================|| POST ||========================
-	$routes->post ( 'uploadCFDIPlus', to: 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
-	$routes->post ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
-	$routes->post ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion' /**@uses \App\Controllers\Dispersiones::chosenForDispersion* */ );
-	$routes->post ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
-	$routes->post ( 'cobro', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
-	$routes->post ( 'consulta', 'Fintech\STP::testConsulta' /**@uses \App\Controllers\Fintech\STP::testConsulta* */ );
-	$routes->post ( 'stpTransactions', 'Fintech\STP::webhook' /**@uses \App\Controllers\Fintech\STP::webhook* */ );
+	$routes->add ( 'uploadCFDIPlus', to: 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
+	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
+	$routes->add ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion' /**@uses \App\Controllers\Dispersiones::chosenForDispersion* */ );
+	$routes->add ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
+	$routes->add ( 'cobro', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
+	$routes->add ( 'consulta', 'Fintech\STP::testConsulta' /**@uses \App\Controllers\Fintech\STP::testConsulta* */ );
+	$routes->add( 'stpTransactions', 'Fintech\STP::webhook' /**@uses \App\Controllers\Fintech\STP::webhook* */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================
