@@ -44,7 +44,7 @@
 			if ( $this->db->query ( $query ) ) {
 				foreach ( $data as $val ) {
 					$inDate = strtotime ( $val[ 'fecha' ] );
-					$query = "INSERT INTO apisolve_sandbox.invoices_$tmpName values ('{$val['emisor']['rfc']}', '{$val['receptor']['rfc']}', '{$val['uuid']}', '{$val['tipo']}','$inDate', '{$val['monto']}', '{$val['xml']}')";
+					$query = "INSERT INTO $this->base.invoices_$tmpName values ('{$val['emisor']['rfc']}', '{$val['receptor']['rfc']}', '{$val['uuid']}', '{$val['tipo']}','$inDate', '{$val['monto']}', '{$val['xml']}')";
 					if ( !$this->db->query ( $query ) ) {
 						throw new Exception( 'No se pudieron insertar los registros.' );
 					}
@@ -145,7 +145,7 @@ FROM (SELECT sender_rfc, receiver_rfc
 //			$ids = [];
 			$counter = 0;
 			foreach ( $data as $row ) {
-				$query = "INSERT INTO apisolve_sandbox.cfdi_plus (sender_rfc, receiver_rfc, uuid, tipo, invoice_date, total, xml_document)
+				$query = "INSERT INTO $this->base.cfdi_plus (sender_rfc, receiver_rfc, uuid, tipo, invoice_date, total, xml_document)
     (SELECT * FROM $row[2] WHERE (sender_rfc = '$row[0]' AND receiver_rfc = '$row[1]') OR (sender_rfc = '$row[1]' AND receiver_rfc = '$row[0]'))";
 				if ( $this->db->query ( $query ) ) {
 					$data[ $counter ][ 'insertedId' ] = $this->db->insertID ();

@@ -44,21 +44,21 @@
 			foreach ( $conciliacionesP as $row ) {
 				if ( $row[ 'id_provider' ] === $company[ 'id' ] ) {
 					$needed = floatval ( $needed ) + floatval ( $row[ 'exit_money' ] );
-					$detail[] = "INSERT INTO apisolve_sandbox.dispersions_plus_detail (id_created_by, folio_dispersion, reference_number, amount, account_clabe, bank)
+					$detail[] = "INSERT INTO $this->base.dispersions_plus_detail (id_created_by, folio_dispersion, reference_number, amount, account_clabe, bank)
 VALUES ('{$user['id']}', '$folio', '{$row['reference_number']}', '{$row[ 'exit_money' ]}', '{$row['provider_clabe']}', '723')";
 				} else {
 					$needed = floatval ( $needed ) + floatval ( $row[ 'entry_money' ] );
-					$detail[] = "INSERT INTO apisolve_sandbox.dispersions_plus_detail (id_created_by, folio_dispersion, reference_number, amount, account_clabe, bank)
+					$detail[] = "INSERT INTO $this->base.dispersions_plus_detail (id_created_by, folio_dispersion, reference_number, amount, account_clabe, bank)
 VALUES ('{$user['id']}', '$folio', '{$row['reference_number']}', '{$row[ 'entry_money' ]}', '{$row['client_clabe']}', '723')";
 				}
 			}
-			$query = "INSERT INTO apisolve_sandbox.dispersions_plus (id_created_by, reference_number, folio, balance_before, balance_needed, status)
+			$query = "INSERT INTO $this->base.dispersions_plus (id_created_by, reference_number, folio, balance_before, balance_needed, status)
 VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 			if ( !$this->db->query ( $query ) ) {
 				throw new Exception( '1.4 No se logro crear la Dispersion masiva' );
 			}
 			$idsC = implode ( ",", $idConciliations );
-			$query = "UPDATE apisolve_sandbox.conciliation_plus SET folio_dispersion = '$folio' WHERE id IN ($idsC) AND status = 1";
+			$query = "UPDATE $this->base.conciliation_plus SET folio_dispersion = '$folio' WHERE id IN ($idsC) AND status = 1";
 			if ( $this->db->query ( $query ) ) {
 				$detailId=[];
 				foreach ($detail as $row){
@@ -85,7 +85,7 @@ VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 			//Se declara el ambiente a utilizar
 			$this->environment = ( $env === NULL ) ? $this->environment : $env;
 			$this->base = ( strtoupper ( $this->environment ) === 'SANDBOX' ) ? $this->APISandbox : $this->APILive;
-			$query = "SELECT MAX(id) AS id FROM apisolve_sandbox.$table";
+			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
 			if ( !$res = $this->db->query ( $query ) ) {
 				throw new Exception( 'No se encontró información de ' . $table );
 			}
@@ -134,9 +134,9 @@ SELECT reference_number AS number FROM $this->base.dispersions_plus WHERE status
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$ids = implode ( ",", $idConciliations );
 			$query = "SELECT t1.*, t2.arteria_clabe AS 'client_clabe', t3.arteria_clabe AS 'provider_clabe'
-FROM apisolve_sandbox.conciliation_plus t1
-INNER JOIN apisolve_sandbox.fintech t2 ON t1.id_client = t2.companie_id
-INNER JOIN apisolve_sandbox.fintech t3 ON t1.id_provider = t3.companie_id
+FROM $this->base.conciliation_plus t1
+INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
+INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
 WHERE t1.id IN ($ids) AND t1.status = 1";
 			if ( !$res = $this->db->query ( $query ) ) {
 				throw new Exception( '1.3 No se logro asignar las conciliaciones a la dispersion' );

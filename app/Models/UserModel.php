@@ -16,7 +16,7 @@
 			parent::__construct ();
 			require 'conf.php';
 			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = $db = \Config\Database::connect ( 'default' );
+			$this->db =  \Config\Database::connect ( 'default' );
 		}
 		/**
 		 * Función para obtener la información de un usuario con acceso a token para validar el inicio de sesión.
@@ -31,7 +31,7 @@
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$query = "SELECT * FROM apisolve_sandbox.users WHERE user = '$user' and token = '1' and active = '1'";
+			$query = "SELECT * FROM $this->base.users WHERE user = '$user' and token = '1' and active = '1'";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return $res->getResultArray ()[ 0 ];
@@ -54,7 +54,7 @@
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$query = "SELECT * FROM apisolve_sandbox.users WHERE email = '$mail' and active = 1";
+			$query = "SELECT * FROM $this->base.users WHERE email = '$mail' and active = 1";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return $res->getResultArray ();
