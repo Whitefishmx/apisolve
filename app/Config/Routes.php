@@ -1,6 +1,9 @@
 <?php
+	
 	namespace CodeIgniter\Commands\Utilities\Routes;
+	
 	use CodeIgniter\Router\RouteCollection;
+	
 	/**
 	 * @var RouteCollection $routes
 	 */
@@ -10,6 +13,9 @@
 	$routes->setDefaultMethod ( 'index' );
 	$routes->setAutoRoute ( FALSE );
 	//========================|| Rutas ||========================
+	//========================|| Webhook ||========================
+	$routes->add ( 'stpTransactions', 'Fintech\STP::wbDispersion' /**@uses \App\Controllers\Fintech\STP::wbDispersion* */ );
+	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
 	//========================|| GET ||========================
 	$routes->add ( 'token', 'Auth::login' );
 	$routes->add ( '/', 'Home' );
@@ -20,7 +26,7 @@
 	$routes->add ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
 	$routes->add ( 'cobro', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
 	$routes->add ( 'consulta', 'Fintech\STP::testConsulta' /**@uses \App\Controllers\Fintech\STP::testConsulta* */ );
-	$routes->add( 'stpTransactions', 'Fintech\STP::webhook' /**@uses \App\Controllers\Fintech\STP::webhook* */ );
+	$routes->add ( 'stpTransactions', 'Fintech\STP::webhook' /**@uses \App\Controllers\Fintech\STP::webhook* */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================

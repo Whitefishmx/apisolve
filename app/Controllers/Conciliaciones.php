@@ -8,65 +8,17 @@
 	use ZipArchive;
 	use Exception;
 	
-	class Conciliaciones extends BaseController {
-		private string $environment = 'SANDBOX';
+	class Conciliaciones extends PagesStatusCode {
+		private string $env = 'SANDBOX';
 		/**
-		 * Function para cargar la información de archivo xml en tabla temporal para su procesamiento, devuelve las
-		 * posibles conciliaciones que se pueden realizar
-		 * @throws Exception
+		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
+		 *
+		 * @param mixed $env Variable con el ambiente a trabajar
+		 *
+		 * @return void Asigna el valor a la variable global
 		 */
-		public function uploadCFDIPlus (): ResponseInterface {
-			$input = $this->getRequestInput ( $this->request );
-			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
-			if ( $_FILES[ 'file' ][ 'error' ] == UPLOAD_ERR_OK ) {
-				$uploadedFile = $_FILES[ 'file' ];
-				if ( pathinfo ( $uploadedFile[ 'name' ], PATHINFO_EXTENSION ) === 'zip' ) {
-					$zip = new ZipArchive;
-					if ( $zip->open ( $uploadedFile[ 'tmp_name' ] ) === TRUE ) {
-						$extractedDir = './temporales/xml/';
-						$zip->extractTo ( $extractedDir );
-						$zip->close ();
-						$xmlFiles = glob ( $extractedDir . '*.xml' );
-						$filesErr = [];
-						$filesOk = [];
-						foreach ( $xmlFiles as $file ) {
-							$xml = simplexml_load_file ( $file );
-							helper ( 'factura' );
-							$doc = XmlProcess ( $xml );
-							$validation = $this->validaComprobantePlus ( $doc, $company );
-							if ( $validation[ 'code' ] === 200 ) {
-								$filesOk[ $doc[ 'uuid' ] ] = $doc;
-							} else {
-								$filesErr [] = $validation;
-							}
-							unlink ( $file );
-						}
-						rmdir ( $extractedDir );
-						$cfdi = new CfdiModel();
-						$user = $cfdi->createTmpInvoices ( $filesOk, $this->environment );
-						$conciliaciones = [
-							'conciliaciones' => $user[ 'conciliaciones' ],
-							'error' => $filesErr,
-						];
-						if ( isset ( $user[ 'errors' ] ) ) {
-							$conciliaciones[ 'db_errors' ] = $user[ 'errors' ];
-						}
-						return $this->getResponse ( $conciliaciones );
-					} else {
-						return $this->getResponse ( [
-							'error' => 'No se logro abrir el archivo',
-						], ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
-					}
-				} else {
-					return $this->getResponse ( [
-						'error' => 'No es un archivo zip',
-					], ResponseInterface::HTTP_BAD_REQUEST );
-				}
-			}
-			return $this->getResponse ( [
-				'error' => 'No se pudo cargar el archivo zip',
-				'reasons' => $_FILES[ 'file' ][ 'error' ] ],
-				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+		public function environment ( mixed $env ): void {
+			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
 		/**
 		 * Función para validar el tipo de comprobante (Factura, Nora de débito)
@@ -98,12 +50,71 @@
 			];
 		}
 		/**
+		 * Function para cargar la información de archivo xml en tabla temporal para su procesamiento, devuelve las
+		 * posibles conciliaciones que se pueden realizar
+		 * @throws Exception
+		 */
+		public function uploadCFDIPlus (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+				return ( $data );
+			}
+			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
+			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
+			if ( $_FILES[ 'file' ][ 'error' ] == UPLOAD_ERR_OK ) {
+				$uploadedFile = $_FILES[ 'file' ];
+				if ( pathinfo ( $uploadedFile[ 'name' ], PATHINFO_EXTENSION ) === 'zip' ) {
+					$zip = new ZipArchive;
+					if ( $zip->open ( $uploadedFile[ 'tmp_name' ] ) === TRUE ) {
+						$extractedDir = './temporales/xml/';
+						$zip->extractTo ( $extractedDir );
+						$zip->close ();
+						$xmlFiles = glob ( $extractedDir . '*.xml' );
+						$filesErr = [];
+						$filesOk = [];
+						foreach ( $xmlFiles as $file ) {
+							$xml = simplexml_load_file ( $file );
+							helper ( 'factura' );
+							$doc = XmlProcess ( $xml );
+							$validation = $this->validaComprobantePlus ( $doc, $company );
+							if ( $validation[ 'code' ] === 200 ) {
+								$filesOk[ $doc[ 'uuid' ] ] = $doc;
+							} else {
+								$filesErr [] = $validation;
+							}
+							unlink ( $file );
+						}
+						rmdir ( $extractedDir );
+						$cfdi = new CfdiModel();
+						$user = $cfdi->createTmpInvoices ( $filesOk, $this->env );
+						$conciliaciones = [
+							'conciliaciones' => $user[ 'conciliaciones' ],
+							'error' => $filesErr,
+						];
+						if ( isset ( $user[ 'errors' ] ) ) {
+							$conciliaciones[ 'db_errors' ] = $user[ 'errors' ];
+						}
+						return $this->getResponse ( $conciliaciones );
+					} else {
+						return $this->serverError ( 'Proceso incompleto', 'No se logro abrir el archivo' );
+					}
+				} else {
+					return $this->dataTypeNotAllowed ( '.zip' );
+				}
+			}
+			return $this->serverError ( 'No se pudo cargar el archivo zip', $_FILES[ 'file' ][ 'error' ] );
+		}
+		/**
 		 * Guarda los CFDI que si serán utilizados para la creación de una conciliación y genera las diferentes operaciones seleccionadas
 		 * @return ResponseInterface
 		 * @throws Exception
 		 */
 		public function chosenConciliation (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+				return ( $data );
+			}
 			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
 			$conciliations = $input[ 'conciliaciones' ];
 			$user = $input[ 'user' ];
 			$company = $input[ 'company' ];
@@ -117,30 +128,20 @@
 					$conciliations = $item;
 				}
 				$cfdi = new CfdiModel();
-				$ids = $cfdi->savePermanentCfdi ( $conciliations, $this->environment );
+				$ids = $cfdi->savePermanentCfdi ( $conciliations, $this->env );
 				if ( empty( $ids ) ) {
-					return $this->getResponse ( [
-						'error' => 'No se pueden crear las conciliaciones',
-						'reasons' => 'Error al guardar información de CFDI' ],
-						ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+					return $this->serverError ( 'No se pueden crear las conciliaciones', 'Error al guardar información de CFDI' );
 				}
 				$ids[ 'client' ] = $user;
 				$ids[ 'company' ] = $company;
 				$concilia = new ConciliacionModel();
-				$ops = $concilia->makeConciliationPlus ( $ids, $this->environment );
+				$ops = $concilia->makeConciliationPlus ( $ids, $this->env );
 				if ( empty( $ops ) ) {
-					return $this->getResponse ( [
-						'error' => 'No se pueden crear las conciliaciones',
-						'reasons' => 'Error al guardar información de CFDI' ],
-						ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+					return $this->serverError ( 'No se pueden crear las conciliaciones', 'Error al guardar información de CFDI' );
 				}
 				return $this->getResponse ( [ $ops ] );
 			}
-			return $this->getResponse ( [
-				'error' => 'No se pueden crear las conciliaciones',
-				'reasons' => 'No se selecciono ningún grupo a conciliar' ],
-				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
-			
+			return $this->serverError ( 'No se pueden crear las conciliaciones', 'No se selecciono ningún grupo a conciliar' );
 		}
 		/**
 		 * Regresa las conciliaciones plus de una empresa
@@ -148,17 +149,20 @@
 		 * @throws Exception Errores
 		 */
 		public function getConciliationPlus (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+				return ( $data );
+			}
 			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
 			$company = $input[ 'company' ] ?? NULL;
-			$env = $input[ 'environment' ] ?? 'SANDBOX';
 			if ( $company === NULL ) {
-				return $this->getResponse ( [
-					'error' => 'Petición incorrecta',
-					'reasons' => 'Se esperaba el ID de la compañía a buscar' ],
-					ResponseInterface::HTTP_BAD_REQUEST );
+				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
 			}
 			$conciliation = new ConciliacionModel();
-			$res = $conciliation->getConciliationsPlus ( $company, $env );
+			$res = $conciliation->getConciliationsPlus ( $company, $this->env );
+			if ( !$res[ 0 ] ) {
+				return $this->serverError ( 'Error proceso incompleto', $res[1] );
+			}
 			return $this->getResponse ( $res );
 		}
 	}

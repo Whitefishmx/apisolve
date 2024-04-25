@@ -50,7 +50,7 @@
 				$query = "INSERT INTO $this->base.conciliation_plus (invoice_range, id_client, id_provider, reference_number, folio, entry_money, exit_money, payment_date, status)
 VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$companies['provider']['id']}', '$opNumber', '$folio', '$row[3]', '$row[4]', '$paymentDate', $status)";
 				if ( !$this->db->query ( $query ) ) {
-					throw new Exception( 'No se lograron crear las conciliaciones' );
+					return [ FALSE, 'No se encontró información de conciliaciones' ];
 				}
 				if ( $company[ 'rfc' ] === $companies[ 'client' ][ 'rfc' ] ) {
 					$args[ $counter ][ 'idConciliation' ] = $this->db->insertID ();
@@ -77,12 +77,12 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			$companies = [];
 			$query = "SELECT * FROM $this->base.companies WHERE rfc = '$client'";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( 'No se encontró información de ' . $client );
+				return [ FALSE, 'No se encontró información de ' . $client ];
 			}
 			$companies[ 'client' ] = $res->getResultArray ()[ 0 ];
 			$query = "SELECT * FROM $this->base.companies WHERE rfc = '$provider'";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( 'No se encontró información de ' . $provider );
+				return [ FALSE, 'No se encontró información de ' . $provider ];
 			}
 			$companies[ 'provider' ] = $res->getResultArray ()[ 0 ];
 			return $companies;
@@ -93,16 +93,15 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		 * @param string      $table Tabla de la que se quiere obtener el siguiente ID
 		 * @param string|null $env   Ambiente en el que se va a trabajar
 		 *
-		 * @return int Siguiente ID que será insertado
-		 * @throws Exception
+		 * @return int|array Siguiente ID que será insertado
 		 */
-		public function getNexId ( string $table, string $env = NULL ): int {
+		public function getNexId ( string $table, string $env = NULL ): int|array {
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( 'No se encontró información de ' . $table );
+				return [ FALSE, 'No se encontró información de ' . $table ];
 			}
 			$res = $res->getResultArray ()[ 0 ][ 'id' ];
 			return $res === NULL ? 1 : intval ( $res + 1 );
@@ -130,14 +129,17 @@ FROM $this->base.conciliation_plus t1
     INNER JOIN $this->base.companies t5 ON t1.id_provider = t5.id
 WHERE t1.id_client = $id OR t1.id_provider = $id";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( 'No se encontró información de conciliaciones' );
+				return [ FALSE, 'No se encontró información de conciliaciones' ];
 			}
 			$res = $res->getResultArray ();
+			if ( empty( $res ) ) {
+				return [ FALSE, 'No se encontró información de los CFDI' ];
+			}
 			for ( $i = 0; $i < count ( $res ); $i++ ) {
 				$range = explode ( '-', $res[ $i ][ 'invoice_range' ] );
 				$query = "SELECT *, CONCAT('$url', id) AS 'idurl' FROM $this->base.cfdi_plus WHERE id BETWEEN $range[0] AND $range[1]";
 				if ( !$cfdi = $this->db->query ( $query ) ) {
-					throw new Exception( 'No se encontró información de los CFDI' );
+					return [ FALSE, 'No se encontró información de los CFDI' ];
 				}
 				$res[ $i ][ 'cfdi' ] = $cfdi->getResultArray ();
 			}

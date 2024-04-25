@@ -20,7 +20,7 @@
 		 * @return void Asigna el valor a la variable global
 		 */
 		public function environment ( mixed $env ): void {
-			$this->env = isset($env['environment']) ? strtoupper ($env['environment']) : 'SANDBOX';
+			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
 		public function testCobro (): ResponseInterface {
 			$stp = new StpModel();
@@ -33,16 +33,26 @@
 		/**
 		 * @return ResponseInterface|bool
 		 */
-		public function webhook (): ResponseInterface|bool {
+		public function wbDispersion (): ResponseInterface|bool {
 			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
-			$this->environment ( $input);
-			if (!createLog ( "incoming_stp_$this->env", json_encode ( $input ) )){
-				return $this->getResponse ( [ 'error' => '500', 'description' => 'Proceso incompleto', 'reason' => 'No se logró guardar la información' ], ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+			$this->environment ( $input );
+			if ( !createLog ( "wbDispersion_stp_$this->env", json_encode ( $input ) ) ) {
+				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
 			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
 		}
-		
+		public function wbAbonos (): ResponseInterface|bool {
+			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+				return ( $data );
+			}
+			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
+			if ( !createLog ( "wbAbonos_stp_$this->env", json_encode ( $input ) ) ) {
+				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+			}
+			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
+		}
 	}
