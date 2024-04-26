@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpMultipleClassDeclarationsInspection */
 	
 	namespace App\Controllers;
 	
@@ -34,9 +34,14 @@
 		 */
 		// protected $session;
 		/**
+		 * @param RequestInterface  $request
+		 * @param ResponseInterface $response
+		 * @param LoggerInterface   $logger
+		 *
 		 * @return void
+		 * @noinspection PhpMultipleClassDeclarationsInspection
 		 */
-		public function initController ( RequestInterface $request, ResponseInterface $response, LoggerInterface $logger ) {
+		public function initController ( RequestInterface $request, ResponseInterface $response, LoggerInterface $logger ): void {
 			// Do Not Edit This Line
 			parent::initController ( $request, $response, $logger );
 			// Preload any models, libraries, etc, here.
@@ -50,7 +55,7 @@
 		 *
 		 * @return array|bool|float|int|mixed|object|string|null
 		 */
-		public function getRequestInput ( IncomingRequest $request ) {
+		public function getRequestInput ( IncomingRequest $request ): mixed {
 			
 			$input = $request->getPost ();
 			if ( empty( $input ) ) {
@@ -58,10 +63,7 @@
 			}
 			return $input;
 		}
-		public function getHost ( IncomingRequest $request ): ResponseInterface {
-			return $this->response->setStatusCode ( ResponseInterface::HTTP_OK )->setJSON ( $_SERVER )->setHeader ( 'Access-Control-Allow-Origin', '*' );
-		}
-		public function validateRequest ( $input, array $rules, array $messages = [] ): bool {
+		public function validateRequest ( $input, $rules, array $messages = [] ): bool {
 			$this->validator = Services::validation ()->setRules ( $rules );
 			if ( is_string ( $rules ) ) {
 				$validation = config ( 'Validation' );

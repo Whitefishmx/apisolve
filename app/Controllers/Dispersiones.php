@@ -6,15 +6,29 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	use Exception;
 	
-	class Dispersiones extends BaseController {
+	class Dispersiones extends PagesStatusCode {
 		private string $environment = 'SANDBOX';
+		/**
+		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
+		 *
+		 * @param mixed $env Variable con el ambiente a trabajar
+		 *
+		 * @return void Asigna el valor a la variable global
+		 */
+		public function environment ( mixed $env ): void {
+			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
+		}
 		/**
 		 * Crea una dispersion masiva a partir de las conciliaciones creadas en Conciliation_plus
 		 * @return ResponseInterface
 		 * @throws Exception
 		 */
 		public function chosenForDispersion (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+				return ( $data );
+			}
 			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
 			$conciliations = $input[ 'conciliaciones' ];
 			$user = json_decode ( base64_decode ( $input[ 'user' ] ), TRUE );
 			$company = json_decode ( base64_decode ( $input[ 'company' ] ), TRUE );
@@ -26,12 +40,8 @@
 					return $this->getResponse ( [
 						'error' => NULL, 'Message' => 'Dispersion creada correctamente' ] );
 				}
-				return $this->getResponse ( [
-					'error' => 'No se logro crear la dispersion', 'reason' => 'No se selecciono ninguna conciliación' ],
-					ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+				return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
 			}
-			return $this->getResponse ( [
-				'error' => 'No se logro crear la dispersion', 'reason' => 'No se selecciono ninguna conciliación' ],
-				ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
+			return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
 		}
 	}

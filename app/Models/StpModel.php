@@ -91,11 +91,9 @@
 				"tipoPago" => $data[ 'tipoPago' ],
 				"firma" => $cadenaOriginal,
 			];
-//			var_dump ( $cadenaOriginal, json_encode ( $body ) );
-//			die();
-			return $this->sendRequest ( $url, $body, $env, 'PUT', 'JSON' );
+			return $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
 		}
-		public function sendConsulta ( string $env = NULL ) {
+		public function sendConsulta ( string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$url = 'https://efws-dev.stpmex.com/efws/API/V2/conciliacion';
@@ -117,7 +115,7 @@
 			];
 //			var_dump ( json_encode ( $body ) );
 //			die();
-			return $this->sendRequest ( $url, $body, $env, 'POST', 'JSON' );
+			return $this->sendRequest ( $url, $body, 'POST', 'JSON' );
 		}
 		/**
 		 * Genera la firma de la llave
@@ -145,16 +143,14 @@
 		/**
 		 * Enviar peticiones a través de CURL al api rest de STP
 		 *
-		 * @param string      $endpoint Endpoint a utilizar
+		 * @param string      $url
 		 * @param mixed       $data     información a enviar
-		 * @param string      $env      Ambiente a ejecutar
 		 * @param string|null $method   Método HTTP para enviar la petición
 		 * @param string|null $dataType Tipo de información que se enviara
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function sendRequest ( string $url, mixed $data, string $env, ?string $method, ?string $dataType ): bool|string {
-			$env = strtoupper ( $env ) ?? 'SANDBOX';
+		public function sendRequest ( string $url, mixed $data, ?string $method, ?string $dataType ): bool|string {
 			$method = !empty( $method ) ? strtoupper ( $method ) : 'POST';
 			$data = json_encode ( $data );
 			$headers = [];

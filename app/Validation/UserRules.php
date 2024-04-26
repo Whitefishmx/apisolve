@@ -13,10 +13,10 @@
 			
 			return openssl_encrypt($datos, $metodo, $clave, 0, $iv);
 		}
-		public function validateUser ( string $str, string $fields, array $data ): bool {
+		public function validateUser ( string $str, string $fields, array $data, string $env ): bool {
 			try {
 				$model = new UserModel;
-				$user = $model->authenticateToken ( $data[ 'usuario' ] );
+				$user = $model->authenticateToken ( $data[ 'usuario' ], $env );
 				return $user[ 'password' ] === $this->cifrarAES ( $data[ 'contraseña' ] );
 			} catch ( \Exception $e ) {
 				return FALSE;
