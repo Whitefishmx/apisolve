@@ -8,7 +8,11 @@
 	 */
 	function MakeOperationNumber ( int $operation ): string {
 		$trash = '010203040506070809';
-		return str_pad ( $operation, 7, substr ( str_shuffle ( $trash ), 0, 10 ), STR_PAD_LEFT );
+		$number = str_pad ( $operation, 7, substr ( str_shuffle ( $trash ), 0, 10 ), STR_PAD_LEFT );
+		while ( str_starts_with ( $number, '0' ) ) {
+			$number = str_pad ( $operation, 7, substr ( str_shuffle ( $trash ), 0, 10 ), STR_PAD_LEFT );
+		}
+		return $number;
 	}
 	
 	/**
@@ -26,7 +30,7 @@
 			$logMessage = '|' . date ( 'Y-m-d H:i:s' ) . '|   ' . $message . "\r\n";
 			fwrite ( $logFile, $logMessage );
 			fclose ( $logFile );
-			return true;
+			return TRUE;
 		}
-		return false;
+		return FALSE;
 	}

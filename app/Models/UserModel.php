@@ -11,12 +11,12 @@
 		private string $environment = '';
 		private string $dbsandbox = '';
 		private string $dbprod = '';
-		public string $base = '';
+		private string $base = '';
 		public function __construct () {
 			parent::__construct ();
 			require 'conf.php';
 			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db =  \Config\Database::connect ( 'default' );
+			$this->db = \Config\Database::connect ( 'default' );
 		}
 		/**
 		 * Función para obtener la información de un usuario con acceso a token para validar el inicio de sesión.
@@ -27,7 +27,7 @@
 		 * @return array|mixed error o datos de usuario
 		 * @throws Exception
 		 */
-		public function authenticateToken ( string $user, string $env = NULL ) {
+		public function authenticateToken ( string $user, string $env = NULL ): mixed {
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;

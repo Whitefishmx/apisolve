@@ -1,5 +1,7 @@
 <?php
+	
 	namespace App\Controllers;
+	
 	use App\Models\UserModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use Exception;
@@ -21,14 +23,15 @@
 		 * @return ResponseInterface responde error o el nuevo token
 		 */
 		public function login (): ResponseInterface {
-			if ( $data = $this->verifyRules ( 'JSON', 'GET', $this->request ) ) {
+			if ( $data = $this->verifyRules (  'GET', $this->request,'JSON' ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
 			$this->environment ( $input );
 			$rules = [
 				'usuario' => 'required|min_length[4]|max_length[50]',
-				'contraseña' => 'required|min_length[8]|max_length[255]|validateUser[usuario, contraseña,environment]',
+				'environment' => 'required|max_length[8]',
+				'contraseña' => 'required|min_length[8]|max_length[255]|validateUser[usuario, contraseña, environment]',
 			];
 			$errors = [
 				'contraseña' => [
@@ -52,12 +55,12 @@
 		private function getJWTForUser ( string $user, $env ): ResponseInterface {
 			try {
 				$model = new UserModel();
-				$user = $model->authenticateToken ( $user,  $env);
+				$user = $model->authenticateToken ( $user, $env );
 				helper ( 'jwt' );
 				$jwt = getSignedJWTForUser ( $user[ 'email' ] );
 				return $this->getResponse ( [
 					'message' => 'Usuario autenticado satisfactoriamente',
-					'access_token' => [ $jwt ]] );
+					'access_token' => [ $jwt ] ] );
 			} catch ( Exception $e ) {
 				return $this->getResponse ( [
 					'error' => $e->getMessage (),

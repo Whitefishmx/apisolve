@@ -28,10 +28,10 @@ Header set Access-Control-Allow-Origin "*"
   AddOutputFilterByType DEFLATE text/javascript
   AddOutputFilterByType DEFLATE text/plain
   AddOutputFilterByType DEFLATE text/xml
- 
+
   # Level of compression (highest compression level)
   DeflateCompressionLevel 9
-   
+
   # Make sure proxies don't deliver the wrong content
    Header append Vary User-Agent env=!dont-vary
 </IfModule>

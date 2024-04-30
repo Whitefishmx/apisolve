@@ -55,7 +55,7 @@
 		 * @throws Exception
 		 */
 		public function uploadCFDIPlus (): ResponseInterface {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -110,7 +110,7 @@
 		 * @throws Exception
 		 */
 		public function chosenConciliation (): ResponseInterface {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+			if ( $data = $this->verifyRules (  'POST', $this->request , NULL) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -145,11 +145,11 @@
 		}
 		/**
 		 * Regresa las conciliaciones plus de una empresa
-		 * @return ResponseInterface Respuesta con la información de las conciliaciones
+		 * @return  bool|ResponseInterface con la información de las conciliaciones
 		 * @throws Exception Errores
 		 */
-		public function getConciliationPlus (): ResponseInterface {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+		public function getConciliationPlus (): ResponseInterface|bool {
+			if ( $data = $this->verifyRules (  'POST', $this->request, 'JSON') ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -161,7 +161,7 @@
 			$conciliation = new ConciliacionModel();
 			$res = $conciliation->getConciliationsPlus ( $company, $this->env );
 			if ( !$res[ 0 ] ) {
-				return $this->serverError ( 'Error proceso incompleto', $res[1] );
+				return $this->serverError ( 'Error proceso incompleto', $res[ 1 ] );
 			}
 			return $this->getResponse ( $res );
 		}

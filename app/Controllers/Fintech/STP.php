@@ -23,18 +23,35 @@
 			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
 		public function testCobro (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				return ( $data );
+			}
+			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
+			helper ( 'tools_helper' );
+			helper ( 'tetraoctal_helper' );
+			$input[ 'folio' ] = serialize32 ([ rand (1,9), rand (1,9), rand (1,9), rand (1,9), rand (1,31221) ]);
+			$input[ 'concepto' ] = 'Prueba ' . rand ( 0, 255 );
+			$input[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
 			$stp = new StpModel();
-			return $this->getResponse ( json_decode ( $stp->sendDispersion ( 'SANDBOX' ), TRUE ) );
+			return $this->getResponse ( json_decode ( $stp->sendDispersion ( $input, 'SANDBOX' ), TRUE ) );
 		}
 		public function testConsulta (): ResponseInterface {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				return ( $data );
+			}
+			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
 			$stp = new StpModel();
-			return $this->getResponse ( json_decode ( $stp->sendConsulta ( 'SANDBOX' ), TRUE ) );
+			$date = isset( $input[ 'date' ] ) ? strtotime ( $input[ 'date' ] ) : strtotime ( 'now' );
+			return $this->getResponse ( json_decode ( $stp->sendConsulta ( $date, $input[ 'tOrden' ], $this->env ), TRUE ) );
 		}
 		/**
+		 * Webhook para obtener la información de las transferencias por STP
 		 * @return ResponseInterface|bool
 		 */
 		public function wbDispersion (): ResponseInterface|bool {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -44,8 +61,12 @@
 			}
 			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
 		}
+		/**
+		 * Webhook para obtener la entrada de recursos en la cuenta de STP
+		 * @return ResponseInterface|bool
+		 */
 		public function wbAbonos (): ResponseInterface|bool {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );

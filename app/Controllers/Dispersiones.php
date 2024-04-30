@@ -7,7 +7,7 @@
 	use Exception;
 	
 	class Dispersiones extends PagesStatusCode {
-		private string $environment = 'SANDBOX';
+		private string $env = 'SANDBOX';
 		/**
 		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
 		 *
@@ -24,7 +24,7 @@
 		 * @throws Exception
 		 */
 		public function chosenForDispersion (): ResponseInterface {
-			if ( $data = $this->verifyRules ( 'JSON', 'POST', $this->request ) ) {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -35,7 +35,7 @@
 			if ( isset( $conciliations ) || $conciliations === NULL ) {
 				$conciliations = explode ( ',', $conciliations );
 				$disp = new DispersionModel();
-				$dispersions = $disp->createDispersionCP ( $conciliations, $user, $company, $this->environment );
+				$dispersions = $disp->createDispersionCP ( $conciliations, $user, $company, $this->env );
 				if ( count ( $dispersions ) > 0 ) {
 					return $this->getResponse ( [
 						'error' => NULL, 'Message' => 'Dispersion creada correctamente' ] );

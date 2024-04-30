@@ -2,6 +2,7 @@
 	
 	namespace Config;
 	
+	use App\Filters\CorsFilter;
 	use App\Filters\JWTAuthenticationFilter;
 	use CodeIgniter\Config\BaseConfig;
 	use CodeIgniter\Filters\CSRF;
@@ -25,6 +26,7 @@
 			'invalidchars' => InvalidChars::class,
 			'secureheaders' => SecureHeaders::class,
 			'auth' => JWTAuthenticationFilter::class,
+			'cors' => CorsFilter::class,
 		];
 		/**
 		 * List of filter aliases that are always
@@ -72,5 +74,13 @@
 					"conciliationPlus",
 				],
 			],
+			'cors'=>[
+				'before'=>[
+					"uploadCFDIPlus",
+					"chosenConciliation",
+					"chosenForDispersion",
+					"conciliationPlus",
+				]
+			]
 		];
 	}

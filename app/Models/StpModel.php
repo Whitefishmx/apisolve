@@ -29,38 +29,40 @@
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function sendDispersion ( string $env = NULL ): bool|string {
+		public function sendDispersion ( array $arg, string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$url = ( $env == 'SANDBOX' ) ? $this->stpSandbox . 'ordenPago/registra' : $this->stpLive . 'ordenPago/registra';
+			$bancoOrdenante = $this->getBankByClave ( $arg[ 'ordenante' ][ 'clabe' ], $env );
+			$bancoBeneficiario = $this->getBankByClave ( $arg[ 'beneficiario' ][ 'clabe' ], $env );
 			$data = [
-				'bancoReceptor' => '90646',
-				'empresa' => 'WHITEFISH',
+				'bancoReceptor' => $bancoBeneficiario[ 'bnk_code' ],
+				'empresa' => $arg[ 'ordenante' ][ 'empresa' ],
 				'fechaOperacion' => '',
 				'folioOrigen' => '',
-				'claveRastreo' => '7777776',
-				'bancoOrigen' => '90646',
-				'monto' => '20.00',
+				'claveRastreo' => $arg[ 'folio' ],
+				'bancoOrigen' => $bancoOrdenante[ 'bnk_code' ],
+				'monto' => strval ( $arg[ 'monto' ] ),
 				'tipoPago' => 1,
 				'tipoCuentaOrigen' => 40,
-				'nombreOrigen' => 'NombreOrigen',
-				'cuentaOrigen' => '646180546900000003',
+				'nombreOrigen' => $arg[ 'ordenante' ][ 'nombre' ],
+				'cuentaOrigen' => $arg[ 'ordenante' ][ 'clabe' ],
 				'rfcOrigen' => 'ND',
 				'tipoCuentaDestino' => 40,
-				'nombreDestino' => 'NombreDestino',
-				'cuentaDestino' => '646180110400000007',
+				'nombreDestino' => $arg[ 'beneficiario' ][ 'nombre' ],
+				'cuentaDestino' => $arg[ 'beneficiario' ][ 'clabe' ],
 				'rfcDestino' => 'ND',
 				'emailBenef' => '',
 				'tipoCuentaBenef2' => '',
 				'nombreBenef2' => '',
 				'cuentaBenef2' => '',
 				'rfcBenef2' => '',
-				'concepto' => "PruebaREST2",
+				'concepto' => $arg[ 'concepto' ],
 				'concepto2' => '',
 				'claveCat1' => '',
 				'claveCat2' => '',
 				'clavePAgo' => '',
 				'refCobranza' => '',
-				'refNumeric' => '7777776',
+				'refNumeric' => $arg[ 'refNumeric' ],
 				'tipoOperacion' => '',
 				'topological' => '',
 				'usuario' => '',
@@ -70,7 +72,6 @@
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||' . $cadenaOriginal . '||';
-//			var_dump ( $cadenaOriginal );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
 			$body = [
 				"claveRastreo" => $data[ 'claveRastreo' ],
@@ -86,35 +87,60 @@
 				"referenciaNumerica" => $data[ 'refNumeric' ],
 				"rfcCurpBeneficiario" => $data[ 'rfcDestino' ],
 				"rfcCurpOrdenante" => $data[ 'rfcOrigen' ],
-				"tipoCuentaBeneficiario" => $data[ 'tipoCuentaDestino' ],
-				"tipoCuentaOrdenante" => $data[ 'tipoCuentaOrigen' ],
-				"tipoPago" => $data[ 'tipoPago' ],
-				"firma" => $cadenaOriginal,
+				"tipoCuentaBeneficiario" => "{$data[ 'tipoCuentaDestino' ]}",
+				"tipoCuentaOrdenante" => "{$data[ 'tipoCuentaOrigen' ]}",
+				"tipoPago" => "{$data[ 'tipoPago' ]}",
+				"firma" => "$cadenaOriginal",
 			];
 			return $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
 		}
-		public function sendConsulta ( string $env = NULL ): bool|string {
+		/**
+		 * Obtener los datos del banco según clabe bancaria
+		 *
+		 * @param string      $clabe
+		 * @param string|NULL $env
+		 *
+		 * @return array
+		 */
+		public function getBankByClave ( string $clabe, string $env = NULL ): array {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$clabe = substr ( $clabe, 0, 3 );
+			$query = "SELECT bnk_alias, bnk_code, bnk_nombre FROM $this->base.cat_bancos WHERE bnk_clave = '$clabe'";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ 'error' => 500, 'descripcion' => 'No se logro obtener la información', 'reason' => 'No se logro obtener la información de los bancos' ];
+			}
+			return $res->getResultArray ()[ 0 ];
+		}
+		/**
+		 * Obtiene los movimientos de la cuenta
+		 *
+		 * @param string|null $date
+		 * @param string      $tipoOrden
+		 * @param string|NULL $env
+		 *
+		 * @return bool|string
+		 */
+		public function sendConsulta ( string $date = NULL, string $tipoOrden = 'E', string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$url = 'https://efws-dev.stpmex.com/efws/API/V2/conciliacion';
+			$date = date ( 'Ymd', $date );
 			$data = [
 				'empresa' => 'WHITEFISH',
-				'tipoOrden' => 'E',
-				'fecha' => '',
+				'tipoOrden' => $tipoOrden,
+				'date' => $date,
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||' . $cadenaOriginal . '||';
-//			var_dump ( $cadenaOriginal );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
-//			var_dump ( $cadenaOriginal );
 			$body = [
 				"empresa" => $data[ 'empresa' ],
 				"firma" => $cadenaOriginal,
 				"page" => 0,
-				"tipoOrden" => "E",
+				"tipoOrden" => $tipoOrden,
+				"fechaOperacion" => $date,
 			];
-//			var_dump ( json_encode ( $body ) );
-//			die();
 			return $this->sendRequest ( $url, $body, 'POST', 'JSON' );
 		}
 		/**

@@ -5,13 +5,14 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class PagesStatusCode extends BaseController {
-		public function verifyRules ( string $dataType, string $method, $request ): ResponseInterface|bool {
-			
+		public function verifyRules ( string $method, $request, ?string $dataType ): ResponseInterface|bool {
 			if ( !$request->is ( $method ) ) {
-				return $this->methodNotAllowed ( 'stpTransactions' );
+				return $this->methodNotAllowed ( $request->getPath () );
 			}
-			if ( !$request->is ( $dataType ) ) {
-				return $this->dataTypeNotAllowed ( $dataType );
+			if ( !is_null ( $dataType ) ) {
+				if ( !$request->is ( $dataType ) ) {
+					return $this->dataTypeNotAllowed ( $dataType );
+				}
 			}
 			return FALSE;
 		}
