@@ -137,7 +137,14 @@ WHERE t1.id_client = $id OR t1.id_provider = $id";
 			}
 			for ( $i = 0; $i < count ( $res ); $i++ ) {
 				$range = explode ( '-', $res[ $i ][ 'invoice_range' ] );
-				$query = "SELECT *, CONCAT('$url', id) AS 'idurl' FROM $this->base.cfdi_plus WHERE id BETWEEN $range[0] AND $range[1]";
+				$query = "SELECT t1.uuid, t2.short_name as 'receiber', t3.short_name as 'sender', t1.total,  CONCAT('$url', t1.id) AS 'idurl',
+       DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%d-%m-%Y') AS 'created_at',
+       DATE_FORMAT(FROM_UNIXTIME(t1.invoice_date), '%d-%m-%Y') AS 'payment_date',
+       (IF(t1.tipo = 'I', 'CFDI', 'Nota de credito') ) AS 'tipo'
+FROM apisandbox_sandbox.cfdi_plus t1
+INNER JOIN apisandbox_sandbox.companies t2 ON t1.receiver_rfc = t2.rfc
+INNER JOIN apisandbox_sandbox.companies t3 ON t1.sender_rfc = t3.rfc
+WHERE t1.id BETWEEN $range[0] AND $range[1]";
 				if ( !$cfdi = $this->db->query ( $query ) ) {
 					return [ FALSE, 'No se encontró información de los CFDI' ];
 				}
