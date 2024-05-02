@@ -5,8 +5,6 @@
 	use OpenSSLAsymmetricKey;
 	use CodeIgniter\Model;
 	use Config\Database;
-
-//	use Exception;
 	class StpModel extends Model {
 		private string $privateKey = './crypt/llavePrivada.pem';
 		private string $passphrase = '12345678';

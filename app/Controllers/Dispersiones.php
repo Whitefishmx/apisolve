@@ -36,6 +36,9 @@
 				$conciliations = explode ( ',', $conciliations );
 				$disp = new DispersionModel();
 				$dispersions = $disp->createDispersionCP ( $conciliations, $user, $company, $this->env );
+				if ( !$dispersions[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $dispersions[ 1 ] );
+				}
 				if ( count ( $dispersions ) > 0 ) {
 					return $this->getResponse ( [
 						'error' => NULL, 'Message' => 'Dispersion creada correctamente' ] );

@@ -11,22 +11,22 @@
 		];
 		protected $useTimestamps = TRUE;
 		protected $updatedField = 'updated_at';
-		public function findClientById ( $id ) {
+		public function findClientById ( $id ): object|array {
 			$client = $this->asArray ()->where ( [ 'id' => $id ] )->first ();
 			if ( !$client ) {
-				throw new \Exception( 'Could not find client for specified ID' );
+				return [ FALSE, 'No se encuentran clientes para el ID especifico' ];
 			}
 			return $client;
 		}
-		public function getClientByArgs ( $args ) {
+		public function getClientByArgs ( $args ): mixed {
 			$query = "SELECT * FROM $this->base.client where name like '%$args%' OR retainer_fee LIKE '%$args%'";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return $res->getResultArray ()[ 0 ];
 				} else {
-					throw new Exception( 'Credenciales incorrectas' );
+					return [ FALSE, 'Credenciales incorrectas' ];
 				}
 			}
-			throw new Exception( 'Credenciales incorrectas' );
+			return [ FALSE, 'Credenciales incorrectas' ];
 		}
 	}

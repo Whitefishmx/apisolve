@@ -4,7 +4,6 @@
 	
 	use CodeIgniter\Model;
 	use Config\Database;
-	use Exception;
 	
 	class DispersionModel extends Model {
 		protected $db;
@@ -26,7 +25,6 @@
 		 * @param string|NULL $env Ambiente en el que se va a trabajar
 		 *
 		 * @return array Arreglo con los ID de la dispersion creada
-		 * @throws Exception Errores
 		 */
 		public function createDispersionCP ( array $idConciliations, array $user, array $company, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
@@ -34,11 +32,17 @@
 			helper ( 'tools_helper' );
 			helper ( 'tetraoctal_helper' );
 			$nexID = $this->getNexId ( 'conciliation_plus' );
+			if ( !$nexID[ 0 ] ) {
+				return [ FALSE,$nexID[ 1 ] ];
+			}
 			$referenceN = $this->NewReferenceNumber ( $nexID, $env );
 			$data = [ 3, $nexID, $user[ 'id' ], $company[ 'id' ], strtotime ( 'now' ) ];
 			$folio = serialize32 ( $data );
 			$before = 0;
 			$conciliacionesP = $this->getConciliacionesPInfo ( $idConciliations, $env );
+			if ( !$conciliacionesP[ 0 ] ) {
+				return [ FALSE, $conciliacionesP[ 1 ] ];
+			}
 			$needed = '';
 			$detail = [];
 			foreach ( $conciliacionesP as $row ) {
@@ -55,7 +59,7 @@ VALUES ('{$user['id']}', '$folio', '{$row['reference_number']}', '{$row[ 'entry_
 			$query = "INSERT INTO $this->base.dispersions_plus (id_created_by, reference_number, folio, balance_before, balance_needed, status)
 VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 			if ( !$this->db->query ( $query ) ) {
-				throw new Exception( '1.4 No se logro crear la Dispersion masiva' );
+				return [ FALSE, '1.4 No se logro crear la Dispersion masiva' ];
 			}
 			$idsC = implode ( ",", $idConciliations );
 			$query = "UPDATE $this->base.conciliation_plus SET folio_dispersion = '$folio' WHERE id IN ($idsC) AND status = 1";
@@ -63,13 +67,13 @@ VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 				$detailId=[];
 				foreach ($detail as $row){
 					if ( !$this->db->query ( $row ) ) {
-						throw new Exception( '1.6 No se logro vincular las conciliaciones con la dispersion' );
+						return [ FALSE, '1.6 No se logro vincular las conciliaciones con la dispersion'  ];
 					}
 					$detailId[] = $this->db->insertID ();
 				}
 				return $detailId;
 			}else{
-				throw new Exception( '1.5 No se logro vincular las conciliaciones con la dispersion' );
+				return [ FALSE, '1.5 No se logro vincular las conciliaciones con la dispersion' ];
 			}
 		}
 		/**
@@ -78,16 +82,15 @@ VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 		 * @param string      $table Tabla de la que se quiere obtener el siguiente ID
 		 * @param string|null $env   Ambiente en el que se va a trabajar
 		 *
-		 * @return int Siguiente ID que será insertado
-		 * @throws Exception
+		 * @return int|array Siguiente ID que será insertado
+		 * @noinspection DuplicatedCode
 		 */
-		public function getNexId ( string $table, string $env = NULL ): int {
-			//Se declara el ambiente a utilizar
+		public function getNexId ( string $table, string $env = NULL ): int|array {
 			$this->environment = ( $env === NULL ) ? $this->environment : $env;
 			$this->base = ( strtoupper ( $this->environment ) === 'SANDBOX' ) ? $this->APISandbox : $this->APILive;
 			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( 'No se encontró información de ' . $table );
+				return [ FALSE,  'No se encontró información de ' . $table];
 			}
 			$res = $res->getResultArray ()[ 0 ][ 'id' ];
 			return $res === NULL ? 1 : intval ( $res + 1 );
@@ -95,7 +98,7 @@ VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 		/**
 		 * Genera un número de referencia que no este activo para que se puedan realizar rastrear la operación a la que pertenece
 		 *
-		 * @param int         $id  ID de la operación a la que se le generara una referencia
+		 * @param int         $id  Id de la operación a la que se le generara una referencia
 		 * @param string|NULL $env Ambiente en el que se va a trabajar
 		 *
 		 * @return string Numero de referencia valido.
@@ -123,11 +126,10 @@ SELECT reference_number AS number FROM $this->base.dispersions_plus WHERE status
 		/**
 		 * Obtiene la información de las conciliaciones que se solicitan por ID
 		 *
-		 * @param array       $idConciliations ID de las conciliaciones a buscar
+		 * @param array       $idConciliations Id de las conciliaciones a buscar
 		 * @param string|NULL $env             Ambiente en el que se va a trabajar
 		 *
 		 * @return array Información obtenida
-		 * @throws Exception Errores
 		 */
 		public function getConciliacionesPInfo ( array $idConciliations, string $env = NULL ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
@@ -139,7 +141,7 @@ INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
 INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
 WHERE t1.id IN ($ids) AND t1.status = 1";
 			if ( !$res = $this->db->query ( $query ) ) {
-				throw new Exception( '1.3 No se logro asignar las conciliaciones a la dispersion' );
+				return [ FALSE, '1.3 No se logro asignar las conciliaciones a la dispersion' ];
 			}
 			return $res->getResultArray ();
 		}

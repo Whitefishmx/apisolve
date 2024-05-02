@@ -4,7 +4,6 @@
 	
 	use CodeIgniter\Model;
 	use Config\Database;
-	use Exception;
 	
 	class CfdiModel extends Model {
 		protected $db;
@@ -25,7 +24,6 @@
 		 * @param string|NULL $env  Entorno en el que se va a trabajar
 		 *
 		 * @return array $res Arreglo con las conciliaciones que se pueden crear
-		 * @throws Exception Error que se genera
 		 */
 		public function createTmpInvoices ( array $data, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
@@ -46,7 +44,7 @@
 					$inDate = strtotime ( $val[ 'fecha' ] );
 					$query = "INSERT INTO $this->base.invoices_$tmpName values ('{$val['emisor']['rfc']}', '{$val['receptor']['rfc']}', '{$val['uuid']}', '{$val['tipo']}','$inDate', '{$val['monto']}', '{$val['xml']}')";
 					if ( !$this->db->query ( $query ) ) {
-						throw new Exception( 'No se pudieron insertar los registros.' );
+						return [ FALSE, 'No se pudieron insertar los registros.' ];
 					}
 				}
 				$query = "SELECT t1.sender_rfc AS sender, t1.receiver_rfc AS receiver, w.W AS 'in', s.S AS 'out',
@@ -67,6 +65,9 @@ FROM (SELECT sender_rfc, receiver_rfc
 					$item = [];
 					$res = $res->getResultArray ();
 					$rfcCompanies = $this->getCompaniesRegisters ( $env );
+					if ( !$rfcCompanies[ 0 ] ) {
+						return [ FALSE, 'No se lograron obtener resultados' ];
+					}
 					for ( $i = 0; $i < count ( $res ); $i++ ) {
 						if ( count ( $item ) > 0 ) {
 							$counter = 0;
@@ -110,15 +111,14 @@ FROM (SELECT sender_rfc, receiver_rfc
 //					}
 					return $conciliaciones;
 				}
-				throw new Exception( 'No se lograron formar los grupos de conciliaciones' );
+				return [ FALSE, 'No se lograron formar los grupos de conciliaciones' ];
 			}
-			throw new Exception( 'No se logro iniciar el proceso para generar una conciliación masiva.' );
+			return [ FALSE, 'No se logro iniciar el proceso para generar una conciliación masiva.' ];
 		}
 		/**
 		 * @param string|NULL $env
 		 *
 		 * @return array
-		 * @throws Exception
 		 */
 		public function getCompaniesRegisters ( string $env = NULL ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
@@ -127,7 +127,7 @@ FROM (SELECT sender_rfc, receiver_rfc
 			if ( $res = $this->db->query ( $query ) ) {
 				return $res->getResultArray ();
 			}
-			throw new Exception( 'No se lograron obtener resultados' );
+			return [ FALSE, 'No se lograron obtener resultados' ];
 		}
 		/**
 		 * Función para guardar los CFDI que si serán usados para conciliaciones masivas
@@ -136,7 +136,6 @@ FROM (SELECT sender_rfc, receiver_rfc
 		 * @param string|NULL $env  Ambiente en el que trabajara la BD LIVE|SANDBOX
 		 *
 		 * @return array Arreglo con los datos de las conciliaciones y los ID de los CFDI que se utilizaran
-		 * @throws Exception Errores que pudieran ocurrir en el proceso
 		 */
 		public function savePermanentCfdi ( array $data, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
@@ -159,8 +158,8 @@ FROM (SELECT sender_rfc, receiver_rfc
 				if ( $this->db->query ( $query ) ) {
 					return $data;
 				}
-				throw new Exception( '2.2 No se logro guardar la información requerida para las conciliaciones.' );
+				return [ FALSE, '2.2 No se logro guardar la información requerida para las conciliaciones.' ];
 			}
-			throw new Exception( '2.1 No se logro guardar la información requerida para las conciliaciones.' );
+			return [ FALSE, '2.1 No se logro guardar la información requerida para las conciliaciones.' ];
 		}
 	}

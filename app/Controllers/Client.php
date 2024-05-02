@@ -4,7 +4,7 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	use Exception;
 	use App\Models\ClientModel;
-	class Client extends BaseController {
+	class Client extends PagesStatusCode {
 		public function index () {
 			$model = new ClientModel();
 			return $this->getResponse ( [
@@ -36,6 +36,9 @@
 				
 				$model = new ClientModel();
 				$client = $model->findClientById ( $id );
+				if ( !$client[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $client[ 1 ] );
+				}
 				return $this->getResponse ( [
 					'message' => 'Client retrieved successfully',
 					'client' => $client,
@@ -52,9 +55,15 @@
 				
 				$model = new ClientModel();
 				$model->findClientById ( $id );
+				if ( !$model[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $model[ 1 ] );
+				}
 				$input = $this->getRequestInput ( $this->request );
 				$model->update ( $id, $input );
 				$client = $model->findClientById ( $id );
+				if ( !$client[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $client[ 1 ] );
+				}
 				return $this->getResponse ( [
 					'message' => 'Client updated successfully',
 					'client' => $client,
@@ -72,6 +81,9 @@
 				
 				$model = new ClientModel();
 				$client = $model->findClientById ( $id );
+				if ( !$client[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $client[ 1 ] );
+				}
 				$model->delete ( $client );
 				return $this->getResponse ( [
 					'message' => 'Client deleted successfully',
@@ -87,6 +99,9 @@
 			$args = $this->getRequestInput ( $this->request )['argumentos'];
 			$client = new ClientModel();
 			$res = $client->getClientByArgs ($args);
+			if ( !$res[ 0 ] ) {
+				return $this->serverError ( 'Error proceso incompleto', $res[ 1 ] );
+			}
 			return $this->getResponse ( [
 				$res
 			], ResponseInterface::HTTP_NOT_FOUND );

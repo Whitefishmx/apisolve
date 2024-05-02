@@ -3,8 +3,6 @@
 	namespace App\Models;
 	
 	use CodeIgniter\Model;
-	use Config\Database;
-	use Exception;
 	
 	class ConciliacionModel extends Model {
 		protected $db;
@@ -13,20 +11,12 @@
 		private string $APILive = '';
 		public string $base = '';
 		public string $urlSolve = "https://compensapay.local/";
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$this->db = Database::connect ( 'default' );
-		}
 		/**
-		 * Crea
+		 * Crear conciliaciones a partir de los grupos generados en la carga de CFDI
 		 *
-		 * @param array       $args
-		 * @param string|NULL $env
-		 *
-		 * @return array
-		 * @throws Exception
+		 * @param array       $args arreglo con los datos necesarios para generar
+		 * @param string|NULL $env Ambientes  EN QUE SE V
+		 * @return array Resultados de las conciliaciones
 		 */
 		public function makeConciliationPlus ( array $args, string $env = NULL ): array {
 			$company = json_decode ( base64_decode ( array_pop ( $args ) ), TRUE );
@@ -68,7 +58,6 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		 * @param string|NULL $env      Ambiente en el que se trabajara SANDBOX|LIVE
 		 *
 		 * @return array Arreglo con la información de ambas empresas
-		 * @throws Exception Errores en la ejecución
 		 */
 		public function getClientProviderByRfc ( string $client, string $provider, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
@@ -94,9 +83,9 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		 * @param string|null $env   Ambiente en el que se va a trabajar
 		 *
 		 * @return int|array Siguiente ID que será insertado
+		 * @noinspection DuplicatedCode
 		 */
 		public function getNexId ( string $table, string $env = NULL ): int|array {
-			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
@@ -113,7 +102,6 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		 * @param string|NULL $env ambiente en el que se trabajará
 		 *
 		 * @return array|array[] Arreglo con la información necesaria para mostrar las conciliaciones
-		 * @throws Exception Errores durante el proceso
 		 */
 		public function getConciliationsPlus ( mixed $id, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
@@ -142,8 +130,8 @@ WHERE t1.id_client = $id OR t1.id_provider = $id";
        DATE_FORMAT(FROM_UNIXTIME(t1.invoice_date), '%d-%m-%Y') AS 'payment_date',
        (IF(t1.tipo = 'I', 'CFDI', 'Nota de credito') ) AS 'tipo'
 FROM apisandbox_sandbox.cfdi_plus t1
-INNER JOIN apisandbox_sandbox.companies t2 ON t1.receiver_rfc = t2.rfc
-INNER JOIN apisandbox_sandbox.companies t3 ON t1.sender_rfc = t3.rfc
+    INNER JOIN apisandbox_sandbox.companies t2 ON t1.receiver_rfc = t2.rfc
+    INNER JOIN apisandbox_sandbox.companies t3 ON t1.sender_rfc = t3.rfc
 WHERE t1.id BETWEEN $range[0] AND $range[1]";
 				if ( !$cfdi = $this->db->query ( $query ) ) {
 					return [ FALSE, 'No se encontró información de los CFDI' ];

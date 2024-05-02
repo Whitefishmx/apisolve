@@ -87,6 +87,9 @@
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
 						$user = $cfdi->createTmpInvoices ( $filesOk, $this->env );
+						if ( !$user[ 0 ] ) {
+							return $this->serverError ( 'Error proceso incompleto', $user[ 1 ] );
+						}
 						$conciliaciones = [
 							'conciliaciones' => $user[ 'conciliaciones' ],
 							'error' => $filesErr,
@@ -129,6 +132,9 @@
 				}
 				$cfdi = new CfdiModel();
 				$ids = $cfdi->savePermanentCfdi ( $conciliations, $this->env );
+				if ( !$ids[ 0 ] ) {
+					return $this->serverError ( 'Error proceso incompleto', $ids[ 1 ] );
+				}
 				if ( empty( $ids ) ) {
 					return $this->serverError ( 'No se pueden crear las conciliaciones', 'Error al guardar información de CFDI' );
 				}

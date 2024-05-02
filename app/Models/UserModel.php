@@ -25,7 +25,6 @@
 		 * @param string|NULL $env  Ambiente en que se va a trabajar
 		 *
 		 * @return array|mixed error o datos de usuario
-		 * @throws Exception
 		 */
 		public function authenticateToken ( string $user, string $env = NULL ): mixed {
 			//Se declara el ambiente a utilizar
