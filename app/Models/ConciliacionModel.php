@@ -11,6 +11,12 @@
 		private string $APILive = '';
 		public string $base = '';
 		public string $urlSolve = "https://compensapay.local/";
+		public function __construct () {
+			parent::__construct ();
+			require 'conf.php';
+			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
+			$this->db = \Config\Database::connect ( 'default' );
+		}
 		/**
 		 * Crear conciliaciones a partir de los grupos generados en la carga de CFDI
 		 *

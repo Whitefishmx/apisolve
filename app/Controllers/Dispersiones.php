@@ -8,6 +8,12 @@
 	
 	class Dispersiones extends PagesStatusCode {
 		private string $env = 'SANDBOX';
+		public function __construct () {
+			parent::__construct ();
+			require 'conf.php';
+			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
+			$this->db = \Config\Database::connect ( 'default' );
+		}
 		/**
 		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
 		 *
@@ -46,5 +52,12 @@
 				return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
 			}
 			return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
+		}
+		public function getDispersionPlus () {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				return ( $data );
+			}
+			$input = $this->getRequestInput ( $this->request );
+			$this->environment ( $input );
 		}
 	}
