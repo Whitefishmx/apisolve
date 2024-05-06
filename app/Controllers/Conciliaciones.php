@@ -9,17 +9,6 @@
 	use Exception;
 	
 	class Conciliaciones extends PagesStatusCode {
-		private string $env = 'SANDBOX';
-		/**
-		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
-		 *
-		 * @param mixed $env Variable con el ambiente a trabajar
-		 *
-		 * @return void Asigna el valor a la variable global
-		 */
-		public function environment ( mixed $env ): void {
-			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
-		}
 		/**
 		 * Función para validar el tipo de comprobante (Factura, Nora de débito)
 		 * de acuerdo a las reglas de recepción para conciliaciones
@@ -87,7 +76,7 @@
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
 						$user = $cfdi->createTmpInvoices ( $filesOk, $this->env );
-						if ( !$user[ 0 ] ) {
+						if ( !isset($user['conciliaciones']) ) {
 							return $this->serverError ( 'Error proceso incompleto', $user[ 1 ] );
 						}
 						$conciliaciones = [
@@ -155,10 +144,10 @@
 		 * @throws Exception Errores
 		 */
 		public function getConciliationPlus (): ResponseInterface|bool {
-			if ( $data = $this->verifyRules (  'POST', $this->request, 'JSON') ) {
+			if ( $data = $this->verifyRules (  'GET', $this->request, NULL) ) {
 				return ( $data );
 			}
-			$input = $this->getRequestInput ( $this->request );
+			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
 			$company = $input[ 'company' ] ?? NULL;
 			if ( $company === NULL ) {

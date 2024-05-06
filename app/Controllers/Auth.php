@@ -7,26 +7,15 @@
 	use Exception;
 	
 	class Auth extends PagesStatusCode {
-		private string $env = 'SANDBOX';
-		/**
-		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
-		 *
-		 * @param mixed $env Variable con el ambiente a trabajar
-		 *
-		 * @return void Asigna el valor a la variable global
-		 */
-		public function environment ( mixed $env ): void {
-			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
-		}
 		/**
 		 * Método para poder autenticarse y obtener un nuevo Token
 		 * @return ResponseInterface responde error o el nuevo token
 		 */
 		public function login (): ResponseInterface {
-			if ( $data = $this->verifyRules (  'GET', $this->request,'JSON' ) ) {
+			if ( $data = $this->verifyRules (  'GET', $this->request,NULL ) ) {
 				return ( $data );
 			}
-			$input = $this->getRequestInput ( $this->request );
+			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
 			$rules = [
 				'usuario' => 'required|min_length[4]|max_length[50]',

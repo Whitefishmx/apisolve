@@ -7,15 +7,15 @@
 	
 	class DispersionModel extends Model {
 		protected $db;
-		private string $environment = '';
+		private string $environment = 'SANDBOX';
 		private string $APISandbox = '';
 		private string $APILive = '';
 		public string $base = '';
 		public function __construct () {
 			parent::__construct ();
 			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$this->db = Database::connect ( 'default' );
+			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
+			$this->db = \Config\Database::connect ( 'default' );
 		}
 		/**
 		 * Crea una dispersion masiva en el proceso de conciliación_plus (Conciliaciones seleccionadas por el usuario)
@@ -32,7 +32,7 @@
 			helper ( 'tools_helper' );
 			helper ( 'tetraoctal_helper' );
 			$nexID = $this->getNexId ( 'conciliation_plus' );
-			if ( !$nexID[ 0 ] ) {
+			if ( !is_numeric  ($nexID) ) {
 				return [ FALSE,$nexID[ 1 ] ];
 			}
 			$referenceN = $this->NewReferenceNumber ( $nexID, $env );
@@ -56,8 +56,8 @@ VALUES ('{$user['id']}', '$folio', '{$row['reference_number']}', '{$row[ 'exit_m
 VALUES ('{$user['id']}', '$folio', '{$row['reference_number']}', '{$row[ 'entry_money' ]}', '{$row['client_clabe']}', '723')";
 				}
 			}
-			$query = "INSERT INTO $this->base.dispersions_plus (id_created_by, reference_number, folio, balance_before, balance_needed, status)
-VALUES ('{$user['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
+			$query = "INSERT INTO $this->base.dispersions_plus (id_created_by, id_company, reference_number, folio, balance_before, balance_needed, status)
+VALUES ('{$user['id']}', '{$company['id']}','$referenceN', '$folio', '$before', '$needed', 1)";
 			if ( !$this->db->query ( $query ) ) {
 				return [ FALSE, '1.4 No se logro crear la Dispersion masiva' ];
 			}
@@ -144,5 +144,32 @@ WHERE t1.id IN ($ids) AND t1.status = 1";
 				return [ FALSE, '1.3 No se logro asignar las conciliaciones a la dispersion' ];
 			}
 			return $res->getResultArray ();
+		}
+		/**
+		 * Obtiene las Dispersiones Plus de una empresa
+		 *
+		 * @param mixed       $id  Id de la empresa a buscar dispersiones
+		 * @param string|NULL $env ambiente en el que se trabajará
+		 *
+		 * @return array|array[] Arreglo con la información necesaria para mostrar las dispersiones
+		 */
+		public function getDispersionesPlus (string $from, string $to, int $company, string $env = NULL ): array {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$query = "SELECT t1.status, t1.reference_number, t1.folio, t2.arteria_clabe AS 'clabe',
+       t1.balance_needed, t1.balance_before, t1.balance_after,
+       t1.created_at, t1.updated_at
+FROM apisandbox_sandbox.dispersions_plus t1
+    INNER JOIN apisandbox_sandbox.fintech t2 ON t2.companie_id = t1.id_company
+WHERE t1.id_company = $company AND (t1.created_at >= '$from' AND t1.created_at <= '$to')";
+			var_dump ($query);
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información de dispersiones' ];
+			}
+			$res = $res->getResultArray ();
+			if ( empty( $res ) ) {
+				return [ FALSE, 'No se encontró información de las dispersiones' ];
+			}
+			return $res;
 		}
 	}

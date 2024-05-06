@@ -7,20 +7,9 @@
 	use App\Models\StpModel;
 	
 	class STP extends PagesStatusCode {
-		private string $env = 'SANDBOX';
 		public function __construct () {
 			parent::__construct ();
 			helper ( 'tools' );
-		}
-		/**
-		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
-		 *
-		 * @param mixed $env Variable con el ambiente a trabajar
-		 *
-		 * @return void Asigna el valor a la variable global
-		 */
-		public function environment ( mixed $env ): void {
-			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
 		public function testCobro (): ResponseInterface {
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

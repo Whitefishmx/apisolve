@@ -17,8 +17,9 @@
 	$routes->add ( 'stpTransactions', 'Fintech\STP::wbDispersion' /**@uses \App\Controllers\Fintech\STP::wbDispersion* */ );
 	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
 	//========================|| GET ||========================
-	$routes->add ( 'token', 'Auth::login' );
+	$routes->add ( 'token', 'Auth::login' /**@uses \App\Controllers\Auth::Login* */ );
 	$routes->add ( '/', 'Home' );
+	$routes->add('dispersionPlus','Dispersiones::getDispersionPlus' /**@uses \App\Controllers\Dispersiones::getDispersionPlus* */ );
 	//========================|| POST ||========================
 	$routes->add ( 'uploadCFDIPlus', 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );

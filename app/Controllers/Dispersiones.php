@@ -7,23 +7,6 @@
 	use Exception;
 	
 	class Dispersiones extends PagesStatusCode {
-		private string $env = 'SANDBOX';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = \Config\Database::connect ( 'default' );
-		}
-		/**
-		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
-		 *
-		 * @param mixed $env Variable con el ambiente a trabajar
-		 *
-		 * @return void Asigna el valor a la variable global
-		 */
-		public function environment ( mixed $env ): void {
-			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
-		}
 		/**
 		 * Crea una dispersion masiva a partir de las conciliaciones creadas en Conciliation_plus
 		 * @return ResponseInterface
@@ -53,11 +36,20 @@
 			}
 			return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
 		}
-		public function getDispersionPlus () {
-			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+		public function getDispersionPlus ()  {
+			if ( $data = $this->verifyRules (  'GET', $this->request, NULL) ) {
 				return ( $data );
 			}
-			$input = $this->getRequestInput ( $this->request );
+			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
+			$company = $input[ 'company' ] ?? NULL;
+			$from = strtotime ( $input[ 'from' ]);
+			$to = strtotime ( $input[ 'to' ]);
+			if ( $company === NULL ) {
+				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
+			}
+			$dispersion = new DispersionModel();
+			$res = $dispersion->getDispersionesPlus ($from, $to, $company, $this->env);
+			var_dump ( $res);
 		}
 	}

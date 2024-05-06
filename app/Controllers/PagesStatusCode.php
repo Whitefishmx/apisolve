@@ -5,6 +5,18 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class PagesStatusCode extends BaseController {
+		public string $env = 'SANDBOX';
+		/**
+		 * Decide el ambiente en el que trabajaran las funciones, por defecto SANDBOX
+		 *
+		 * @param mixed $env Variable con el ambiente a trabajar
+		 *
+		 * @return void Asigna el valor a la variable global
+		 */
+		public function environment ( mixed $env ): void {
+			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
+		}
+		
 		public function verifyRules ( string $method, $request, ?string $dataType ): ResponseInterface|bool {
 			if ( !$request->is ( $method ) ) {
 				return $this->methodNotAllowed ( $request->getPath () );
