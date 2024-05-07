@@ -161,8 +161,7 @@ WHERE t1.id IN ($ids) AND t1.status = 1";
        t1.created_at, t1.updated_at
 FROM apisandbox_sandbox.dispersions_plus t1
     INNER JOIN apisandbox_sandbox.fintech t2 ON t2.companie_id = t1.id_company
-WHERE t1.id_company = $company AND (t1.created_at >= '$from' AND t1.created_at <= '$to')";
-			var_dump ($query);
+WHERE t1.id_company = $company AND (t1.created_at between '$from' AND '$to')";
 			if ( !$res = $this->db->query ( $query ) ) {
 				return [ FALSE, 'No se encontró información de dispersiones' ];
 			}
