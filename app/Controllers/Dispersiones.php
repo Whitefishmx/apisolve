@@ -37,7 +37,10 @@
 			}
 			return $this->serverError ( 'No se logro crear la dispersion', 'No se selecciono ninguna conciliación' );
 		}
-		public function getDispersionPlus ()  {
+		/**Obtener un listado de dispersiones masivas por empresa
+		 * @return ResponseInterface|bool
+		 */
+		public function getDispersionPlus (): ResponseInterface|bool {
 			if ( $data = $this->verifyRules (  'GET', $this->request, NULL) ) {
 				return ( $data );
 			}
