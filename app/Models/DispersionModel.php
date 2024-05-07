@@ -169,6 +169,14 @@ WHERE t1.id_company = $company AND (t1.created_at between '$from' AND '$to')";
 			if ( empty( $res ) ) {
 				return [ FALSE, 'No se encontró información de las dispersiones' ];
 			}
+			foreach ($res as $value){
+				$query = "SELECT t2.folio, t2.balance_needed, t1.reference_number, t1.amount, t1.account_clabe, t1.bank, t4.bnk_alias
+FROM apisandbox_sandbox.dispersions_plus_detail t1
+    INNER JOIN apisandbox_sandbox.dispersions_plus t2 ON t1.folio_dispersion = t2.folio
+    LEFT JOIN apisandbox_sandbox.operations t3 ON t3.folio_dispersion = t1.folio_dispersion
+    LEFT JOIN apisandbox_sandbox.cat_bancos t4 ON t1.bank = t4.bnk_clave
+WHERE t2.id_company = $company AND t2.	";
+			}
 			return $res;
 		}
 	}
