@@ -1,28 +1,14 @@
 <?php
 	
 	namespace App\Models;
-	
-	use CodeIgniter\Model;
-	use Config\Database;
-	
-	class DispersionModel extends Model {
-		protected $db;
-		private string $environment = 'SANDBOX';
-		private string $APISandbox = '';
-		private string $APILive = '';
-		public string $base = '';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = \Config\Database::connect ( 'default' );
-		}
+	class DispersionModel extends BaseModel {
 		/**
 		 * Crea una dispersion masiva en el proceso de conciliación_plus (Conciliaciones seleccionadas por el usuario)
+		 *
 		 * @param array       $idConciliations Conciliaciones seleccionadas
-		 * @param array       $user Usuario que está realizando la acción
-		 * @param array       $company Compañía del usuario que está haciendo el proceso
-		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 * @param array       $user            Usuario que está realizando la acción
+		 * @param array       $company         Compañía del usuario que está haciendo el proceso
+		 * @param string|NULL $env             Ambiente en el que se va a trabajar
 		 *
 		 * @return array Arreglo con los ID de la dispersion creada
 		 */
@@ -32,8 +18,8 @@
 			helper ( 'tools_helper' );
 			helper ( 'tetraoctal_helper' );
 			$nexID = $this->getNexId ( 'conciliation_plus' );
-			if ( !is_numeric  ($nexID) ) {
-				return [ FALSE,$nexID[ 1 ] ];
+			if ( !is_numeric ( $nexID ) ) {
+				return [ FALSE, $nexID[ 1 ] ];
 			}
 			$referenceN = $this->NewReferenceNumber ( $nexID, $env );
 			$data = [ 3, $nexID, $user[ 'id' ], $company[ 'id' ], strtotime ( 'now' ) ];
@@ -64,36 +50,17 @@ VALUES ('{$user['id']}', '{$company['id']}','$referenceN', '$folio', '$before', 
 			$idsC = implode ( ",", $idConciliations );
 			$query = "UPDATE $this->base.conciliation_plus SET folio_dispersion = '$folio' WHERE id IN ($idsC) AND status = 1";
 			if ( $this->db->query ( $query ) ) {
-				$detailId=[];
-				foreach ($detail as $row){
+				$detailId = [];
+				foreach ( $detail as $row ) {
 					if ( !$this->db->query ( $row ) ) {
-						return [ FALSE, '1.6 No se logro vincular las conciliaciones con la dispersion'  ];
+						return [ FALSE, '1.6 No se logro vincular las conciliaciones con la dispersion' ];
 					}
 					$detailId[] = $this->db->insertID ();
 				}
 				return $detailId;
-			}else{
+			} else {
 				return [ FALSE, '1.5 No se logro vincular las conciliaciones con la dispersion' ];
 			}
-		}
-		/**
-		 * Obtiene el siguiente ID que será insertado
-		 *
-		 * @param string      $table Tabla de la que se quiere obtener el siguiente ID
-		 * @param string|null $env   Ambiente en el que se va a trabajar
-		 *
-		 * @return int|array Siguiente ID que será insertado
-		 * @noinspection DuplicatedCode
-		 */
-		public function getNexId ( string $table, string $env = NULL ): int|array {
-			$this->environment = ( $env === NULL ) ? $this->environment : $env;
-			$this->base = ( strtoupper ( $this->environment ) === 'SANDBOX' ) ? $this->APISandbox : $this->APILive;
-			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
-			if ( !$res = $this->db->query ( $query ) ) {
-				return [ FALSE,  'No se encontró información de ' . $table];
-			}
-			$res = $res->getResultArray ()[ 0 ][ 'id' ];
-			return $res === NULL ? 1 : intval ( $res + 1 );
 		}
 		/**
 		 * Genera un número de referencia que no este activo para que se puedan realizar rastrear la operación a la que pertenece
@@ -148,34 +115,48 @@ WHERE t1.id IN ($ids) AND t1.status = 1";
 		/**
 		 * Obtiene las Dispersiones Plus de una empresa
 		 *
-		 * @param mixed       $id  Id de la empresa a buscar dispersiones
+		 * @param string      $folio
+		 * @param int         $numeric
+		 * @param string      $from
+		 * @param string      $to
+		 * @param int         $company
 		 * @param string|NULL $env ambiente en el que se trabajará
 		 *
 		 * @return array|array[] Arreglo con la información necesaria para mostrar las dispersiones
 		 */
-		public function getDispersionesPlus (string $from, string $to, int $company, string $env = NULL ): array {
+		public function getDispersionesPlus ( string $folio, int $numeric, string $from, string $to, int $company, string $env = NULL ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$query = "SELECT t1.status, t1.reference_number, t1.folio, t2.arteria_clabe AS 'clabe',
-       t1.balance_needed, t1.balance_before, t1.balance_after,
-       t1.created_at, t1.updated_at
-FROM apisandbox_sandbox.dispersions_plus t1
-    INNER JOIN apisandbox_sandbox.fintech t2 ON t2.companie_id = t1.id_company
-WHERE t1.id_company = $company AND (t1.created_at between '$from' AND '$to')";
+			$query = "SELECT t1.id, t1.id_company, t1.status, t1.reference_number, t1.folio, t2.arteria_clabe AS 'clabe',
+       t1.balance_needed, t1.balance_before, t1.balance_after, DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%d-%m-%Y') AS 'created_at',
+       DATE_FORMAT(FROM_UNIXTIME(t1.updated_at), '%d-%m-%Y') AS 'updated_at'
+FROM $this->base.dispersions_plus t1
+    INNER JOIN $this->base.fintech t2 ON t2.companie_id = t1.id_company
+WHERE t1.id_company = $company AND ( t1.created_at BETWEEN '$from' AND '$to') ";
+			if ( $folio != NULL ) {
+				$query .= "AND t1.folio LIKE '%$folio%'";
+			}
+			if ( $numeric != NULL ) {
+				$query .= "AND t1.reference_number LIKE '%$numeric%'";
+			}
 			if ( !$res = $this->db->query ( $query ) ) {
 				return [ FALSE, 'No se encontró información de dispersiones' ];
 			}
 			$res = $res->getResultArray ();
 			if ( empty( $res ) ) {
-				return [ FALSE, 'No se encontró información de las dispersiones' ];
+				return $res;
 			}
-			foreach ($res as $value){
+			for ( $i = 0; $i < count ( $res ); $i++ ) {
 				$query = "SELECT t2.folio, t2.balance_needed, t1.reference_number, t1.amount, t1.account_clabe, t1.bank, t4.bnk_alias
-FROM apisandbox_sandbox.dispersions_plus_detail t1
-    INNER JOIN apisandbox_sandbox.dispersions_plus t2 ON t1.folio_dispersion = t2.folio
-    LEFT JOIN apisandbox_sandbox.operations t3 ON t3.folio_dispersion = t1.folio_dispersion
-    LEFT JOIN apisandbox_sandbox.cat_bancos t4 ON t1.bank = t4.bnk_clave
-WHERE t2.id_company = $company AND t2.	";
+FROM $this->base.dispersions_plus_detail t1
+    INNER JOIN $this->base.dispersions_plus t2 ON t1.folio_dispersion = t2.folio
+    LEFT JOIN $this->base.operations t3 ON t3.folio_operation = t1.folio_operation
+    LEFT JOIN $this->base.cat_bancos t4 ON t1.bank = t4.bnk_clave
+WHERE t2.id_company = '{$res[$i]['id_company']}' AND t2.folio = '{$res[$i]['folio']}' AND t2.status IN (1,3) AND (t1.created_at between '$from' AND '$to')";
+				if ( !$res2 = $this->db->query ( $query ) ) {
+					return [ FALSE, 'No se encontró información de dispersiones' ];
+				}
+				$res[ $i ][ 'details' ] = $res2->getResultArray ();
 			}
 			return $res;
 		}

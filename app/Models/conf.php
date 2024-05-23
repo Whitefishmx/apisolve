@@ -5,4 +5,4 @@
 //	private string $dbprod = 'compensapay';
 	$this->dbprod = 'apisandbox_sandbox'; //Base de datos de Producción
 	$this->APISandbox = 'apisandbox_sandbox';
-	$this->APILive = 'apisolve_live';
+	$this->APILive = 'apisandbox_sandbox';

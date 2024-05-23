@@ -7,6 +7,7 @@
 	use App\Models\CfdiModel;
 	use ZipArchive;
 	use Exception;
+	use DateTime;
 	
 	class Conciliaciones extends PagesStatusCode {
 		/**
@@ -76,7 +77,7 @@
 						rmdir ( $extractedDir );
 						$cfdi = new CfdiModel();
 						$user = $cfdi->createTmpInvoices ( $filesOk, $this->env );
-						if ( !isset($user['conciliaciones']) ) {
+						if ( !isset( $user[ 'conciliaciones' ] ) ) {
 							return $this->serverError ( 'Error proceso incompleto', $user[ 1 ] );
 						}
 						$conciliaciones = [
@@ -102,7 +103,7 @@
 		 * @throws Exception
 		 */
 		public function chosenConciliation (): ResponseInterface {
-			if ( $data = $this->verifyRules (  'POST', $this->request , NULL) ) {
+			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
@@ -144,17 +145,24 @@
 		 * @throws Exception Errores
 		 */
 		public function getConciliationPlus (): ResponseInterface|bool {
-			if ( $data = $this->verifyRules (  'GET', $this->request, NULL) ) {
+			if ( $data = $this->verifyRules ( 'GET', $this->request, NULL ) ) {
 				return ( $data );
 			}
 			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
 			$company = $input[ 'company' ] ?? NULL;
+			$from = DateTime::createFromFormat ( 'Y-m-d', $input[ 'from' ] );
+			$to = DateTime::createFromFormat ( 'Y-m-d', $input[ 'to' ] );
+			$from = strtotime ( $from->format ( 'm/d/y' ) . ' -1day' );
+			$to = strtotime ( $to->format ( 'm/d/y' ) . ' +1day' );
 			if ( $company === NULL ) {
 				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
 			}
 			$conciliation = new ConciliacionModel();
-			$res = $conciliation->getConciliationsPlus ( $company, $this->env );
+			$res = $conciliation->getConciliationsPlus ( $from, $to, $company, $this->env );
+			if ( count ( $res ) <= 0 ) {
+				return $this->dataNotFound ();
+			}
 			if ( !$res[ 0 ] ) {
 				return $this->serverError ( 'Error proceso incompleto', $res[ 1 ] );
 			}

@@ -3,23 +3,11 @@
 	namespace App\Models;
 	
 	use OpenSSLAsymmetricKey;
-	use CodeIgniter\Model;
-	use Config\Database;
-	class StpModel extends Model {
+	class StpModel extends BaseModel {
 		private string $privateKey = './crypt/llavePrivada.pem';
 		private string $passphrase = '12345678';
-		private string $environment = '';
-		private string $APISandbox = '';
-		private string $APILive = '';
-		public string $base = '';
 		private string $stpSandbox = 'https://demo.stpmex.com:7024/speiws/rest/';
 		private string $stpLive = 'https://demo.stpmex.com:7024/speiws/rest/';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$this->db = Database::connect ( 'default' );
-		}
 		/**
 		 * Genera un dispersion de dinero a través de STP
 		 *

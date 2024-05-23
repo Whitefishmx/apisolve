@@ -28,6 +28,7 @@
 	
 	$routes->add ( 'cobro', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
 	$routes->add ( 'consulta', 'Fintech\STP::testConsulta' /**@uses \App\Controllers\Fintech\STP::testConsulta* */ );
+	$routes->add('playDispercion', 'Dispersiones::playDispersiones' /**@uses \App\Controllers\Dispersiones::playDispersiones* */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================

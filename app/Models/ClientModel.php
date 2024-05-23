@@ -1,22 +1,13 @@
 <?php
 	
 	namespace App\Models;
-	
-	use CodeIgniter\Model;
-	
-	class ClientModel extends Model {
+	class ClientModel extends BaseModel {
 		protected $table = 'client';
 		protected $allowedFields = [
 			'name', 'email', 'retainer_fee',
 		];
 		protected $useTimestamps = TRUE;
 		protected $updatedField = 'updated_at';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = \Config\Database::connect ( 'default' );
-		}
 		public function findClientById ( $id ): object|array {
 			$client = $this->asArray ()->where ( [ 'id' => $id ] )->first ();
 			if ( !$client ) {

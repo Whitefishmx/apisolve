@@ -1,22 +1,7 @@
 <?php
 	
 	namespace App\Models;
-	
-	use CodeIgniter\Model;
-	use Config\Database;
-	
-	class CfdiModel extends Model {
-		protected $db;
-		private string $environment = '';
-		private string $APISandbox = '';
-		private string $APILive = '';
-		public string $base = '';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$this->db = Database::connect ( 'default' );
-		}
+	class CfdiModel extends BaseModel {
 		/**
 		 * Función para poder obtener los grupos de conciliaciones posibles
 		 *

@@ -16,8 +16,15 @@
 		public function environment ( mixed $env ): void {
 			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
-		
-		public function verifyRules ( string $method, $request, ?string $dataType ): ResponseInterface|bool {
+		/**
+		 * Permite validar que el método y tipo de dato sean correctos al que solícita el recurso
+		 * @param string      $method Verbo requerido
+		 * @param mixed       $request Petición completa
+		 * @param string|null $dataType Tipo de dato que se requiere
+		 *
+		 * @return ResponseInterface|bool
+		 */
+		public function verifyRules ( string $method, mixed $request, ?string $dataType ): ResponseInterface|bool {
 			if ( !$request->is ( $method ) ) {
 				return $this->methodNotAllowed ( $request->getPath () );
 			}
@@ -31,11 +38,17 @@
 		public function pageNotFound (): ResponseInterface {
 			return $this->getResponse ( [ 'error' => 404, 'description' => 'Recurso no encontrada', 'reason' => 'Verifique que el endpoint sea correcto' ], ResponseInterface::HTTP_NOT_FOUND );
 		}
+		public function dataNotFound (): ResponseInterface {
+			return $this->getResponse ( [ 'error' => 404, 'description' => 'Recurso no encontrada', 'reason' => 'No se encontró información con los datos ingresados' ], ResponseInterface::HTTP_NOT_FOUND );
+		}
 		public function methodNotAllowed ( $endpoint ): ResponseInterface {
 			return $this->getResponse ( [ 'error' => 405, 'description' => 'Método no implementado', 'reason' => 'El método utilizado no coincide con el que solicita [' . $endpoint . ']' ], ResponseInterface::HTTP_METHOD_NOT_ALLOWED );
 		}
 		public function dataTypeNotAllowed ( $dataType ): ResponseInterface {
 			return $this->getResponse ( [ 'error' => 400, 'description' => 'Tipo de dato invalido', 'reason' => 'Se esperaba contenido en formato [' . $dataType . ']' ], ResponseInterface::HTTP_BAD_REQUEST );
+		}
+		public function errDataSuplied ( $reason ): ResponseInterface {
+			return $this->getResponse ( [ 'error' => 400, 'description' => 'Datos de petición incorrectos', 'reason' => $reason ], ResponseInterface::HTTP_BAD_REQUEST );
 		}
 		public function serverError ( $description, $reason ): ResponseInterface {
 			return $this->getResponse ( [ 'error' => 500, 'description' => $description, 'reason' => $reason ], ResponseInterface::HTTP_BAD_REQUEST );

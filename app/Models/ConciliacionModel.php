@@ -1,27 +1,14 @@
 <?php
 	
 	namespace App\Models;
-	
-	use CodeIgniter\Model;
-	
-	class ConciliacionModel extends Model {
-		protected $db;
-		private string $environment = 'SANDBOX';
-		private string $APISandbox = '';
-		private string $APILive = '';
-		public string $base = '';
+	class ConciliacionModel extends BaseModel {
 		public string $urlSolve = "https://compensapay.local/";
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = \Config\Database::connect ( 'default' );
-		}
-		/**
+			/**
 		 * Crear conciliaciones a partir de los grupos generados en la carga de CFDI
 		 *
 		 * @param array       $args arreglo con los datos necesarios para generar
-		 * @param string|NULL $env Ambientes  EN QUE SE V
+		 * @param string|NULL $env  Ambientes  EN QUE SE V
+		 *
 		 * @return array Resultados de las conciliaciones
 		 */
 		public function makeConciliationPlus ( array $args, string $env = NULL ): array {
@@ -83,25 +70,6 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			return $companies;
 		}
 		/**
-		 * Obtiene el siguiente ID que será insertado
-		 *
-		 * @param string      $table Tabla de la que se quiere obtener el siguiente ID
-		 * @param string|null $env   Ambiente en el que se va a trabajar
-		 *
-		 * @return int|array Siguiente ID que será insertado
-		 * @noinspection DuplicatedCode
-		 */
-		public function getNexId ( string $table, string $env = NULL ): int|array {
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$query = "SELECT MAX(id) AS id FROM $this->base.$table";
-			if ( !$res = $this->db->query ( $query ) ) {
-				return [ FALSE, 'No se encontró información de ' . $table ];
-			}
-			$res = $res->getResultArray ()[ 0 ][ 'id' ];
-			return $res === NULL ? 1 : intval ( $res + 1 );
-		}
-		/**
 		 * Obtiene las Conciliaciones Plus de una empresa
 		 *
 		 * @param mixed       $id  Id de la empresa a buscar conciliaciones
@@ -109,7 +77,7 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 		 *
 		 * @return array|array[] Arreglo con la información necesaria para mostrar las conciliaciones
 		 */
-		public function getConciliationsPlus ( mixed $id, string $env = NULL ): array {
+		public function getConciliationsPlus ( string $from, string $to, mixed $id, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
@@ -117,17 +85,17 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			$query = "SELECT t1.id, t1.status, t3.arteria_clabe AS 'clabeTransferencia', t1.reference_number, t1.folio, t1.invoice_range, t1.entry_money, t1.exit_money,
        DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%d-%m-%Y') AS 'payment_date', t4.short_name AS 'deudor', t5.short_name AS 'receptor', t4.rfc
 FROM $this->base.conciliation_plus t1
-    inner JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
+    INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
     INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
     INNER JOIN $this->base.companies t4 ON t1.id_client = t4.id
     INNER JOIN $this->base.companies t5 ON t1.id_provider = t5.id
-WHERE t1.id_client = $id OR t1.id_provider = $id";
+WHERE ( t1.id_client = $id OR t1.id_provider = $id ) AND ( t1.created_at BETWEEN '$from' AND '$to' )";
 			if ( !$res = $this->db->query ( $query ) ) {
 				return [ FALSE, 'No se encontró información de conciliaciones' ];
 			}
 			$res = $res->getResultArray ();
 			if ( empty( $res ) ) {
-				return [ FALSE, 'No se encontró información de los CFDI' ];
+				return $res;
 			}
 			for ( $i = 0; $i < count ( $res ); $i++ ) {
 				$range = explode ( '-', $res[ $i ][ 'invoice_range' ] );
