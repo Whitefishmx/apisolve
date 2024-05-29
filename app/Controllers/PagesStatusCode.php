@@ -3,6 +3,7 @@
 	namespace App\Controllers;
 	
 	use CodeIgniter\HTTP\ResponseInterface;
+	use DateTime;
 	
 	class PagesStatusCode extends BaseController {
 		public string $env = 'SANDBOX';
@@ -52,5 +53,17 @@
 		}
 		public function serverError ( $description, $reason ): ResponseInterface {
 			return $this->getResponse ( [ 'error' => 500, 'description' => $description, 'reason' => $reason ], ResponseInterface::HTTP_BAD_REQUEST );
+		}
+		/**
+		 * Preparar las fechas para los filtros
+		 * @param mixed $input fecha de inicio y término
+		 * @return array
+		 */
+		public function dateFilter ( mixed $input ): array {
+			$from = DateTime::createFromFormat ( 'Y-m-d', $input[ 'from' ] );
+			$to = DateTime::createFromFormat ( 'Y-m-d', $input[ 'to' ] );
+			$from = strtotime ( $from->format ( 'm/d/y' ) . ' -1day' );
+			$to = strtotime ( $to->format ( 'm/d/y' ) . ' +1day' );
+			return [ $from, $to ];
 		}
 	}

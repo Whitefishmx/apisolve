@@ -32,17 +32,19 @@
 						return [ FALSE, 'No se pudieron insertar los registros.' ];
 					}
 				}
-				$query = "SELECT t1.sender_rfc AS sender, t1.receiver_rfc AS receiver, w.W AS 'in', s.S AS 'out',
+				$query = "SELECT t1.sender_rfc AS sender, t1.receiver_rfc AS receiver, t1.sender_name, t1.receiver_name, w.W AS 'in', s.S AS 'out',
        (IF(w.W > s.S, w.W - s.S, s.S - w.W)) AS difference,
-       (IF(w.W > s.S, 'Favor', 'Contra')) AS saldo
-FROM (SELECT sender_rfc, receiver_rfc
-      FROM $this->base.invoices_$tmpName
+       (IF(w.W > s.S, 'Favor', 'Contra')) AS saldo, (s.uuid_s + w.uuid_w) AS total_cfdi
+FROM (SELECT rf.sender_rfc, rf.receiver_rfc, cm.short_name AS 'sender_name', cm2.short_name AS 'receiver_name'
+      FROM $this->base.invoices_$tmpName rf
+          INNER JOIN $this->base.companies cm ON cm.rfc = rf.sender_rfc
+          INNER JOIN $this->base.companies cm2 ON cm2.rfc = rf.receiver_rfc
       GROUP BY sender_rfc, receiver_rfc) AS t1
-    LEFT JOIN (SELECT sender_rfc, receiver_rfc, SUM(total) AS W
+    LEFT JOIN (SELECT COUNT(UUID) AS 'uuid_w', sender_rfc, receiver_rfc, SUM(total) AS W
                FROM $this->base.invoices_$tmpName
                GROUP BY sender_rfc, receiver_rfc) AS w
         ON t1.sender_rfc = w.sender_rfc AND t1.receiver_rfc = w.receiver_rfc
-    LEFT JOIN (SELECT sender_rfc, receiver_rfc, SUM(total) AS S
+    LEFT JOIN (SELECT COUNT(UUID) AS 'uuid_s', sender_rfc, receiver_rfc, SUM(total) AS S
                FROM $this->base.invoices_$tmpName
                GROUP BY sender_rfc, receiver_rfc) AS s
         ON t1.sender_rfc = s.receiver_rfc AND t1.receiver_rfc = s.sender_rfc";
@@ -90,10 +92,10 @@ FROM (SELECT sender_rfc, receiver_rfc
 					if ( !empty( $finalItemErr ) ) {
 						$conciliaciones  [ 'errors' ] = $finalItemErr;
 					}
-//					$query = "DROP TABLE $this->base.invoices_$tmpName";
-//					if ( !$this->db->query ( $query ) ) {
-//						$conciliaciones[ 'errors' ] = 'tabla temporal persiste';
-//					}
+					//					$query = "DROP TABLE $this->base.invoices_$tmpName";
+					//					if ( !$this->db->query ( $query ) ) {
+					//						$conciliaciones[ 'errors' ] = 'tabla temporal persiste';
+					//					}
 					return $conciliaciones;
 				}
 				return [ FALSE, 'No se lograron formar los grupos de conciliaciones' ];
@@ -126,7 +128,6 @@ FROM (SELECT sender_rfc, receiver_rfc
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-//			$ids = [];
 			$counter = 0;
 			foreach ( $data as $row ) {
 				$query = "INSERT INTO $this->base.cfdi_plus (sender_rfc, receiver_rfc, uuid, tipo, invoice_date, total, xml_document)
@@ -146,5 +147,29 @@ FROM (SELECT sender_rfc, receiver_rfc
 				return [ FALSE, '2.2 No se logro guardar la información requerida para las conciliaciones.' ];
 			}
 			return [ FALSE, '2.1 No se logro guardar la información requerida para las conciliaciones.' ];
+		}
+		public function getCfdiPdf ( array $args, string $env = 'SANDBOX' ) {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$query = '';
+			switch ( $args[ 'category' ] ) {
+				case '1':
+					$query = "SELECT uuid, xml_document, total, sender_rfc, receiver_rfc FROM $this->base.invoices WHERE UUID = '{$args['uuid']}'";
+					break;
+				case '2':
+					$query = "SELECT uuid, xml_document, total, sender_rfc, receiver_rfc FROM $this->base.cfdi_plus WHERE UUID = '{$args['uuid']}'";
+					break;
+				case '3':
+					$query = "SELECT uuid, xml_document, total, sender_rfc, receiver_rfc FROM $this->base.debit_notes WHERE UUID = '{$args['uuid']}'";
+					break;
+			}
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información de conciliaciones' ];
+			}
+			$res = $res->getResultArray ();
+			if ( empty( $res ) ) {
+				return $res;
+			}
+			return $res[ 0 ];
 		}
 	}

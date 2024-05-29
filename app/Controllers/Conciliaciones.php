@@ -7,7 +7,6 @@
 	use App\Models\CfdiModel;
 	use ZipArchive;
 	use Exception;
-	use DateTime;
 	
 	class Conciliaciones extends PagesStatusCode {
 		/**
@@ -151,10 +150,7 @@
 			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
 			$company = $input[ 'company' ] ?? NULL;
-			$from = DateTime::createFromFormat ( 'Y-m-d', $input[ 'from' ] );
-			$to = DateTime::createFromFormat ( 'Y-m-d', $input[ 'to' ] );
-			$from = strtotime ( $from->format ( 'm/d/y' ) . ' -1day' );
-			$to = strtotime ( $to->format ( 'm/d/y' ) . ' +1day' );
+			[ $from, $to ] = $this->dateFilter ( $input );
 			if ( $company === NULL ) {
 				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
 			}
