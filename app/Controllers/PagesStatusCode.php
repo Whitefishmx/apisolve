@@ -19,8 +19,9 @@
 		}
 		/**
 		 * Permite validar que el método y tipo de dato sean correctos al que solícita el recurso
-		 * @param string      $method Verbo requerido
-		 * @param mixed       $request Petición completa
+		 *
+		 * @param string      $method   Verbo requerido
+		 * @param mixed       $request  Petición completa
 		 * @param string|null $dataType Tipo de dato que se requiere
 		 *
 		 * @return ResponseInterface|bool
@@ -56,12 +57,14 @@
 		}
 		/**
 		 * Preparar las fechas para los filtros
+		 *
 		 * @param mixed $input fecha de inicio y término
+		 *
 		 * @return array
 		 */
-		public function dateFilter ( mixed $input ): array {
-			$from = DateTime::createFromFormat ( 'Y-m-d', $input[ 'from' ] );
-			$to = DateTime::createFromFormat ( 'Y-m-d', $input[ 'to' ] );
+		public function dateFilter ( mixed $input, string $from, string $to ): array {
+			$from = DateTime::createFromFormat ( 'Y-m-d', $input[ $from ] );
+			$to = DateTime::createFromFormat ( 'Y-m-d', $input[ $to ] );
 			$from = strtotime ( $from->format ( 'm/d/y' ) . ' -1day' );
 			$to = strtotime ( $to->format ( 'm/d/y' ) . ' +1day' );
 			return [ $from, $to ];

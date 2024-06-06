@@ -172,4 +172,103 @@ FROM (SELECT rf.sender_rfc, rf.receiver_rfc, cm.short_name AS 'sender_name', cm2
 			}
 			return $res[ 0 ];
 		}
+		public function getDocsCfdi ( $from, $to, $fromUpdate, $toUpdate, $uuid, $args, $show, $company, $env = NULL ): array {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$url = 'https://compensapay.local/assets/factura';
+			$query1 = "SELECT * FROM ( (SELECT CONCAT(t1.id,'f') AS id2, t2.id, t3.short_name AS 'emisor', t4.short_name AS 'receptor', t2.uuid,
+                        CONCAT( '$url' , '/factura.php?idfactura=', t2.id ) AS 'idurl',
+                        DATE_FORMAT(FROM_UNIXTIME(t2.invoice_date), '%d-%m-%Y') AS 'dateCFDI',
+                        DATE_FORMAT(FROM_UNIXTIME(t2.created_at), '%d-%m-%Y') AS 'dateCreate',
+                        DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%d-%m-%Y') AS 'dateToPay',
+                        t2.total, 'Factura' AS tipo, t1.created_at
+                 FROM $this->base.operations t1
+                     INNER JOIN $this->base.invoices t2 ON t1.id_invoice = t2.id OR t1.id_invoice_relational = t2.id
+                     LEFT JOIN $this->base.companies t3 ON t2.sender_rfc = t3.rfc
+                     LEFT JOIN $this->base.companies t4 ON t2.receiver_rfc = t4.rfc
+                 WHERE (t1.id_client = $company OR t1.id_provider = $company)
+                   AND t2.status = 3
+                   AND t2.created_at >= '$from' AND t2.created_at <= '$to'
+                   AND t2.invoice_date >= '$fromUpdate' AND t2.invoice_date <= '$toUpdate'
+                   AND t2.`uuid` LIKE '%$uuid%'
+                   AND (t2.sender_rfc LIKE '%$args%' OR t2.receiver_rfc LIKE '%$args%' OR t3.legal_name LIKE '%$args%'  OR t4.legal_name LIKE '%$args%'
+                            OR t3.short_name LIKE '%$args%' OR t4.short_name LIKE '%$args%' OR t1.operation_number LIKE '%$args%' OR t1.folio_operation LIKE '%$args%') )
+UNION (SELECT CONCAT(t1.id,'n') AS id2, t2.id, t3.short_name AS 'emisor', t4.short_name AS 'receptor', t2.uuid,
+              CONCAT('$url' , '/nota.php?idnota=', t2.id ) AS 'idurl',
+              DATE_FORMAT(FROM_UNIXTIME(t2.debitNote_date), '%d-%m-%Y') AS 'dateCFDI',
+              DATE_FORMAT(FROM_UNIXTIME(t2.created_at), '%d-%m-%Y') AS 'dateCreate',
+              DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%d-%m-%Y') AS 'dateToPay',
+              t2.total, 'Nota de crédito' AS tipo, t1.created_at
+       FROM $this->base.operations t1
+           INNER JOIN $this->base.debit_notes t2 ON t1.id_debit_note = t2.id
+           LEFT JOIN $this->base.companies t3 ON t2.sender_rfc = t3.rfc
+           LEFT JOIN $this->base.companies t4 ON t2.receiver_rfc = t4.rfc
+       WHERE (t3.id = 1 OR t4.id = 1)
+         AND t2.status = 3
+         AND t2.created_at >= '$from' AND t2.created_at <= '$to'
+         AND t2.debitNote_date >= '$fromUpdate' AND t2.debitNote_date <= '$toUpdate'
+         AND t2.uuid LIKE '%$uuid%'
+         AND (t2.sender_rfc LIKE '%$args%' OR t2.receiver_rfc LIKE '%$args%' OR t3.legal_name LIKE '%$args%'  OR t4.legal_name LIKE '%$args%'
+                  OR t3.short_name LIKE '%$args%' OR t4.short_name LIKE '%$args%' OR t1.operation_number LIKE '%$args%' OR t1.folio_operation LIKE '%$args%')) ) AS T
+         ORDER BY T.created_at";
+			$queryW = "SELECT invoice_range FROM $this->base.conciliation_plus WHERE id_client = $company OR id_provider = $company";
+			$query2 = "SELECT CONCAT(t1.id,'fp') AS id2, t1.id, t3.short_name AS 'emisor', t3.short_name AS 'receptor', t1.uuid,
+       CONCAT( '$url' , '/factura.php?idfactura=', t2.id ) AS 'idurl',
+       DATE_FORMAT(FROM_UNIXTIME(t1.invoice_date), '%d-%m-%Y') AS 'dateCFDI',
+       DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%d-%m-%Y') AS 'dateCreate',
+       DATE_FORMAT(FROM_UNIXTIME(t1.updated_at), '%d-%m-%Y') AS 'dateToPay',
+       t1.total, 'CFDI Masivo' AS tipo, t1.created_at
+FROM apisandbox_sandbox.cfdi_plus t1
+    LEFT JOIN apisandbox_sandbox.companies t2 ON t1.sender_rfc = t2.rfc
+    LEFT JOIN apisandbox_sandbox.companies t3 ON t1.receiver_rfc = t3.rfc
+WHERE (";
+			$query2W = ") AND t1.created_at >= '$from' AND t1.created_at <= '$to'
+			AND t1.invoice_date >= '$fromUpdate' AND t1.invoice_date <= '$toUpdate'
+			AND t1.`uuid` LIKE '%$uuid%'
+			AND (t2.rfc LIKE '%$args%' OR t2.rfc LIKE '%$args%' OR t2.legal_name LIKE '%$args%'  OR t3.legal_name LIKE '%$args%' OR t2.short_name LIKE '%$args%'
+			OR t3.short_name LIKE '%$args%')";
+			$where = '';
+			switch ( $show ) {
+				case 1:
+					if ( !$res = $this->db->query ( $query1 ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					$items = $res->getResultArray ();
+					break;
+				case 2:
+					if ( !$res = $this->db->query ( $queryW ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					foreach ( $res->getResultArray () as $value ) {
+						$id = explode ( '-', $value[ 'invoice_range' ] );
+						$where .= "t1.id BETWEEN  $id[0] AND $id[1] OR ";
+					}
+					$where = substr ( $where, 0, -3 );
+					$resQuery = $query2 . $where . $query2W;
+					if ( !$res2 = $this->db->query ( $resQuery ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					$items = $res2->getResultArray ();
+					break;
+				default:
+					if ( !$res = $this->db->query ( $query1 ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					$items = $res->getResultArray ();
+					if ( !$res = $this->db->query ( $queryW ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					foreach ( $res->getResultArray () as $value ) {
+						$id = explode ( '-', $value[ 'invoice_range' ] );
+						$where .= "t1.id BETWEEN  $id[0] AND $id[1] OR ";
+					}
+					$where = substr ( $where, 0, -3 );
+					$resQuery = $query2 . $where . $query2W;
+					if ( !$res = $this->db->query ( $resQuery ) ) {
+						return [ FALSE, 'No se encontró información de conciliaciones' ];
+					}
+					$items = array_merge ( $items, $res->getResultArray () );
+			}
+			return ( $items );
+		}
 	}

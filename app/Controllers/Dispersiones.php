@@ -48,7 +48,7 @@
 			$company = $input[ 'company' ] ?? NULL;
 			$folio = $input[ 'folio' ] ?? NULL;
 			$numeric = intval ( $input[ 'numeric' ] ) ?? NULL;
-			[ $from, $to ] = $this->dateFilter ( $input );
+			[ $from, $to ] = $this->dateFilter ( $input, 'from', 'to' );
 			if ( $company === NULL ) {
 				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
 			}
@@ -62,5 +62,4 @@
 			}
 			return $this->getResponse ( $res );
 		}
-		
 	}

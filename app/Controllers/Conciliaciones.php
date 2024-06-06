@@ -150,7 +150,7 @@
 			$input = $this->getGetRequestInput ( $this->request );
 			$this->environment ( $input );
 			$company = $input[ 'company' ] ?? NULL;
-			[ $from, $to ] = $this->dateFilter ( $input );
+			[ $from, $to ] = $this->dateFilter ( $input, 'from', 'to' );
 			if ( $company === NULL ) {
 				return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
 			}

@@ -24,6 +24,7 @@
 	$routes->add ( 'getCfdiInfo', 'Data::getCfdiInfo' /**@uses \App\Controllers\Data::getCfdiInfo* */ );
 	$routes->add ( 'getCPInfo', 'Data::getCPInfo' /**@uses \app\Controllers\Data::getCPInfo* */ );
 	$routes->add ( 'getRegimen', 'Data::getRegimen' /**@uses \app\Controllers\Data::getRegimen* */ );
+	$routes->add ( 'getInvoiceDocuments', 'Documents::getCFDI' /**@uses \app\Controllers\Documents::getCFDI* */ );
 	//========================|| POST ||========================
 	$routes->add ( 'uploadCFDIPlus', 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
