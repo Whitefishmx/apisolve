@@ -6,7 +6,7 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class Documents extends PagesStatusCode {
-		public function getCFDI ():ResponseInterface|bool {
+		public function getCFDI (): ResponseInterface|bool {
 			/** @noinspection DuplicatedCode */
 			if ( $in = $this->verifyRules ( 'GET', $this->request, NULL ) ) {
 				return ( $in );

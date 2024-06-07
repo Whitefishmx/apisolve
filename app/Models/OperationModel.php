@@ -1,6 +1,7 @@
 <?php
 	
 	namespace App\Models;
+	
 	use CodeIgniter\Database\Exceptions\DataException;
 	use Exception;
 	
@@ -37,70 +38,72 @@ UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id, 'concilia
       UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id,'dispercionPlus' AS 'origin'
             FROM $this->base.dispersions_plus
             WHERE status = 1 AND ($wh3)";
-			if ( !$res = $this->db->query ( $query ) ) {
-				return [ FALSE, 'No se encontró información de ' . $res ];
+			
+			$res = $this->db->query ( $query );
+			if ( $res->getNumRows () < 1 ) {
+				return [ FALSE, 'No se encontró una operacion el folio enviado'  ];
 			}
 			$res = $res->getResultArray ();
 			return count ( $res ) > 0 ? $res[ 0 ] : $res;
-//			for ( $i = 0; count ( $res ) > 0; $i++ ) {
-//				switch ( $res[ $i ][ 'origin' ] ) {
-//					case 'conciliacion':
-//						$query = "SELECT t1.id, t1.operation_number, t1.id_client, t2.legal_name as 'cname', t2.rfc as 'crfc', t2.account_clabe as 'cclabe',
-//					t1.id_provider, t3.legal_name as 'pname', t3.rfc as 'prfc', t3.account_clabe as 'pclabe',
-//					t4.arteria_clabe, (t5.total*100) AS 'entry_money', (t6.total*100) AS 'exit_money_d', (t8.total*100) as 'exit_money_f',
-//					t3.account_clabe as 'companyClabe', t3.legal_name, t7.bnk_clave, t5.uuid,
-//					t9.name AS 'provName', t9.last_name AS 'provLast', t9.email AS 'provEmail', t2.legal_name AS 'provCompany',
-//					t10.name AS 'clientName', t10.last_name AS 'clientLast', t10.email AS 'clientEmail', t3.legal_name AS 'clientCompany'
-//					FROM $this->base.operations t1
-//					    LEFT JOIN $this->base.companies t2 ON t1.id_client = t2.id
-//					    LEFT JOIN $this->base.companies t3 ON t1.id_provider = t3.id
-//					    INNER JOIN $this->base.fintech t4 ON t4.companie_id = t1.id_provider
-//					    INNER JOIN $this->base.invoices t5 ON t1.id_invoice = t5.id
-//					    LEFT JOIN $this->base.debit_notes t6 ON t1.id_debit_note = t6.id
-//					    INNER JOIN $this->base.cat_bancos t7 ON t2.id_broadcast_bank = t7.bnk_id
-//					    LEFT JOIN $this->base.invoices t8 ON t1.id_invoice_relational = t8.id
-//					    INNER JOIN $this->base.users t9 ON t9.id_company = t3.id
-//					    INNER JOIN $this->base.users t10 ON t10.id_company = t2.id
-//					WHERE t1.status = 1 AND t1.operation_number = '{$res[$i]['opNumber']}' AND t1.folio = '{$res[$i]['folio']}'";
-//						if ( $subRes = $this->db->query ( $query ) ) {
-//							$subRes = $subRes->getResultArray ();
-//							if ( !empty( $subRes ) ) {
-//								$res[$i]['details'] = $subRes;
-//							}
-//						}
-//						break;
-//					case 'conciliacionCPlus':
-//						$query = "SELECT t1.id, t2.legal_name AS 'legal_client', t2.short_name AS 'short_client',
-//       t3.legal_name AS 'legal_provider', t3.short_name AS 'short_provider', t1.reference_number, t1.folio, t1.folio_dispersion, t1.entry_money, t1.exit_money,
-//       DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%Y-%m-%d') AS 'payment_date', t1.`status`,
-//       DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%Y-%m-%d %H:%i:%s') AS 'created_at',
-//       t4.arteria_clabe AS 'provider_fintech', t5.arteria_clabe AS 'client_fintech', t9.email AS 'provider_mail', t10.email AS 'client_mail'
-//FROM apisandbox_sandbox.conciliation_plus t1
-//    LEFT JOIN apisandbox_sandbox.companies t2 ON t1.id_client = t2.id
-//    LEFT JOIN apisandbox_sandbox.companies t3 ON t1.id_provider = t3.id
-//    INNER JOIN apisandbox_sandbox.fintech t4 ON t4.companie_id = t1.id_provider
-//    INNER JOIN apisandbox_sandbox.fintech t5 ON t5.companie_id = t1.id_client
-//    INNER JOIN apisandbox_sandbox.users t9 ON t9.id_company = t3.id
-//    INNER JOIN apisandbox_sandbox.users t10 ON t10.id_company = t2.id
-//    WHERE t1.folio = '{$res[$i]['folio']}' AND t1.status = 1";
-//						if ( $subRes = $this->db->query ( $query ) ) {
-//							$subRes = $subRes->getResultArray ();
-//							if ( !empty( $subRes ) ) {
-//								$res[$i]['details'] = $subRes;
-//							}
-//						}
-//						break;
-//					case 'dispercionPlus':
-//						$query = "";
-//						if ( $subRes = $this->db->query ( $query ) ) {
-//							$subRes = $subRes->getResultArray ();
-//							if ( !empty( $subRes ) ) {
-//								$res[$i]['details'] = $subRes;
-//							}
-//						}
-//						break;
-//				}
-//			}
+			//			for ( $i = 0; count ( $res ) > 0; $i++ ) {
+			//				switch ( $res[ $i ][ 'origin' ] ) {
+			//					case 'conciliacion':
+			//						$query = "SELECT t1.id, t1.operation_number, t1.id_client, t2.legal_name as 'cname', t2.rfc as 'crfc', t2.account_clabe as 'cclabe',
+			//					t1.id_provider, t3.legal_name as 'pname', t3.rfc as 'prfc', t3.account_clabe as 'pclabe',
+			//					t4.arteria_clabe, (t5.total*100) AS 'entry_money', (t6.total*100) AS 'exit_money_d', (t8.total*100) as 'exit_money_f',
+			//					t3.account_clabe as 'companyClabe', t3.legal_name, t7.bnk_clave, t5.uuid,
+			//					t9.name AS 'provName', t9.last_name AS 'provLast', t9.email AS 'provEmail', t2.legal_name AS 'provCompany',
+			//					t10.name AS 'clientName', t10.last_name AS 'clientLast', t10.email AS 'clientEmail', t3.legal_name AS 'clientCompany'
+			//					FROM $this->base.operations t1
+			//					    LEFT JOIN $this->base.companies t2 ON t1.id_client = t2.id
+			//					    LEFT JOIN $this->base.companies t3 ON t1.id_provider = t3.id
+			//					    INNER JOIN $this->base.fintech t4 ON t4.companie_id = t1.id_provider
+			//					    INNER JOIN $this->base.invoices t5 ON t1.id_invoice = t5.id
+			//					    LEFT JOIN $this->base.debit_notes t6 ON t1.id_debit_note = t6.id
+			//					    INNER JOIN $this->base.cat_bancos t7 ON t2.id_broadcast_bank = t7.bnk_id
+			//					    LEFT JOIN $this->base.invoices t8 ON t1.id_invoice_relational = t8.id
+			//					    INNER JOIN $this->base.users t9 ON t9.id_company = t3.id
+			//					    INNER JOIN $this->base.users t10 ON t10.id_company = t2.id
+			//					WHERE t1.status = 1 AND t1.operation_number = '{$res[$i]['opNumber']}' AND t1.folio = '{$res[$i]['folio']}'";
+			//						if ( $subRes = $this->db->query ( $query ) ) {
+			//							$subRes = $subRes->getResultArray ();
+			//							if ( !empty( $subRes ) ) {
+			//								$res[$i]['details'] = $subRes;
+			//							}
+			//						}
+			//						break;
+			//					case 'conciliacionCPlus':
+			//						$query = "SELECT t1.id, t2.legal_name AS 'legal_client', t2.short_name AS 'short_client',
+			//       t3.legal_name AS 'legal_provider', t3.short_name AS 'short_provider', t1.reference_number, t1.folio, t1.folio_dispersion, t1.entry_money, t1.exit_money,
+			//       DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%Y-%m-%d') AS 'payment_date', t1.`status`,
+			//       DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%Y-%m-%d %H:%i:%s') AS 'created_at',
+			//       t4.arteria_clabe AS 'provider_fintech', t5.arteria_clabe AS 'client_fintech', t9.email AS 'provider_mail', t10.email AS 'client_mail'
+			//FROM apisandbox_sandbox.conciliation_plus t1
+			//    LEFT JOIN apisandbox_sandbox.companies t2 ON t1.id_client = t2.id
+			//    LEFT JOIN apisandbox_sandbox.companies t3 ON t1.id_provider = t3.id
+			//    INNER JOIN apisandbox_sandbox.fintech t4 ON t4.companie_id = t1.id_provider
+			//    INNER JOIN apisandbox_sandbox.fintech t5 ON t5.companie_id = t1.id_client
+			//    INNER JOIN apisandbox_sandbox.users t9 ON t9.id_company = t3.id
+			//    INNER JOIN apisandbox_sandbox.users t10 ON t10.id_company = t2.id
+			//    WHERE t1.folio = '{$res[$i]['folio']}' AND t1.status = 1";
+			//						if ( $subRes = $this->db->query ( $query ) ) {
+			//							$subRes = $subRes->getResultArray ();
+			//							if ( !empty( $subRes ) ) {
+			//								$res[$i]['details'] = $subRes;
+			//							}
+			//						}
+			//						break;
+			//					case 'dispercionPlus':
+			//						$query = "";
+			//						if ( $subRes = $this->db->query ( $query ) ) {
+			//							$subRes = $subRes->getResultArray ();
+			//							if ( !empty( $subRes ) ) {
+			//								$res[$i]['details'] = $subRes;
+			//							}
+			//						}
+			//						break;
+			//				}
+			//			}
 		}
 		public function AddMovement ( array $args, string $env = NULL ): string {
 			//Se declara el ambiente a utilizar
@@ -123,14 +126,13 @@ UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id, 'concilia
 			$query .= "'{$args['sourceBank']}', '{$args['receiverBank']}', '$fecha') ";
 			//Se verífica que se pueda insertar la información
 			try {
-				$res = $this->db->query($query);
-			}catch (Exception $e) {
+				$res = $this->db->query ( $query );
+			} catch ( Exception $e ) {
 				return 'hola';
 			}
-			
-			if (!$res) {
-				throw new Exception('error in query');
-				return false;
+			if ( !$res ) {
+				throw new Exception( 'error in query' );
+				return FALSE;
 			}
 			//En caso correcto
 			return [ "code" => 200, "result" => $this->db->insertID () ];

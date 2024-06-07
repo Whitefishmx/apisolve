@@ -62,17 +62,46 @@
 			}
 			$input = $this->getRequestInput ( $this->request );
 			$this->environment ( $input );
+			//Se crea el log con los datos que se recibieron por el webhook
 			if ( !createLog ( "wbAbonos_stp_$this->env", json_encode ( $input ) ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
+			//validar que se tenga la descripcion o referencia numerica para poder validar
 			$descriptor = $input[ 'descriptor' ] ?? NULL;
 			$refNumber = $input[ 'reference_number' ] ?? NULL;
 			$trackingKey = $input[ 'tracking_key' ] ?? NULL;
-			if ( $descriptor === NULL && $trackingKey === NULL ) {
+			if ( $refNumber === NULL && $descriptor === NULL ) {
 				return $this->errDataSuplied ( 'No hay referencia numerica, descripcion o clave de rastreo' );
+			}
+			//validar que la transferencia sea a una cuenta clabe que pertenezca a una empresa registrada
+			$clabeDestino = $input[ 'receiverBank' ] ?? NULL;
+			if ( $clabeDestino === NULL ) {
+				return $this->errDataSuplied ( 'Falta clabe de banco origen' );
+			}
+			$stp = new StpModel();
+			$vClabe = $stp->validateClabe ( $clabeDestino, $this->env );
+			if ( $vClabe[ 0 ] === FALSE ) {
+				$this->rollback ( $input, $this->env );
 			}
 			$op = new OperationModel ();
 			$operation = $op->searchOperations ( $descriptor, $refNumber, $trackingKey, $this->env );
+			if ( $operation[ 0 ] === FALSE ) {
+				$this->rollback ( $input, $this->env );
+			}
+			switch ( $operation[ 'origin' ] ) {
+				case 'conciliacion':
+					$do= $this->makeConciliation($operation, $input, $this->env);
+					break;
+				case 'conciliacionCPlus':
+					$do= $this->makeConciliationPlus($operation, $input, $this->env);
+					break;
+				case 'dispercionPlus':
+					$do= $this->makeDispertion($operation, $input, $this->env);
+					break;
+			}
+			
+			var_dump ( $operation );
+			die();
 			if ( !count ( $operation ) > 0 ) {
 				return $this->getResponse ( $this->rollback ( $input, $this->env ) );
 			}
@@ -84,7 +113,7 @@
 				$res = $this->doDispercionPlus ( $operation, $this->env );
 			}
 			return $this->getResponse ( $res );
-//			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
+			//			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
 		}
 		public function doConciliationPlus ( array $operation, string $env ) {
 			$conc = new ConciliacionModel();
@@ -95,13 +124,13 @@
 				'operationNumber' => $input[ 'reference_number' ],
 				'trakingKey' => $input[ 'tracking_key' ],
 				'opId' => $input[ 'speid_id' ],
-				'amount' => $input['amount'],
-				'descriptor' => $input['descriptor'],
-				'sourceBank' => $input['sourceBank'],
-				'receiverBank' => $input['receiverBank'],
-				'transactionDate' => $input['transactionDate'],
-				'sourceRfc' => $input['sourceRfc'] ?? NULL,
-				'receiverRfc' => $input['receiverRfc'] ?? NULL,
+				'amount' => $input[ 'amount' ],
+				'descriptor' => $input[ 'descriptor' ],
+				'sourceBank' => $input[ 'sourceBank' ],
+				'receiverBank' => $input[ 'receiverBank' ],
+				'transactionDate' => $input[ 'transactionDate' ],
+				'sourceRfc' => $input[ 'sourceRfc' ] ?? NULL,
+				'receiverRfc' => $input[ 'receiverRfc' ] ?? NULL,
 			];
 			$this->AddMovement ( $args, $env );
 			return $input;
@@ -109,11 +138,17 @@
 		public function AddMovement ( array $args, string $env = NULL ) {
 			$op = new OperationModel ();
 			$res = $op->AddMovement ( $args, $env );
-			var_dump ($res);
-			return $this->serverError ($res[1],$res[1]);
+			var_dump ( $res );
+			return $this->serverError ( $res[ 1 ], $res[ 1 ] );
 			$binnacle [ 'L' ] = [ 'id_c' => 1, 'id' => 1, 'module' => 3, 'code' => $res[ 'code' ],
 				'in' => json_encode ( $args ),
 				'out' => json_encode ( $res ) ];
 			$this->Binnacle ( $binnacle, 0, [ 3 ], 3, $this->environment );
+		}
+		public function makeConciliation ( array $operation, array $input, string $env = NULL ) {
+		}
+		public function makeConciliationPlus ( array $operation, array $input, string $env ) {
+		}
+		public function makeDispertion ( mixed $operation, mixed $input, string $env ) {
 		}
 	}

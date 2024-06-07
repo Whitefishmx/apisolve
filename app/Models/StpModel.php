@@ -3,6 +3,7 @@
 	namespace App\Models;
 	
 	use OpenSSLAsymmetricKey;
+	
 	class StpModel extends BaseModel {
 		private string $privateKey = './crypt/llavePrivada.pem';
 		private string $passphrase = '12345678';
@@ -151,6 +152,16 @@
 			$privateKey = fread ( $fp, filesize ( realpath ( $this->privateKey ) ) );
 			fclose ( $fp );
 			return openssl_get_privatekey ( $privateKey, $this->passphrase );
+		}
+		public function validateClabe ( string $clabe, string $env = 'SANDBOX' ): array {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$query = "SELECT companie_id FROM apisandbox_sandbox.fintech_clabes WHERE fintech_clabe = '$clabe'";
+			$res = $this->db->query ( $query );
+			if ( $res->getNumRows () < 1 ) {
+				return [ FALSE, 'Clabe no encontrada' ];
+			}
+			return $res->getResultArray ();
 		}
 		/**
 		 * Enviar peticiones a través de CURL al api rest de STP
