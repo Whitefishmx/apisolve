@@ -12,6 +12,8 @@
 		public function __construct () {
 			parent::__construct ();
 			helper ( 'tools' );
+			helper ( 'tools_helper' );
+			helper ( 'tetraoctal_helper' );
 		}
 		public function testCobro (): ResponseInterface {
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
@@ -19,11 +21,10 @@
 			}
 			$input = $this->getRequestInput ( $this->request );
 			$this->environment ( $input );
-			helper ( 'tools_helper' );
-			helper ( 'tetraoctal_helper' );
 			$input[ 'folio' ] = serialize32 ( [ rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 31221 ) ] );
-			$input[ 'concepto' ] = 'Prueba ' . rand ( 0, 255 );
+			$input[ 'concepto' ] = 'devolucion';
 			$input[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
+			$input[ 'empresa' ] = 'WHITEFISH';
 			$stp = new StpModel();
 			return $this->getResponse ( json_decode ( $stp->sendDispersion ( $input, 'SANDBOX' ), TRUE ) );
 		}
@@ -52,11 +53,80 @@
 			}
 			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
 		}
+		public function AddMovement ( array $args, string $env = NULL ): array {
+			$op = new OperationModel ();
+			$res = $op->AddMovement ( $args, $env );
+			if ( isset( $operation[ 0 ] ) ) {
+				return [ FALSE, 'No se logró guardar el movimiento' ];
+			}
+			return [ 'id' => $res[ 'result' ] ];
+		}
+		public function rollback ( mixed $input, string $message, string $env ): ResponseInterface|array {
+			$args = [
+				'operationNumber' => $input[ 'reference_number' ],
+				'transactionDate' => $input[ 'transactionDate' ],
+				'trackingKey' => $input[ 'tracking_key' ],
+				'descriptor' => $input[ 'descriptor' ],
+				'opId' => $input[ 'speid_id' ],
+				'amount' => $input[ 'amount' ],
+				'sourceName' => $input[ 'sourceName' ] ?? 'Desconocido',
+				'sourceRfc' => $input[ 'sourceRfc' ] ?? 'XAXX010101000',
+				'sourceBank' => $input[ 'sourceBank' ],
+				'receiverName' => $input[ 'receiverName' ] ?? 'Desconocido',
+				'receiverRfc' => $input[ 'receiverRfc' ] ?? 'XAXX010101000',
+				'receiverBank' => $input[ 'receiverBank' ],
+			];
+			$mov = $this->AddMovement ( $args, $env );
+			if ( isset( $mov[ 0 ] ) ) {
+				return $mov;
+			}
+			$stp = new StpModel();
+			$data = [
+				'folio' => serialize32 ( [ 5, $mov[ 'id' ], 0, 0, strtotime ( 'now' ) ] ),
+				'concepto' => 'devolución de ' . $args[ 'trackingKey' ],
+				'refNumeric' => MakeOperationNumber ( $mov[ 'id' ] ),
+				'monto' => $args[ 'amount' ],
+				'empresa' => 'WHITEFISH',
+				'ordenante' => [
+					'clabe' => $args[ 'receiverBank' ],
+					'rfc' => $args[ 'receiverRfc' ],
+					'nombre' => $args[ 'receiverName' ],
+				],
+				'beneficiario' => [
+					'clabe' => $args[ 'sourceBank' ],
+					'rfc' => $args[ 'sourceRfc' ],
+					'nombre' => $args[ 'sourceName' ],
+				],
+			];
+			$rollback = json_decode ( $stp->sendDispersion ( $data, 'SANDBOX' ), TRUE );
+			if ( isset( $rollback[ 'resultado' ][ 'descripcionError' ] ) ) {
+				return $this->serverError ( 'No se logro realizar la devolución', $rollback );
+			}
+			$args = [
+				'operationNumber' => $data[ 'refNumeric' ],
+				'transactionDate' => date ( 'Y-m-d', strtotime ( 'now' ) ),
+				'trackingKey' => $data[ 'folio' ],
+				'descriptor' => $data[ 'concepto' ],
+				'opId' => $rollback[ 'resultado' ][ 'id' ],
+				'amount' => $data[ 'monto' ],
+				'sourceName' => $data[ 'ordenante' ][ 'nombre' ],
+				'sourceRfc' => $data[ 'ordenante' ] [ 'rfc' ],
+				'sourceBank' => $data[ 'ordenante' ][ 'clabe' ],
+				'receiverName' => $data[ 'beneficiario' ] [ 'nombre' ],
+				'receiverRfc' => $data[ 'beneficiario' ][ 'rfc' ],
+				'receiverBank' => $data[ 'beneficiario' ][ 'clabe' ],
+			];
+			$mov2 = $this->AddMovement ( $args, $env );
+			if ( isset( $mov2[ 0 ] ) ) {
+				return $mov2;
+			}
+			return $this->getResponse ( [ 'status' => 'correcto', "message" => $message ] );
+		}
 		/**
 		 * Webhook para obtener la entrada de recursos en la cuenta de STP
 		 * @return ResponseInterface|bool
 		 */
-		public function wbAbonos (): ResponseInterface|bool {
+		public function wbAbonos (): mixed {
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return ( $data );
 			}
@@ -81,25 +151,26 @@
 			$stp = new StpModel();
 			$vClabe = $stp->validateClabe ( $clabeDestino, $this->env );
 			if ( $vClabe[ 0 ] === FALSE ) {
-				$this->rollback ( $input, $this->env );
+				var_dump ( $vClabe );
+				return $this->rollback ( $input, $vClabe[ 1 ], $this->env );
 			}
 			$op = new OperationModel ();
 			$operation = $op->searchOperations ( $descriptor, $refNumber, $trackingKey, $this->env );
-			if ( $operation[ 0 ] === FALSE ) {
-				$this->rollback ( $input, $this->env );
+			if ( isset( $operation[ 0 ] ) ) {
+				var_dump ( $operation );
+				return $this->rollback ( $input, $operation[ 1 ], $this->env );
 			}
 			switch ( $operation[ 'origin' ] ) {
 				case 'conciliacion':
-					$do= $this->makeConciliation($operation, $input, $this->env);
+					$do = $this->makeConciliation ( $operation, $input, $this->env );
 					break;
 				case 'conciliacionCPlus':
-					$do= $this->makeConciliationPlus($operation, $input, $this->env);
+					$do = $this->makeConciliationPlus ( $operation, $input, $this->env );
 					break;
 				case 'dispercionPlus':
-					$do= $this->makeDispertion($operation, $input, $this->env);
+					$do = $this->makeDispertion ( $operation, $input, $this->env );
 					break;
 			}
-			
 			var_dump ( $operation );
 			die();
 			if ( !count ( $operation ) > 0 ) {
@@ -118,32 +189,6 @@
 		public function doConciliationPlus ( array $operation, string $env ) {
 			$conc = new ConciliacionModel();
 			
-		}
-		public function rollback ( mixed $input, string $env ) {
-			$args = [
-				'operationNumber' => $input[ 'reference_number' ],
-				'trakingKey' => $input[ 'tracking_key' ],
-				'opId' => $input[ 'speid_id' ],
-				'amount' => $input[ 'amount' ],
-				'descriptor' => $input[ 'descriptor' ],
-				'sourceBank' => $input[ 'sourceBank' ],
-				'receiverBank' => $input[ 'receiverBank' ],
-				'transactionDate' => $input[ 'transactionDate' ],
-				'sourceRfc' => $input[ 'sourceRfc' ] ?? NULL,
-				'receiverRfc' => $input[ 'receiverRfc' ] ?? NULL,
-			];
-			$this->AddMovement ( $args, $env );
-			return $input;
-		}
-		public function AddMovement ( array $args, string $env = NULL ) {
-			$op = new OperationModel ();
-			$res = $op->AddMovement ( $args, $env );
-			var_dump ( $res );
-			return $this->serverError ( $res[ 1 ], $res[ 1 ] );
-			$binnacle [ 'L' ] = [ 'id_c' => 1, 'id' => 1, 'module' => 3, 'code' => $res[ 'code' ],
-				'in' => json_encode ( $args ),
-				'out' => json_encode ( $res ) ];
-			$this->Binnacle ( $binnacle, 0, [ 3 ], 3, $this->environment );
 		}
 		public function makeConciliation ( array $operation, array $input, string $env = NULL ) {
 		}

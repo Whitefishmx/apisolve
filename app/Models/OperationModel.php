@@ -2,9 +2,6 @@
 	
 	namespace App\Models;
 	
-	use CodeIgniter\Database\Exceptions\DataException;
-	use Exception;
-	
 	class OperationModel extends BaseModel {
 		/**
 		 * Busca que tipo de operación es la que se va a realizar según el número de referencia ingresado
@@ -38,10 +35,10 @@ UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id, 'concilia
       UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id,'dispercionPlus' AS 'origin'
             FROM $this->base.dispersions_plus
             WHERE status = 1 AND ($wh3)";
-			
+//			var_dump (query);
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () < 1 ) {
-				return [ FALSE, 'No se encontró una operacion el folio enviado'  ];
+				return [ FALSE, 'No se encontró una operacion el folio proporcionado' ];
 			}
 			$res = $res->getResultArray ();
 			return count ( $res ) > 0 ? $res[ 0 ] : $res;
@@ -105,7 +102,7 @@ UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id, 'concilia
 			//				}
 			//			}
 		}
-		public function AddMovement ( array $args, string $env = NULL ): string {
+		public function AddMovement ( array $args, string $env = NULL ): array {
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
@@ -118,33 +115,34 @@ UNION SELECT id, reference_number AS 'opNumber', folio AS 'folio', id, 'concilia
                                  source_bank, receiver_bank, source_rfc, receiver_rfc,
                                  source_clabe, receiver_clabe, transaction_date) VALUES ( ";
 			$query .= $args[ 'operationNumber' ] === NULL ? "NULL, " : "'{$args['operationNumber']}', ";
-			$query .= $args[ 'trakingKey' ] === NULL ? "NULL, " : "'{$args['trakingKey']}', ";
+			$query .= $args[ 'trackingKey' ] === NULL ? "NULL, " : "'{$args['trackingKey']}', ";
 			$query .= "'{$args['opId']}', '{$args['amount']}', '{$args['descriptor']}',
 					'{$sourceBank['bnk_code']}', '{$receiverBank['bnk_code']}', ";
 			$query .= $args[ 'sourceRfc' ] === NULL ? "NULL, " : "'{$args['sourceRfc']}', ";
 			$query .= $args[ 'receiverRfc' ] === NULL ? "NULL, " : "'{$args['receiverRfc']}', ";
 			$query .= "'{$args['sourceBank']}', '{$args['receiverBank']}', '$fecha') ";
 			//Se verífica que se pueda insertar la información
-			try {
-				$res = $this->db->query ( $query );
-			} catch ( Exception $e ) {
-				return 'hola';
+			$this->db->query ( $query );
+			if ( $this->db->affectedRows () === 0 ) {
+				return [ FALSE, 'No se logro insertar el movimiento' ];
 			}
-			if ( !$res ) {
-				throw new Exception( 'error in query' );
-				return FALSE;
-			}
-			//En caso correcto
 			return [ "code" => 200, "result" => $this->db->insertID () ];
 		}
-		public function getBankByClabe ( string $clabe, string $env = NULL ) {
+		/**
+		 * @param string      $clabe
+		 * @param string|NULL $env
+		 *
+		 * @return mixed
+		 */
+		public function getBankByClabe ( string $clabe, string $env = NULL ): mixed {
 			//Se declara el ambiente a utilizar
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$query = "SELECT * FROM $this->base.cat_bancos WHERE bnk_clave = '{$clabe}'";
+			$query = "SELECT * FROM $this->base.cat_bancos WHERE bnk_clave = '$clabe'";
 			if ( $result = $this->db->query ( $query ) ) {
 				$result = $result->getResultArray ();
 				return count ( $result ) > 0 ? $result[ 0 ] : $result;
 			}
+			return $result->getResultArray ();
 		}
 	}

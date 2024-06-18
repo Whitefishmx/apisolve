@@ -53,7 +53,7 @@
 			return $this->getResponse ( [ 'error' => 400, 'description' => 'Datos de petición incorrectos', 'reason' => $reason ], ResponseInterface::HTTP_BAD_REQUEST );
 		}
 		public function serverError ( $description, $reason ): ResponseInterface {
-			return $this->getResponse ( [ 'error' => 500, 'description' => $description, 'reason' => $reason ], ResponseInterface::HTTP_BAD_REQUEST );
+			return $this->getResponse ( [ 'error' => 500, 'description' => $description, 'reason' => $reason ], ResponseInterface::HTTP_INTERNAL_SERVER_ERROR );
 		}
 		/**
 		 * Preparar las fechas para los filtros

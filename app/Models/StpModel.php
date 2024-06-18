@@ -23,12 +23,12 @@
 			$bancoBeneficiario = $this->getBankByClave ( $arg[ 'beneficiario' ][ 'clabe' ], $env );
 			$data = [
 				'bancoReceptor' => $bancoBeneficiario[ 'bnk_code' ],
-				'empresa' => $arg[ 'ordenante' ][ 'empresa' ],
+				'empresa' => $arg[ 'empresa' ],
 				'fechaOperacion' => '',
 				'folioOrigen' => '',
 				'claveRastreo' => $arg[ 'folio' ],
 				'bancoOrigen' => $bancoOrdenante[ 'bnk_code' ],
-				'monto' => strval ( $arg[ 'monto' ] ),
+				'monto' => number_format ( strval ( $arg[ 'monto' ] ), 2, '.' ),
 				'tipoPago' => 1,
 				'tipoCuentaOrigen' => 40,
 				'nombreOrigen' => $arg[ 'ordenante' ][ 'nombre' ],
@@ -59,6 +59,7 @@
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||' . $cadenaOriginal . '||';
+			//			var_dump ( $cadenaOriginal );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
 			$body = [
 				"claveRastreo" => $data[ 'claveRastreo' ],
@@ -79,6 +80,8 @@
 				"tipoPago" => "{$data[ 'tipoPago' ]}",
 				"firma" => "$cadenaOriginal",
 			];
+			//			var_dump ( $body );
+			//			die(var_dump ($body));
 			return $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
 		}
 		/**

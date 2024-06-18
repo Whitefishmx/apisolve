@@ -82,11 +82,11 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$url = $this->urlSolve . 'assets/factura/factura.php?idfactura=';
-			$query = "SELECT t1.id, t1.status, t3.arteria_clabe AS 'clabeTransferencia', t1.reference_number, t1.folio, t1.invoice_range, t1.entry_money, t1.exit_money,
+			$query = "SELECT t1.id, t1.status, t3.fintech_clabe AS 'clabeTransferencia', t1.reference_number, t1.folio, t1.invoice_range, t1.entry_money, t1.exit_money,
        DATE_FORMAT(FROM_UNIXTIME(t1.payment_date), '%d-%m-%Y') AS 'payment_date', t4.short_name AS 'deudor', t5.short_name AS 'receptor', t4.rfc
 FROM $this->base.conciliation_plus t1
-    INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
-    INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
+    INNER JOIN $this->base.fintech_clabes t2 ON t1.id_client = t2.companie_id
+    INNER JOIN $this->base.fintech_clabes t3 ON t1.id_provider = t3.companie_id
     INNER JOIN $this->base.companies t4 ON t1.id_client = t4.id
     INNER JOIN $this->base.companies t5 ON t1.id_provider = t5.id
 WHERE ( t1.id_client = $id OR t1.id_provider = $id ) AND ( t1.created_at BETWEEN '$from' AND '$to' )";

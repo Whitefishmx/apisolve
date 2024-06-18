@@ -102,10 +102,10 @@ SELECT reference_number AS number FROM $this->base.dispersions_plus WHERE status
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$ids = implode ( ",", $idConciliations );
-			$query = "SELECT t1.*, t2.arteria_clabe AS 'client_clabe', t3.arteria_clabe AS 'provider_clabe'
+			$query = "SELECT t1.*, t2.fintech_clabe AS 'client_clabe', t3.fintech_clabe AS 'provider_clabe'
 FROM $this->base.conciliation_plus t1
-INNER JOIN $this->base.fintech t2 ON t1.id_client = t2.companie_id
-INNER JOIN $this->base.fintech t3 ON t1.id_provider = t3.companie_id
+INNER JOIN $this->base.fintech_clabes t2 ON t1.id_client = t2.companie_id
+INNER JOIN $this->base.fintech_clabes	 t3 ON t1.id_provider = t3.companie_id
 WHERE t1.id IN ($ids) AND t1.status = 1";
 			if ( !$res = $this->db->query ( $query ) ) {
 				return [ FALSE, '1.3 No se logro asignar las conciliaciones a la dispersion' ];
