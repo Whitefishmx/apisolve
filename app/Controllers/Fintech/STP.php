@@ -20,13 +20,24 @@
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
+			
 			$this->environment ( $input );
-			$input[ 'folio' ] = serialize32 ( [ rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 31221 ) ] );
-			$input[ 'concepto' ] = 'devolucion';
-			$input[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
-			$input[ 'empresa' ] = 'WHITEFISH';
 			$stp = new StpModel();
-			return $this->getResponse ( json_decode ( $stp->sendDispersion ( $input, 'SANDBOX' ), TRUE ) );
+			$beneficiarios = $input[ 'beneficiario' ];
+			$responses = [];
+			for ( $i = 0; $i < count ( $beneficiarios ); $i++ ) {
+				$args[ 'folio' ] = serialize32 ( [ rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 31221 ) ] );
+				$args[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
+				$args[ 'beneficiario' ] =  $beneficiarios[ $i ] ;
+				$args[ 'ordenante' ] = [
+					'clabe' => '646180546900000003',
+					'nombre' => 'WHITEFISH',
+				];
+				//				echo json_encode ($args);
+				//				$responses[]= $args;
+				$responses[] = json_decode ( $stp->sendDispersion ( $args, 'SANDBOX' ), TRUE );
+			}
+			return $this->getResponse ( $responses );
 		}
 		public function testConsulta (): ResponseInterface {
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

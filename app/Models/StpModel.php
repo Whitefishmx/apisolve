@@ -19,16 +19,17 @@
 		public function sendDispersion ( array $arg, string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$url = ( $env == 'SANDBOX' ) ? $this->stpSandbox . 'ordenPago/registra' : $this->stpLive . 'ordenPago/registra';
-			$bancoOrdenante = $this->getBankByClave ( $arg[ 'ordenante' ][ 'clabe' ], $env );
 			$bancoBeneficiario = $this->getBankByClave ( $arg[ 'beneficiario' ][ 'clabe' ], $env );
+			$bancoOrdenante = $this->getBankByClave ( $arg[ 'ordenante' ][ 'clabe' ], $env );
+			helper ( 'tools_helper' );
 			$data = [
 				'bancoReceptor' => $bancoBeneficiario[ 'bnk_code' ],
-				'empresa' => $arg[ 'empresa' ],
+				'empresa' => 'WHITEFISH',
 				'fechaOperacion' => '',
 				'folioOrigen' => '',
 				'claveRastreo' => $arg[ 'folio' ],
 				'bancoOrigen' => $bancoOrdenante[ 'bnk_code' ],
-				'monto' => number_format ( strval ( $arg[ 'monto' ] ), 2, '.' ),
+				'monto' => number_format ( strval ( $arg[ 'beneficiario' ][ 'monto' ] ), 2 ),
 				'tipoPago' => 1,
 				'tipoCuentaOrigen' => 40,
 				'nombreOrigen' => $arg[ 'ordenante' ][ 'nombre' ],
@@ -43,7 +44,7 @@
 				'nombreBenef2' => '',
 				'cuentaBenef2' => '',
 				'rfcBenef2' => '',
-				'concepto' => $arg[ 'concepto' ],
+				'concepto' => $arg[ 'beneficiario' ][ 'concepto' ],
 				'concepto2' => '',
 				'claveCat1' => '',
 				'claveCat2' => '',
@@ -59,7 +60,7 @@
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||' . $cadenaOriginal . '||';
-			//			var_dump ( $cadenaOriginal );
+			saveLog ( 1, 1, 1, 200, json_encode ( [ 'cadenaOriginal' => $data ] ), NULL, $env );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
 			$body = [
 				"claveRastreo" => $data[ 'claveRastreo' ],
@@ -80,9 +81,9 @@
 				"tipoPago" => "{$data[ 'tipoPago' ]}",
 				"firma" => "$cadenaOriginal",
 			];
-			//			var_dump ( $body );
-			//			die(var_dump ($body));
-			return $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
+			$res = $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
+			saveLog ( 1, 1, 1, 200, json_encode ( $body ), $res, $env );
+			return $res;
 		}
 		/**
 		 * Obtener los datos del banco según clabe bancaria
@@ -156,6 +157,13 @@
 			fclose ( $fp );
 			return openssl_get_privatekey ( $privateKey, $this->passphrase );
 		}
+		/**
+		 * Obtiene el ID de una compañía por su clabe bancaria
+		 * @param string $clabe Clabe bancaria a buscar
+		 * @param string $env Ambiente en el que se va a trabajar
+		 *
+		 * @return array Resultados
+		 */
 		public function validateClabe ( string $clabe, string $env = 'SANDBOX' ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
