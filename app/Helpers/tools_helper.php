@@ -1,4 +1,7 @@
 <?php
+	
+	use App\Models\DataModel;
+	
 	/**
 	 * Genera un número de operación
 	 *
@@ -33,4 +36,30 @@
 			return TRUE;
 		}
 		return FALSE;
+	}
+	
+	/**
+	 * Permite guardar un log en la base de datos
+	 *
+	 * @param int         $company  id de la compañía
+	 * @param int         $user     id de usuario
+	 * @param int         $function id de función
+	 * @param int         $code     Código de estatus
+	 * @param string      $dataIn   JSON con los datos de entrada
+	 * @param string|null $dataOut  JSON con los resultados
+	 * @param string|NULL $env      Ambiente en el que se va a trabajar
+	 *
+	 * @return bool resultado
+	 */
+	function saveLog ( int $company, int $user, int $function, int $code, string $dataIn, string $dataOut = NULL, string $env = NULL ): bool {
+		$model = new DataModel();
+		$data = [
+			'company' => $company,
+			'user' => $user,
+			'function' => $function,
+			'code' => $code,
+			'dataIn' => $dataIn,
+			'dataOut' => $dataOut,
+		];
+		return $model->saveLogs ( $data, $env );
 	}

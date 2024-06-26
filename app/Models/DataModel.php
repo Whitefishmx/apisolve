@@ -2,6 +2,13 @@
 	
 	namespace App\Models;
 	class DataModel extends BaseModel {
+		/**
+		 * Obtiene el código postal de acuerdo a los argumentos ingresados (ciudad, estado)
+		 * @param array       $args Argumentos de búsqueda
+		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 *
+		 * @return array|null  resultados
+		 */
 		public function getCPInfo ( array $args, string $env = NULL ): ?array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
@@ -25,6 +32,14 @@
 			}
 			return $res->getResultArray ();
 		}
+		/**
+		 * Obtiene el regimen de acuerdo a la clave
+		 * @param string      $clave Clave
+		 * @param int|NULL    $limit Limite de resultados
+		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 *
+		 * @return array|null Resultados
+		 */
 		public function getRegimen ( string $clave, int $limit = NULL, string $env = NULL ): ?array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
@@ -40,5 +55,25 @@
 				return $res->getRowArray ();
 			}
 			return $res->getResultArray ();
+		}
+		/**
+		 * Guarda un log en la base de datos
+		 * @param array       $args Información a guardar
+		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 *
+		 * @return bool Respuesta si logro guardar
+		 */
+		public function saveLogs ( array $args, string $env = NULL): bool {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$query = "INSERT INTO $this->base.logs ( id_company, id_user, task, code, data_in, result )
+VALUES ( {$args['company']}, {$args['user']}, {$args['function']}, {$args['code']}, ";
+			$query .= $args['dataIn'] === NULL ? " NULL, " : "'{$args['dataIn']}', ";
+			$query .= $args['dataOut'] === NULL ? " NULL ) " : ", '{$args['dataOut']}' ) ";
+			$this->db->query ( $query );
+			if ( $this->db->affectedRows () === 0 ) {
+				return FALSE;
+			}
+			return TRUE;
 		}
 	}
