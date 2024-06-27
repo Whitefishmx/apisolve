@@ -20,7 +20,6 @@
 				return ( $data );
 			}
 			$input = $this->getRequestInput ( $this->request );
-			
 			$this->environment ( $input );
 			$stp = new StpModel();
 			$beneficiarios = $input[ 'beneficiario' ];
@@ -28,7 +27,7 @@
 			for ( $i = 0; $i < count ( $beneficiarios ); $i++ ) {
 				$args[ 'folio' ] = serialize32 ( [ rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 31221 ) ] );
 				$args[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
-				$args[ 'beneficiario' ] =  $beneficiarios[ $i ] ;
+				$args[ 'beneficiario' ] = $beneficiarios[ $i ];
 				$args[ 'ordenante' ] = [
 					'clabe' => '646180546900000003',
 					'nombre' => 'WHITEFISH',
@@ -37,6 +36,7 @@
 				//				$responses[]= $args;
 				$responses[] = json_decode ( $stp->sendDispersion ( $args, 'SANDBOX' ), TRUE );
 			}
+			saveLog ( 1, 1, 2, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $responses ) ), $this->env );
 			return $this->getResponse ( $responses );
 		}
 		public function testConsulta (): ResponseInterface {
@@ -59,10 +59,11 @@
 			}
 			$input = $this->getRequestInput ( $this->request );
 			$this->environment ( $input );
-			if ( !createLog ( "wbDispersion_stp_$this->env", json_encode ( $input ) ) ) {
+			$res = [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ];
+			if ( !saveLog ( 1, 1, 3, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $res ) ), $this->env ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
-			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
+			return $this->getResponse ( $res );
 		}
 		public function AddMovement ( array $args, string $env = NULL ): array {
 			$op = new OperationModel ();
@@ -143,10 +144,39 @@
 			}
 			$input = $this->getRequestInput ( $this->request );
 			$this->environment ( $input );
-			//Se crea el log con los datos que se recibieron por el webhook
-			if ( !createLog ( "wbAbonos_stp_$this->env", json_encode ( $input ) ) ) {
+			$res = [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ];
+			$code = 200;
+			if ( strval ( $input[ 'cuentaBeneficiario' ] ) === '646180546900000029' ) {
+				$res = [ "mensaje" => "devolver", "id" => $input[ 'id' ], "desc" => "Tipo de opera erron" ];
+				$code = 400;
+			}
+			if ( !saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $res ) ), $this->env ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
+//			return $this->getResponse ( $res, $code );
+//			die();
+			if ( !function_exists ( 'pcntl' ) ) {
+				return $this->serverError ( 'Proceso incompleto', 'La extensión PCNTL no está disponible en este sistema' );
+			}
+			$pid = pcntl_fork ();
+			if ( $pid == -1 ) {
+				// Error al crear el proceso hijo
+				return $this->serverError ('Proceso incompleto', 'No se pudo crear el proceso hijo');
+			} else if ( $pid ) {
+				// Este es el proceso padre
+//				echo "Este es el proceso padre, PID del hijo: $pid\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Este es el proceso padre, PID del hijo: '.$pid] ) ), NULL, $this->env );
+			} else {
+				// Este es el proceso hijo
+//				echo "Este es el proceso hijo\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Este es el proceso hijo'] ) ), NULL, $this->env );
+				// Aquí puedes poner el código que quieres que el hijo ejecute
+				sleep ( 10 ); // Simula una tarea que toma tiempo
+//				echo "Proceso hijo terminado\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Proceso hijo terminado'] ) ), NULL, $this->env );
+				exit( 0 );
+			}
+			
 			//validar que se tenga la descripcion o referencia numerica para poder validar
 			$descriptor = $input[ 'descriptor' ] ?? NULL;
 			$refNumber = $input[ 'reference_number' ] ?? NULL;
@@ -179,11 +209,9 @@
 					$do = $this->makeConciliationPlus ( $operation, $input, $this->env );
 					break;
 				case 'dispercionPlus':
-					$do = $this->makeDispertion ( $operation, $input, $this->env );
+					$do = $this->makeDispersion ( $operation, $input, $this->env );
 					break;
 			}
-			var_dump ( $operation );
-			die();
 			if ( !count ( $operation ) > 0 ) {
 				return $this->getResponse ( $this->rollback ( $input, $this->env ) );
 			}
@@ -199,12 +227,11 @@
 		}
 		public function doConciliationPlus ( array $operation, string $env ) {
 			$conc = new ConciliacionModel();
-			
 		}
 		public function makeConciliation ( array $operation, array $input, string $env = NULL ) {
 		}
 		public function makeConciliationPlus ( array $operation, array $input, string $env ) {
 		}
-		public function makeDispertion ( mixed $operation, mixed $input, string $env ) {
+		public function makeDispersion ( mixed $operation, mixed $input, string $env ) {
 		}
 	}

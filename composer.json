@@ -18,7 +18,8 @@
         "ext-simplexml": "*",
         "ext-json": "*",
       "ext-openssl": "*",
-      "ext-curl": "*"
+      "ext-curl": "*",
+      "ext-pcntl": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",

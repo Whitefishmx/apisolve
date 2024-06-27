@@ -1,11 +1,14 @@
 <?php
 	
 	namespace App\Models;
+	header ( 'Content-Type: text/html; charset=utf-8' );
+	
 	class DataModel extends BaseModel {
 		/**
 		 * Obtiene el código postal de acuerdo a los argumentos ingresados (ciudad, estado)
+		 *
 		 * @param array       $args Argumentos de búsqueda
-		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 * @param string|NULL $env  Ambiente en el que se va a trabajar
 		 *
 		 * @return array|null  resultados
 		 */
@@ -34,9 +37,10 @@
 		}
 		/**
 		 * Obtiene el regimen de acuerdo a la clave
+		 *
 		 * @param string      $clave Clave
 		 * @param int|NULL    $limit Limite de resultados
-		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 * @param string|NULL $env   Ambiente en el que se va a trabajar
 		 *
 		 * @return array|null Resultados
 		 */
@@ -58,18 +62,21 @@
 		}
 		/**
 		 * Guarda un log en la base de datos
+		 *
 		 * @param array       $args Información a guardar
-		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 * @param string|NULL $env  Ambiente en el que se va a trabajar
 		 *
 		 * @return bool Respuesta si logro guardar
 		 */
-		public function saveLogs ( array $args, string $env = NULL): bool {
+		public function saveLogs ( array $args, string $env = NULL ): bool {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "INSERT INTO $this->base.logs ( id_company, id_user, task, code, data_in, result )
 VALUES ( {$args['company']}, {$args['user']}, {$args['function']}, {$args['code']}, ";
-			$query .= $args['dataIn'] === NULL ? " NULL, " : "'{$args['dataIn']}', ";
-			$query .= $args['dataOut'] === NULL ? " NULL ) " : ", '{$args['dataOut']}' ) ";
+			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '" . utf8_encode ($args['dataIn']) . "', ";
+			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '" . utf8_encode ( $args[ 'dataOut' ] ) . "' ) ";
+			//			var_dump ($query);
+			//			die();
 			$this->db->query ( $query );
 			if ( $this->db->affectedRows () === 0 ) {
 				return FALSE;
