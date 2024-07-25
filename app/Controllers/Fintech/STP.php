@@ -147,13 +147,13 @@
 			$res = [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ];
 			$code = 200;
 			if ( strval ( $input[ 'cuentaBeneficiario' ] ) === '646180546900000029' ) {
-				$res = [ "mensaje" => "devolver", "id" => $input[ 'id' ], "desc" => "Tipo de opera erron" ];
+				$res = [ "mensaje" => "devolver", "id" => 16, "desc" => "Tipo de opera erron" ];
 				$code = 400;
 			}
 			if ( !saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $res ) ), $this->env ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
-//			return $this->getResponse ( $res, $code );
+			return $this->getResponse ( $res, $code );
 //			die();
 			if ( !function_exists ( 'pcntl' ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'La extensión PCNTL no está disponible en este sistema' );
