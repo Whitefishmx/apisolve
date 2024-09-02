@@ -3,7 +3,7 @@
 	namespace App\Models;
 	class ConciliacionModel extends BaseModel {
 		public string $urlSolve = "https://compensapay.local/";
-			/**
+		/**
 		 * Crear conciliaciones a partir de los grupos generados en la carga de CFDI
 		 *
 		 * @param array       $args arreglo con los datos necesarios para generar
@@ -68,6 +68,20 @@ VALUES ('{$row['insertedId']}-$range', '{$companies['client']['id']}', '{$compan
 			}
 			$companies[ 'provider' ] = $res->getResultArray ()[ 0 ];
 			return $companies;
+		}
+		/**
+		 * Obtener todas las conciliaciones sencillas
+		 * @param string      $from Fecha desde donde comenzar a buscar
+		 * @param string      $to Fecha hasta donde buscar
+		 * @param mixed       $id Id de la empresa que se quiere obtener las conciliaciones
+		 * @param string|NULL $env Ambiente en el que se va a trabajar
+		 *
+		 * @return void
+		 */
+		public function getConciliations ( string $from, string $to, mixed $id, string $env = NULL ) {
+			$this->environment = $env === NULL ? $this->environment : $env;
+			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
+			$query = "";
 		}
 		/**
 		 * Obtiene las Conciliaciones Plus de una empresa

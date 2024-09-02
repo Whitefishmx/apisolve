@@ -68,15 +68,12 @@
 		 *
 		 * @return bool Respuesta si logro guardar
 		 */
-		public function saveLogs ( array $args, string $env = NULL ): bool {
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$query = "INSERT INTO $this->base.logs ( id_company, id_user, task, code, data_in, result )
-VALUES ( {$args['company']}, {$args['user']}, {$args['function']}, {$args['code']}, ";
-			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '" . utf8_encode ($args['dataIn']) . "', ";
-			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '" . utf8_encode ( $args[ 'dataOut' ] ) . "' ) ";
-			//			var_dump ($query);
-			//			die();
+		public function saveLogs ( array $args ): bool {
+			$query = "INSERT INTO logs ( id_user, task, code, data_in, result )
+VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
+			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '" . $args['dataIn'] . "', ";
+			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '" .  $args[ 'dataOut' ] . "' ) ";
+			$this->db->query ( 'SET NAMES utf8mb4' );
 			$this->db->query ( $query );
 			if ( $this->db->affectedRows () === 0 ) {
 				return FALSE;

@@ -9,9 +9,9 @@
 	class Auth extends PagesStatusCode {
 		/**
 		 * Método para poder autenticarse y obtener un nuevo Token
-		 * @return ResponseInterface responde error o el nuevo token
+		 * @return ResponseInterface|array responde error o el nuevo token
 		 */
-		public function login (): ResponseInterface {
+		public function login (): ResponseInterface|array {
 			if ( $data = $this->verifyRules (  'GET', $this->request,NULL ) ) {
 				return ( $data );
 			}
@@ -28,23 +28,21 @@
 				],
 			];
 			if ( !$this->validateRequest ( $input, $rules, $errors ) ) {
-				return $this->getResponse ( [ 'error' => 400, 'description' => 'Inicio de sesión incorrecto', 'reason' => 'Usuario y/o contraseña incorrectos.' ],
-					ResponseInterface::HTTP_BAD_REQUEST );
+				return $this->errDataSupplied ('Usuario y/o contraseña incorrectos.' );
 			}
-			return $this->getJWTForUser ( $input[ 'usuario' ], $this->env );
+			return $this->getJWTForUser ( $input[ 'usuario' ] );
 		}
 		/**
 		 * Método para obtener un nuevo token
 		 *
 		 * @param string $user Usuario al que se le generara el token
-		 * @param        $env
 		 *
 		 * @return ResponseInterface
 		 */
-		private function getJWTForUser ( string $user, $env ): ResponseInterface {
+		private function getJWTForUser ( string $user ): ResponseInterface {
 			try {
 				$model = new UserModel();
-				$user = $model->authenticateToken ( $user, $env );
+				$user = $model->authenticateToken ( $user );
 				helper ( 'jwt' );
 				$jwt = getSignedJWTForUser ( $user[ 'email' ] );
 				return $this->getResponse ( [
@@ -55,5 +53,31 @@
 					'error' => $e->getMessage (),
 				], ResponseInterface::HTTP_UNAUTHORIZED );
 			}
+		}
+		public function signIn(): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				$this->logResponse ( 1 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$user = new UserModel();
+			helper ( 'crypt_helper' );
+			$res = $user->validateAccess ( $this->input[ 'email' ], $this->input[ 'password' ] = ( passwordEncrypt (
+				$this->input[ 'password' ])	), intval ($this->input[ 'platform'] ));
+			if ( !$res[ 0 ] ) {
+				$this->errDataSupplied ( 'Las credenciales ingresadas son incorrectas' );
+//				$this->logResponse ( 1 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$session = session ();
+			$session->set ( 'logged_in', TRUE );
+			$session->set ( 'user', $res[ 1 ]['id'] );
+			$this->errCode = 200;
+			$this->responseBody = [
+				'error'       => 0,
+				'user'=>  ['id'=>$res[1]['id'], 'permissions'=>$res[1]['permissions']],
+				'logged_in' => TRUE];
+//			$this->logResponse ( 1 );
+			return $this->getResponse ( $this->responseBody );
 		}
 	}

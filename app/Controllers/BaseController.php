@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpMultipleClassDeclarationsInspection */
+<?php /** @noinspection PhpDeprecationInspection */
+	
+	/** @noinspection PhpMultipleClassDeclarationsInspection */
 	
 	namespace App\Controllers;
 	
@@ -7,11 +9,14 @@
 	use CodeIgniter\HTTP\IncomingRequest;
 	use CodeIgniter\HTTP\RequestInterface;
 	use CodeIgniter\HTTP\ResponseInterface;
-	use CodeIgniter\Validation\Exceptions\ValidationException;
-	use Config\Services;
 	use Psr\Log\LoggerInterface;
 	
 	abstract class BaseController extends Controller {
+		public string $env          = 'LIVE';
+		public int    $user         = 2;
+		public int    $errCode      = 200;
+		public array  $responseBody = [];
+		public mixed  $input        = NULL;
 		/**
 		 * Instance of the main Request object.
 		 *
@@ -25,8 +30,12 @@
 		 *
 		 * @var array
 		 */
-		protected $helpers = [];
+		protected $helpers = [ 'tools_helper' ];
 		public function __construct () {
+			$this->responseBody = [
+				'error'       => $this->errCode,
+				'description' => 'Sesión invalida',
+				'reason'      => 'la sesión a caducado, vuelve a iniciar sesión' ];
 		}
 		/**
 		 * Be sure to declare properties for any property fetch you initialized.
@@ -47,8 +56,16 @@
 			// Preload any models, libraries, etc, here.
 			// E.g.: $this->session = \Config\Services::session();
 		}
-		public function getResponse ( array $responseBody, int $code = ResponseInterface::HTTP_OK ): ResponseInterface {
-			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )->setHeader ( 'Access-Control-Allow-Origin', '*' );
+		public function logResponse ( int $function, array $inputData = NULL, array $responseData = NULL ): bool {
+			return saveLog ( $this->user, $function, $this->errCode, json_encode ( $inputData ?? $this->input,
+				JSON_UNESCAPED_UNICODE ), json_encode ( $responseData ?? $this->responseBody, JSON_UNESCAPED_UNICODE ), $this->env );
+		}
+		public function getResponse ( array $responseBody, int $code = NULL ): ResponseInterface {
+			$code = $code === NULL ? $this->errCode : $code;
+			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )
+			                      ->setHeader ( 'Access-Control-Allow-Origin', '*' )
+			                      ->setHeader ( 'Content-Type', 'application/json' )
+			                      ->setContentType ( 'application/json' );
 		}
 		/**
 		 * @param IncomingRequest $request
@@ -56,7 +73,12 @@
 		 * @return array|bool|float|int|mixed|object|string|null
 		 */
 		public function getRequestInput ( IncomingRequest $request ): mixed {
-			$input = $request->getPost ();
+			$method = strtolower ( $request->getMethod () );
+			if ( $method === 'post' ) {
+				$input = $request->getPost ();
+			} else {
+				$input = $request->getGet ();
+			}
 			if ( empty( $input ) ) {
 				$input = json_decode ( $request->getBody (), TRUE );
 			}
@@ -64,25 +86,13 @@
 		}
 		public function getGetRequestInput ( IncomingRequest $request ): mixed {
 			$input = $request->getPostGet ();
-//			$input = $request->getPost ();
+			//			$input = $request->getPost ();
 			if ( empty( $input ) ) {
 				$input = json_decode ( $request->getBody (), TRUE );
 			}
 			return $input;
 		}
-		public function validateRequest ( $input, $rules, array $messages = [] ): bool {
-			$this->validator = Services::validation ()->setRules ( $rules );
-			if ( is_string ( $rules ) ) {
-				$validation = config ( 'Validation' );
-				if ( !isset( $validation->$rules ) ) {
-					throw ValidationException::forRuleNotFound ( $rules );
-				}
-				if ( !$messages ) {
-					$errorName = $rules . '_errors';
-					$messages = $validation->$errorName ?? [];
-				}
-				$rules = $validation->$rules;
-			}
-			return $this->validator->setRules ( $rules, $messages )->run ( $input );
+		public function environment ( mixed $env ): void {
+			$this->env = isset( $env[ 'environment' ] ) ? strtoupper ( $env[ 'environment' ] ) : 'SANDBOX';
 		}
 	}

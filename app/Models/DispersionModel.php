@@ -127,11 +127,11 @@ WHERE t1.id IN ($ids) AND t1.status = 1";
 		public function getDispersionesPlus ( string $folio, int $numeric, string $from, string $to, int $company, string $env = NULL ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$query = "SELECT t1.id, t1.id_company, t1.status, t1.reference_number, t1.folio, t2.arteria_clabe AS 'clabe',
+			$query = "SELECT t1.id, t1.id_company, t1.status, t1.reference_number, t1.folio, t2.clabe,
        t1.balance_needed, t1.balance_before, t1.balance_after, DATE_FORMAT(FROM_UNIXTIME(t1.created_at), '%d-%m-%Y') AS 'created_at',
        DATE_FORMAT(FROM_UNIXTIME(t1.updated_at), '%d-%m-%Y') AS 'updated_at'
 FROM $this->base.dispersions_plus t1
-    INNER JOIN $this->base.fintech t2 ON t2.companie_id = t1.id_company
+    INNER JOIN $this->base.bank_clabes t2 ON t2.company = t1.id_company
 WHERE t1.id_company = $company AND ( t1.created_at BETWEEN '$from' AND '$to') ";
 			if ( $folio != NULL ) {
 				$query .= "AND t1.folio LIKE '%$folio%'";

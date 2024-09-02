@@ -4,7 +4,6 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php/$1 [L]
-Header set Access-Control-Allow-Origin "*"
 <IfModule mod_deflate.c>
   # Compress HTML, CSS, JavaScript, Text, XML and fonts
   AddOutputFilterByType DEFLATE application/javascript
@@ -30,7 +29,7 @@ Header set Access-Control-Allow-Origin "*"
   AddOutputFilterByType DEFLATE text/xml
 
   # Level of compression (highest compression level)
-  DeflateCompressionLevel 9
+  # DeflateCompressionLevel 9
 
   # Make sure proxies don't deliver the wrong content
    Header append Vary User-Agent env=!dont-vary

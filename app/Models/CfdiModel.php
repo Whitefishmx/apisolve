@@ -262,8 +262,10 @@ WHERE (";
 						$id = explode ( '-', $value[ 'invoice_range' ] );
 						$where .= "t1.id BETWEEN  $id[0] AND $id[1] OR ";
 					}
+					$where .= ' 1 = 1 OR';
 					$where = substr ( $where, 0, -3 );
 					$resQuery = $query2 . $where . $query2W;
+					//  die(var_dump ($resQuery));
 					if ( !$res = $this->db->query ( $resQuery ) ) {
 						return [ FALSE, 'No se encontró información de conciliaciones' ];
 					}

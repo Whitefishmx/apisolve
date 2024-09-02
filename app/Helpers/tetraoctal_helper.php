@@ -77,7 +77,7 @@
 	/**
 	 * Genera un serial con cifras en base32 a partir de un arreglo con números en base10
 	 *
-	 * @param array $args arreglo en base10
+	 * @param array $data
 	 *
 	 * @return string serial en base32
 	 */

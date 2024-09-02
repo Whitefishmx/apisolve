@@ -26,23 +26,22 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => 'root',
-        'password'     => '123456',
+        'hostname'     => '',
+        'username'     => '',
+        'password'     => '',
         'database'     => '',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
         'DBDebug'      => true,
         'charset'      => 'utf8',
-        'DBCollat'     => 'utf8_general_ci',
+        'DBCollat'     => 'utf8mb4_unicode_ci',
         'swapPre'      => '',
         'encrypt'      => false,
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],
         'port'         => 3306,
-        'numberNative' => false,
     ];
 
     /**

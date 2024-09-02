@@ -51,15 +51,14 @@
 	 *
 	 * @return bool resultado
 	 */
-	function saveLog ( int $company, int $user, int $function, int $code, string $dataIn, string $dataOut = NULL, string $env = NULL ): bool {
+	function saveLog ( int $user, int $function, int $code, string $dataIn, string $dataOut = NULL ): bool {
 		$model = new DataModel();
 		$data = [
-			'company' => $company,
 			'user' => $user,
-			'function' => $function,
+			'task' => $function,
 			'code' => $code,
 			'dataIn' => $dataIn,
 			'dataOut' => $dataOut,
 		];
-		return $model->saveLogs ( $data, $env );
+		return $model->saveLogs ( $data );
 	}

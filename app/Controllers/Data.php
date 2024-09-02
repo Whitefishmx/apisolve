@@ -35,7 +35,7 @@
 			}
 			$input = $this->getGetRequestInput ( $this->request );
 			if ( !isset( $input[ 'cp' ] ) && !isset( $input[ 'county' ] ) && !isset( $input[ 'state' ] ) ) {
-				return $this->errDataSuplied ( 'Debe incluir al menos un elemento (C.P o Estado o Ciudad)' );
+				return $this->errDataSupplied ( 'Debe incluir al menos un elemento (C.P o Estado o Ciudad)' );
 			}
 			$this->environment ( $input );
 			$dat = new DataModel();

@@ -2,35 +2,19 @@
 	
 	namespace App\Models;
 	
-	use CodeIgniter\Model;
 	use Exception;
-	use CodeIgniter\Database\ConnectionInterface;
 	
-	class UserModel extends Model {
-		protected $db;
-		private string $environment = '';
-		private string $dbsandbox = '';
-		private string $dbprod = '';
-		private string $base = '';
-		public function __construct () {
-			parent::__construct ();
-			require 'conf.php';
-			$this->base = $this->environment === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$this->db = \Config\Database::connect ( 'default' );
-		}
+	class UserModel extends BaseModel {
 		/**
 		 * Función para obtener la información de un usuario con acceso a token para validar el inicio de sesión.
 		 *
-		 * @param string      $user Username a buscar
-		 * @param string|NULL $env  Ambiente en que se va a trabajar
+		 * @param string $user Username a buscar
 		 *
 		 * @return array|mixed error o datos de usuario
+		 * @throws Exception
 		 */
-		public function authenticateToken ( string $user, string $env = NULL ): mixed {
-			//Se declara el ambiente a utilizar
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$query = "SELECT * FROM $this->base.users WHERE user = '$user' and token = '1' and active = '1'";
+		public function authenticateToken ( string $user ): mixed {
+			$query = "SELECT * FROM users WHERE nickname = '$user' and token = '1' and active = '1'";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return $res->getResultArray ()[ 0 ];
@@ -43,17 +27,14 @@
 		/**
 		 * Función para obtener la información de un usuario proporcionando un correo electrónico
 		 *
-		 * @param string      $mail correo electrónico asociado a unn usuario
-		 * @param string|NULL $env  Ambiente en que se va a trabajar
+		 * @param string $mail correo electrónico asociado a unn usuario
 		 *
 		 * @return array error o datos de usuario
 		 * @throws Exception
 		 */
-		public function findUserByEmailAddress ( string $mail, string $env = NULL ): array {
+		public function findUserByEmailAddress ( string $mail): array {
 			//Se declara el ambiente a utilizar
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->dbsandbox : $this->dbprod;
-			$query = "SELECT * FROM $this->base.users WHERE email = '$mail' and active = 1";
+			$query = "SELECT * FROM users WHERE email = '$mail' and active = 1";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return $res->getResultArray ();
@@ -61,5 +42,25 @@
 				throw new Exception( 'No se encontró usuario con el correo proporcionado' );
 			}
 			throw new Exception( 'Error con la conexión a la fuente de información' );
+		}
+		public function validateAccess ( string $login, string $password, int $platform ): array {
+			$query = "SELECT id FROM users WHERE (nickname = '$login' AND password = '$password') OR (email = '$login' AND password = '$password') AND active = 1";
+			$res = $this->db->query ( $query );
+			if ( $res->getNumRows () === 0 ) {
+				return [ FALSE, $res->getNumRows () ];
+			}
+			$user = $res->getResultArray ()[0]['id'];
+			$query = "SELECT t4.name, t4.session, t4.route, t3.writable
+FROM users t1
+    INNER JOIN platform_access t2 ON t1.id  = t2.id_user AND t2.id_platform = $platform
+    INNER JOIN permissions t3 ON t3.user_id = t1.id
+    INNER JOIN views t4 ON t4.id = t3.view_id
+WHERE t2.id_platform = $platform AND t1.id  = $user";
+			$res = $this->db->query ( $query );
+			if ( $res->getNumRows () === 0 ) {
+				return [ FALSE, $res->getNumRows () ];
+			}
+			$data = ['id' => $user, 'permissions' => $res->getResultArray ()];
+			return [ TRUE, $data];
 		}
 	}

@@ -182,12 +182,12 @@
 			$refNumber = $input[ 'reference_number' ] ?? NULL;
 			$trackingKey = $input[ 'tracking_key' ] ?? NULL;
 			if ( $refNumber === NULL && $descriptor === NULL ) {
-				return $this->errDataSuplied ( 'No hay referencia numerica, descripcion o clave de rastreo' );
+				return $this->errDataSupplied ( 'No hay referencia numerica, descripcion o clave de rastreo' );
 			}
 			//validar que la transferencia sea a una cuenta clabe que pertenezca a una empresa registrada
 			$clabeDestino = $input[ 'receiverBank' ] ?? NULL;
 			if ( $clabeDestino === NULL ) {
-				return $this->errDataSuplied ( 'Falta clabe de banco origen' );
+				return $this->errDataSupplied ( 'Falta clabe de banco origen' );
 			}
 			$stp = new StpModel();
 			$vClabe = $stp->validateClabe ( $clabeDestino, $this->env );

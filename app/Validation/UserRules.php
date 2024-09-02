@@ -5,7 +5,7 @@
 	use App\Models\UserModel;
 	
 	class UserRules {
-		function cifrarAES ( $id ) {
+		function cifrarAES ( $id ): bool|string {
 			$clave = 'D0170rN07T#3r31sN07Tr&';
 			$datos = $id;
 			$metodo = 'aes-256-cbc';
@@ -16,7 +16,8 @@
 			try {
 				$model = new UserModel;
 				$user = $model->authenticateToken ( $data[ 'usuario' ], $data[ 'environment' ] );
-				return $user[ 'password' ] === $this->cifrarAES ( $data[ 'contraseña' ] );
+				helper ( 'crypt_helper' );
+				return $user[ 'password' ] === passwordEncrypt ( $data[ 'contraseña' ] );
 			} catch ( \Exception $e ) {
 				return FALSE;
 			}

@@ -138,6 +138,27 @@
 			}
 			return $this->serverError ( 'No se pueden crear las conciliaciones', 'No se selecciono ningún grupo a conciliar' );
 		}
+		public function getConciliation (): ResponseInterface|bool {
+			if ( $data = $this->verifyRules ( 'GET', $this->request, NULL ) ) {
+                return ( $data );
+            }
+            $input = $this->getGetRequestInput ( $this->request );
+            $this->environment ( $input );
+            $company = $input[ 'company' ] ?? NULL;
+            [ $from, $to ] = $this->dateFilter ( $input, 'from', 'to' );
+            if ( $company === NULL ) {
+                return $this->serverError ( 'Recurso no encontrada', 'Se esperaba el ID de la compañía a buscar' );
+            }
+            $conciliation = new ConciliacionModel();
+            $res = $conciliation->getConciliations ( $from, $to, $company, $this->env );
+			if ( count ( $res ) <= 0 ) {
+				return $this->dataNotFound ();
+			}
+			if ( !$res[ 0 ] ) {
+				return $this->serverError ( 'Error proceso incompleto', $res[ 1 ] );
+			}
+			return $this->getResponse ( $res );
+		}
 		/**
 		 * Regresa las conciliaciones plus de una empresa
 		 * @return  bool|ResponseInterface con la información de las conciliaciones
