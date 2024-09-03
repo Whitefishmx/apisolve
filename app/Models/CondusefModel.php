@@ -156,7 +156,7 @@ ON DUPLICATE KEY UPDATE expiration = '$expiration', active = '1', token = '{$tok
 				return FALSE;
 			}
 			return $res;
-		}
+		 }
 		public function postReuneClaims ( array $args ) {
 			$token = $this->getReuneToken ();
 			if ( $token === FALSE ) {
