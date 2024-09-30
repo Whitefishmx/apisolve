@@ -32,22 +32,28 @@
 		 * @return array error o datos de usuario
 		 * @throws Exception
 		 */
-		public function findUserByEmailAddress ( string $mail ): array {
+		public function findUserByTokenAccess ( string $mail ): array {
 			//Se declara el ambiente a utilizar
-			$query = "SELECT * FROM users WHERE email = '$mail' and active = 1";
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan
+FROM users t1
+    INNER JOIN person t2 ON t1.id = t2.user_id
+    LEFT JOIN employee t3 ON t3.person_id = t2.id
+WHERE (t1.email = '$mail' and t1.active = 1)
+   OR (t1.nickname = '$mail' and t1.active = 1)
+   OR (t2.rfc = '$mail' AND t1.active = 1)";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
-					return $res->getResultArray ();
+					return [ TRUE, $res->getResultArray ()[0] ];
 				}
-				throw new Exception( 'No se encontró usuario con el correo proporcionado' );
+				return [ FALSE, 'No se encontró usuario con el correo proporcionado' ];
 			}
-			throw new Exception( 'Error con la conexión a la fuente de información' );
+			return [ FALSE, 'Error con la conexión a la fuente de información' ];
 		}
 		public function validateAccess ( string $login, string $password, int $platform ): array {
 			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan
 FROM users t1
     INNER JOIN person t2 ON t1.id = t2.user_id
-    INNER JOIN employee t3 ON t3.person_id = t2.id
+    LEFT JOIN employee t3 ON t3.person_id = t2.id
 WHERE (t1.nickname = '$login' AND t1.password = '$password')
    OR (t1.email = '$login' AND t1.password = '$password') ";
 			if ( $platform === 5 ) {
@@ -60,7 +66,7 @@ WHERE (t1.nickname = '$login' AND t1.password = '$password')
 			}
 			$res = $res->getResultArray ();
 			$userid = $res[ 0 ][ 'id' ];
-			$user = $res[0];
+			$user = $res[ 0 ];
 			$query = "SELECT t4.name, t4.session, t4.route, t3.writable
 FROM users t1
     INNER JOIN platform_access t2 ON t1.id  = t2.id_user AND t2.id_platform = $platform

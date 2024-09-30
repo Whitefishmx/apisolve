@@ -3,6 +3,7 @@
 	namespace CodeIgniter\Commands\Utilities\Routes;
 	
 	use CodeIgniter\Router\RouteCollection;
+	use function Sodium\add;
 	
 	/**
 	 * @var RouteCollection $routes
@@ -39,6 +40,7 @@
 	$routes->add ( 'stpDispersion', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
 	//========================|| Session ||========================
 	$routes->add ( 'toSignIn', 'Auth::signIn' /**@uses \App\Controllers\Auth::signIn * */ );
+	$routes->add ('tokenAlive' , 'Auth::tokenAlive' /**@uses \App\Controllers\Auth::tokenAlive  * */);
 	//========================|| Condusef ||========================
 	$routes->add ( 'reuneQueja', 'Condusef::reuneQueja' /**@uses \App\Controllers\Condusef::reuneQueja * */ );
 	$routes->add ( 'reuneReclamacion', 'Condusef::reuneReclamacion' /**@uses \App\Controllers\Condusef::reuneReclamacion * */ );

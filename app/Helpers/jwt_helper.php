@@ -21,14 +21,14 @@
 	/**
 	 * @param string $encodedToken
 	 *
-	 * @return void
+	 * @return array
 	 * @throws Exception
 	 */
-	function validateJWTFromRequest ( string $encodedToken ): void {
+	function validateJWTFromRequest ( string $encodedToken ): array {
 		$key = Services::getSecretKey ();
 		$decodedToken = JWT::decode ( $encodedToken, new Key( $key, 'HS256' ) );
 		$userModel = new UserModel();
-		$userModel->findUserByEmailAddress ( $decodedToken->email );
+		return $userModel->findUserByTokenAccess ( $decodedToken->email );
 	}
 	
 	/**

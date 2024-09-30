@@ -3,6 +3,7 @@
 	namespace App\Controllers;
 	
 	use App\Models\UserModel;
+	use CodeIgniter\Config\Services;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use Exception;
 	
@@ -73,7 +74,7 @@
 			$session->set ( 'logged_in', TRUE );
 			$session->set ( 'user', $res[ 1 ][ 'id' ] );
 			helper ( 'jwt' );
-			$jwt = getSignedJWTForUser ($this->input[ 'email' ], $res[ 1 ][ 'userData' ]['id'] );
+			$jwt = getSignedJWTForUser ( $this->input[ 'email' ], $res[ 1 ][ 'userData' ][ 'id' ] );
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'        => 0,
@@ -84,5 +85,27 @@
 				'logged_in'    => TRUE ];
 			//			$this->logResponse ( 1 );
 			return $this->getResponse ( $this->responseBody );
+		}
+		public function tokenAlive (): ResponseInterface {
+			$authenticationHeader = $this->request->getServer ( 'HTTP_AUTHORIZATION' );
+			try {
+				helper ( 'jwt' );
+				$encodedToken = getJWTFromRequest ( $authenticationHeader );
+				$jwt = validateJWTFromRequest ( $encodedToken );
+				if ( $jwt[ 0 ] === FALSE ) {
+					$this->serverError ( 'Error con el token', $jwt[ 1 ] );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
+				$newJwt = getSignedJWTForUser ( $jwt[1][ 'email' ], $jwt[1][ 'id' ] );
+				$this->responseBody = [
+					'error'        => 0,
+					'user'         => [
+						'data'        => $jwt[1] ],
+					'access_token' => $newJwt,
+					'logged_in'    => TRUE ];
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			} catch ( \Exception $e ) {
+				return $this->getResponse ( [ 'error' => $e->getMessage (), ], 401 );
+			}
 		}
 	}
