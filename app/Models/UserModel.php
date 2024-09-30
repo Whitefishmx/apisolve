@@ -32,7 +32,7 @@
 		 * @return array error o datos de usuario
 		 * @throws Exception
 		 */
-		public function findUserByEmailAddress ( string $mail): array {
+		public function findUserByEmailAddress ( string $mail ): array {
 			//Se declara el ambiente a utilizar
 			$query = "SELECT * FROM users WHERE email = '$mail' and active = 1";
 			if ( $res = $this->db->query ( $query ) ) {
@@ -44,23 +44,34 @@
 			throw new Exception( 'Error con la conexión a la fuente de información' );
 		}
 		public function validateAccess ( string $login, string $password, int $platform ): array {
-			$query = "SELECT id FROM users WHERE (nickname = '$login' AND password = '$password') OR (email = '$login' AND password = '$password') AND active = 1";
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan
+FROM users t1
+    INNER JOIN person t2 ON t1.id = t2.user_id
+    INNER JOIN employee t3 ON t3.person_id = t2.id
+WHERE (t1.nickname = '$login' AND t1.password = '$password')
+   OR (t1.email = '$login' AND t1.password = '$password') ";
+			if ( $platform === 5 ) {
+				$query .= "OR (t2.rfc = '$login' AND t1.password = '$password') ";
+			}
+			$query .= "AND t1.active = 1 ";
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
 			}
-			$user = $res->getResultArray ()[0]['id'];
+			$res = $res->getResultArray ();
+			$userid = $res[ 0 ][ 'id' ];
+			$user = $res[0];
 			$query = "SELECT t4.name, t4.session, t4.route, t3.writable
 FROM users t1
     INNER JOIN platform_access t2 ON t1.id  = t2.id_user AND t2.id_platform = $platform
     INNER JOIN permissions t3 ON t3.user_id = t1.id
     INNER JOIN views t4 ON t4.id = t3.view_id
-WHERE t2.id_platform = $platform AND t1.id  = $user";
+WHERE t2.id_platform = $platform AND t1.id  = $userid";
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
 			}
-			$data = ['id' => $user, 'permissions' => $res->getResultArray ()];
-			return [ TRUE, $data];
+			$data = [ 'id' => $userid, 'permissions' => $res->getResultArray (), 'userData' => $user ];
+			return [ TRUE, $data ];
 		}
 	}

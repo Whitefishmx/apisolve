@@ -72,6 +72,8 @@
 					"chosenConciliation",
 					"chosenForDispersion",
 					"conciliationPlus",
+					"getMagicBalance",
+					"getMagicTransfers",
 				],
 			],
 			'cors'=>[

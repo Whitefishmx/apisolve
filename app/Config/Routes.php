@@ -23,11 +23,12 @@
 	$routes->add ( 'acuseReune', 'Home::acuseReune' );
 	$routes->add ( 'dispersionPlus', 'Dispersiones::getDispersionPlus' /**@uses \App\Controllers\Dispersiones::getDispersionPlus* */ );
 	$routes->add ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
-	$routes->add ( 'getInvoiceDocuments', 'Documents::getCFDI' /**@uses \app\Controllers\Documents::getCFDI* */ );
+	$routes->add ( 'getInvoiceDocuments', 'Documents::getCFDI' /**@uses \App\Controllers\Documents::getCFDI* */ );
 	$routes->add ( 'getCfdiInfo', 'Data::getCfdiInfo' /**@uses \App\Controllers\Data::getCfdiInfo* */ );
-	$routes->add ( 'getCPInfo', 'Data::getCPInfo' /**@uses \app\Controllers\Data::getCPInfo* */ );
-	$routes->add ( 'getRegimen', 'Data::getRegimen' /**@uses \app\Controllers\Data::getRegimen* */ );
+	$routes->add ( 'getCPInfo', 'Data::getCPInfo' /**@uses \App\Controllers\Data::getCPInfo* */ );
+	$routes->add ( 'getRegimen', 'Data::getRegimen' /**@uses \App\Controllers\Data::getRegimen* */ );
 	$routes->add ( 'conciliation', 'Conciliaciones::getConciliation' /**@uses \App\Controllers\Conciliaciones::getConciliation* */ );
+	$routes->add ( 'getMagicBalance', 'Fintech\MagicPay::getBalance' /**@uses \App\Controllers\Fintech\MagicPay::getBalance* */ );
 	//=========================================================|| POST ||=========================================================
 	//========================|| Conciliaciones ||========================
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
@@ -42,8 +43,13 @@
 	$routes->add ( 'reuneQueja', 'Condusef::reuneQueja' /**@uses \App\Controllers\Condusef::reuneQueja * */ );
 	$routes->add ( 'reuneReclamacion', 'Condusef::reuneReclamacion' /**@uses \App\Controllers\Condusef::reuneReclamacion * */ );
 	$routes->add ( 'reuneAclaracion', 'Condusef::reuneAclaracion' /**@uses \App\Controllers\Condusef::reuneAclaracion * */ );
-	$routes->add ( 'redecoQueja', 'Condusef::redecoQueja' /**@uses \App\Controllers\Condusef::redecoQueja *
-	 */ );
+	$routes->add ( 'redecoQueja', 'Condusef::redecoQueja' /**@uses \App\Controllers\Condusef::redecoQueja * */ );
+	//========================|| MagicPay ||========================
+	$routes->add ( 'getMagicTransfers', 'Fintech\MagicPay::getTransfers' /**@uses \App\Controllers\Fintech\MagicPay::getTransfers* */ );
+	$routes->add ( 'getMagicTransferByID', 'Fintech\MagicPay::getTransfersById' /**@uses \App\Controllers\Fintech\MagicPay::getTransfersById* */ );
+	$routes->add ( 'magicTransfer', 'Fintech\MagicPay::transfer' /**@uses \App\Controllers\Fintech\MagicPay::transfer* */ );
+	//========================|| Solve Express ||========================
+	$routes->add ( 'sExpressReport', '\SolveExpress::payrollAdvanceReport' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReport*/ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================

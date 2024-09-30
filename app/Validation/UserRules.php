@@ -15,7 +15,7 @@
 		public function validateUser ( string $str, string $fields, array $data ): bool {
 			try {
 				$model = new UserModel;
-				$user = $model->authenticateToken ( $data[ 'usuario' ], $data[ 'environment' ] );
+				$user = $model->authenticateToken ( $data[ 'usuario' ] );
 				helper ( 'crypt_helper' );
 				return $user[ 'password' ] === passwordEncrypt ( $data[ 'contraseña' ] );
 			} catch ( \Exception $e ) {

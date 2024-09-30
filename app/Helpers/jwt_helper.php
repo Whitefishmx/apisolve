@@ -36,7 +36,7 @@
 	 *
 	 * @return array
 	 */
-	function getSignedJWTForUser ( string $email ): array {
+	function getSignedJWTForUser ( string $email, int $id ): array {
 		$key = Services::getSecretKey ();
 		$issuedAtTime = time ();
 		$tokenExpiration = strtotime ( '+'.getenv ( 'JWT_TIME_TO_LIVE' ), $issuedAtTime );
@@ -46,7 +46,9 @@
 			'exp'   => $tokenExpiration,
 		];
 		$jwt = JWT::encode ( $payload, $key, 'HS256' );
-		return [ 'token'   => $jwt,
-		         'created' => date ( 'Y-m-d H:i:s', $issuedAtTime ),
-		         'expires' => date ( 'Y-m-d H:i:s', $tokenExpiration ) ];
+		return [
+			'token'   => $jwt,
+			'created' => date ( 'Y-m-d H:i:s', $issuedAtTime ),
+			'expires' => date ( 'Y-m-d H:i:s', $tokenExpiration ),
+			'id'      => $id, ];
 	}

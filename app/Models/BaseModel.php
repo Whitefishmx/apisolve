@@ -25,4 +25,10 @@
 			$res = $res->getResultArray ()[ 0 ][ 'id' ];
 			return $res === NULL ? 1 : intval ( $res + 1 );
 		}
+		public function generateFolio ( int $functionId, string $table, int $user = NULL ): string {
+			helper ('tetraoctal_helper');
+			$nextId = $this->getNexId ($table);
+			$data = [ $functionId, $nextId, strtotime ( 'now' ) ];
+			return $folio = serialize32 ( $data );
+		}
 	}

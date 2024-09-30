@@ -27,15 +27,15 @@
 		 * @return ResponseInterface|RequestInterface
 		 */
 		public function before ( RequestInterface $request, $arguments = NULL ) {
-			try {
-				if ( isset( $_SERVER[ 'HTTP_ORIGIN' ] ) ) {
-					if ( $_SERVER[ 'HTTP_ORIGIN' ] === 'https://compensapay.local' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
-						return $request;
-					}
-				} else if ( $_SERVER[ 'HTTP_USER_AGENT' ] === 'PostmanRuntime/7.37.0' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
-					return $request;
-				}
-			} catch ( \Exception $e ) {
+//			try {
+//				if ( isset( $_SERVER[ 'HTTP_ORIGIN' ] ) ) {
+//					if ( $_SERVER[ 'HTTP_ORIGIN' ] === 'https://compensapay.local' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
+//						return $request;
+//					}
+//				} else if ( $_SERVER[ 'HTTP_USER_AGENT' ] === 'PostmanRuntime/7.37.0' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
+//					return $request;
+//				}
+//			} catch ( \Exception $e ) {
 				$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
 				try {
 					helper ( 'jwt' );
@@ -49,7 +49,7 @@
 							'error' => $e->getMessage (),
 						] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
 				}
-			}
+//			}
 		}
 		/**
 		 * Allows After filters to inspect and modify the response
