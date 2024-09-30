@@ -2,6 +2,7 @@
 	
 	namespace App\Filters;
 	
+	use Exception;
 	use CodeIgniter\API\ResponseTrait;
 	use CodeIgniter\Filters\FilterInterface;
 	use CodeIgniter\HTTP\RequestInterface;
@@ -26,30 +27,20 @@
 		 *
 		 * @return ResponseInterface|RequestInterface
 		 */
-		public function before ( RequestInterface $request, $arguments = NULL ) {
-//			try {
-//				if ( isset( $_SERVER[ 'HTTP_ORIGIN' ] ) ) {
-//					if ( $_SERVER[ 'HTTP_ORIGIN' ] === 'https://compensapay.local' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
-//						return $request;
-//					}
-//				} else if ( $_SERVER[ 'HTTP_USER_AGENT' ] === 'PostmanRuntime/7.37.0' && $_SERVER[ 'REMOTE_ADDR' ] === '127.0.0.1' ) {
-//					return $request;
-//				}
-//			} catch ( \Exception $e ) {
-				$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
-				try {
-					helper ( 'jwt' );
-					$encodedToken = getJWTFromRequest ( $authenticationHeader );
-					validateJWTFromRequest ( $encodedToken );
-					return $request;
-					
-				} catch ( \Exception $e ) {
-					return Services::response ()
-						->setJSON ( [
-							'error' => $e->getMessage (),
-						] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
-				}
-//			}
+		public function before ( RequestInterface $request, $arguments = NULL ): ResponseInterface|RequestInterface {
+			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
+			try {
+				helper ( 'jwt' );
+				$encodedToken = getJWTFromRequest ( $authenticationHeader );
+				validateJWTFromRequest ( $encodedToken );
+				return $request;
+				
+			} catch ( Exception $e ) {
+				return Services::response ()
+				               ->setJSON ( [
+					               'error' => $e->getMessage (),
+				               ] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
+			}
 		}
 		/**
 		 * Allows After filters to inspect and modify the response

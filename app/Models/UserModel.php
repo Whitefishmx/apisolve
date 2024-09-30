@@ -25,7 +25,7 @@
 			throw new Exception( 'Credenciales incorrectas' );
 		}
 		/**
-		 * Función para obtener la información de un usuario proporcionando un correo electrónico
+		 * Función para obtener la información de un usuario proporcionando por un token
 		 *
 		 * @param string $mail correo electrónico asociado a unn usuario
 		 *
@@ -43,7 +43,7 @@ WHERE (t1.email = '$mail' and t1.active = 1)
    OR (t2.rfc = '$mail' AND t1.active = 1)";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
-					return [ TRUE, $res->getResultArray ()[0] ];
+					return [ TRUE, $res->getResultArray ()[ 0 ] ];
 				}
 				return [ FALSE, 'No se encontró usuario con el correo proporcionado' ];
 			}
