@@ -76,9 +76,10 @@
 					"getMagicBalance",
 					"getMagicTransfers",
 					"sExpressReport",
+					"sExpressDashboard",
 				],
 			],
-			'cors'=>[
+	/*		'cors'=>[
 				'before'=>[
 					"uploadCFDIPlus",
 					"chosenConciliation",
@@ -86,6 +87,6 @@
 					"conciliationPlus",
 					"toSignIn",
 				]
-			]
+			]*/
 		];
 	}

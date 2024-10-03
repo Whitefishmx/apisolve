@@ -56,8 +56,8 @@
 			if ( !empty( $args[ 'name' ] ) ) {
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
-//			var_dump ($builder->getCompiledSelect ());
-//			die();
+			//			var_dump ($builder->getCompiledSelect ());
+			//			die();
 			$query = $builder->get ();
 			if ( $query->getNumRows () > 0 ) {
 				if ( $query->getNumRows () === 1 ) {
@@ -67,5 +67,21 @@
 			} else {
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
+		}
+		public function getDashboard ( int $user ): array {
+			$query = "SELECT p.name, p.last_name, p.sure_name, e.net_salary, e.plan, t1.amount_aviable, t1.worked_days, t1.aviable
+    FROM advancePayroll_control t1
+        INNER JOIN employee e ON e.id = t1.employee_id
+        INNER JOIN person p ON p.id = e.person_id
+        INNER JOIN users u ON u.id = p.user_id
+        WHERE u.id = $user";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows=  $res->getNumRows ();
+			if ( $rows > 1 || $rows === 0 ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
 	}
