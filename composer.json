@@ -10,7 +10,7 @@
     "slack": "https://codeigniterchat.slack.com"
   },
   "require": {
-    "php": "^8.0",
+    "php": "^8.3",
     "ext-curl": "*",
     "ext-json": "*",
     "ext-openssl": "*",

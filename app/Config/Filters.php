@@ -36,6 +36,7 @@
 		 */
 		public array $globals = [
 			'before' => [
+				'cors',
 				// 'honeypot',
 				// 'csrf',
 				// 'invalidchars',
@@ -74,6 +75,7 @@
 					"conciliationPlus",
 					"getMagicBalance",
 					"getMagicTransfers",
+					"sExpressReport",
 				],
 			],
 			'cors'=>[
@@ -82,6 +84,7 @@
 					"chosenConciliation",
 					"chosenForDispersion",
 					"conciliationPlus",
+					"toSignIn",
 				]
 			]
 		];

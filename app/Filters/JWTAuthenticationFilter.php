@@ -2,7 +2,6 @@
 	
 	namespace App\Filters;
 	
-	use Exception;
 	use CodeIgniter\API\ResponseTrait;
 	use CodeIgniter\Filters\FilterInterface;
 	use CodeIgniter\HTTP\RequestInterface;
@@ -35,7 +34,7 @@
 				validateJWTFromRequest ( $encodedToken );
 				return $request;
 				
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				return Services::response ()
 				               ->setJSON ( [
 					               'error' => $e->getMessage (),

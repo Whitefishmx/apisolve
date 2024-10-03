@@ -63,7 +63,7 @@
 		public function getResponse ( array $responseBody, int $code = NULL ): ResponseInterface {
 			$code = $code === NULL ? $this->errCode : $code;
 			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )
-			                      ->setHeader ( 'Access-Control-Allow-Origin', '*' )
+//			                      ->setHeader ( 'Access-Control-Allow-Origin', 'http://localhost:8081' )
 			                      ->setHeader ( 'Content-Type', 'application/json' )
 			                      ->setContentType ( 'application/json' );
 		}

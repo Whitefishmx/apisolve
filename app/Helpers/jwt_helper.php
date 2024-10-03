@@ -33,6 +33,7 @@
 	
 	/**
 	 * @param string $email
+	 * @param int    $id
 	 *
 	 * @return array
 	 */

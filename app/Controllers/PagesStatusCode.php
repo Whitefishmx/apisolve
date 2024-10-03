@@ -18,8 +18,11 @@
 		 * @return array|bool
 		 */
 		public function verifyRules ( string $method, mixed $request, ?string $dataType ): array|bool {
-			if ( !$request->is ( $method ) ) {
-				return $this->methodNotAllowed ( $request->getPath () );
+//			var_dump ($request->is ( $method ));
+			if (!$request->is('OPTIONS')){
+				if ( !$request->is ( $method )  ) {
+					return $this->methodNotAllowed ( $request->getPath () );
+				}
 			}
 			if ( !is_null ( $dataType ) ) {
 				if ( !$request->is ( $dataType ) ) {
@@ -94,12 +97,13 @@
 				'description' => 'Recurso no encontrada',
 				'reason'      => 'Verifique que el endpoint sea correcto' ], ResponseInterface::HTTP_NOT_FOUND );
 		}
-		public function dataNotFound (): ResponseInterface {
+		public function dataNotFound (): array {
 			$this->errCode = 404;
-			return $this->getResponse ( [
+			$this->responseBody = [
 				'error'       => $this->errCode,
 				'description' => 'Recurso no encontrada',
-				'reason'      => 'No se encontró información con los datos ingresados' ], ResponseInterface::HTTP_NOT_FOUND );
+				'reason'      => 'No se encontró información con los datos ingresados' ];
+			return $this->responseBody;
 		}
 		public function redirectLogIn (): array {
 			$this->errCode = 307;
