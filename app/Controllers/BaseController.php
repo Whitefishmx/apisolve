@@ -30,7 +30,7 @@
 		 *
 		 * @var array
 		 */
-		protected $helpers = [ 'tools_helper' ];
+		protected $helpers = [ 'tools_helper', 'jwt' ];
 		public function __construct () {
 			$this->responseBody = [
 				'error'       => $this->errCode,
@@ -63,16 +63,33 @@
 		public function getResponse ( array $responseBody, int $code = NULL ): ResponseInterface {
 			$code = $code === NULL ? $this->errCode : $code;
 			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )
-//			                      ->setHeader ( 'Access-Control-Allow-Origin', 'http://localhost:8081' )
-			                      ->setHeader ( 'Content-Type', 'application/json' )
+				//			                      ->setHeader ( 'Access-Control-Allow-Origin', 'http://localhost:8081' )
+				                  ->setHeader ( 'Content-Type', 'application/json' )
 			                      ->setContentType ( 'application/json' );
 		}
 		/**
 		 * @param IncomingRequest $request
 		 *
 		 * @return array|bool|float|int|mixed|object|string|null
+		 * @throws \Exception
 		 */
 		public function getRequestInput ( IncomingRequest $request ): mixed {
+			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
+			$encodedToken = getJWTFromRequest ( $authenticationHeader );
+			$tokenData = validateJWTFromRequest ($encodedToken);
+			$this->user = $tokenData[1]['id'];
+			$method = strtolower ( $request->getMethod () );
+			if ( $method === 'post' ) {
+				$input = $request->getPost ();
+			} else {
+				$input = $request->getGet ();
+			}
+			if ( empty( $input ) ) {
+				$input = json_decode ( $request->getBody (), TRUE );
+			}
+			return $input;
+		}
+		public function getRequestLogin ( IncomingRequest $request ): mixed {
 			$method = strtolower ( $request->getMethod () );
 			if ( $method === 'post' ) {
 				$input = $request->getPost ();

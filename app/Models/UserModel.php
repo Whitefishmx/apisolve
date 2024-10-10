@@ -34,7 +34,7 @@
 		 */
 		public function findUserByTokenAccess ( string $mail ): array {
 			//Se declara el ambiente a utilizar
-			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login
 FROM users t1
     INNER JOIN person t2 ON t1.id = t2.user_id
     LEFT JOIN employee t3 ON t3.person_id = t2.id
@@ -50,7 +50,7 @@ WHERE (t1.email = '$mail' and t1.active = 1)
 			return [ FALSE, 'Error con la conexión a la fuente de información' ];
 		}
 		public function validateAccess ( string $login, string $password, int $platform ): array {
-			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login
 FROM users t1
     INNER JOIN person t2 ON t1.id = t2.user_id
     LEFT JOIN employee t3 ON t3.person_id = t2.id

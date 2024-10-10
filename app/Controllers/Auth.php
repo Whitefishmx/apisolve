@@ -43,7 +43,6 @@
 			try {
 				$model = new UserModel();
 				$user = $model->authenticateToken ( $user );
-				helper ( 'jwt' );
 				$jwt = getSignedJWTForUser ( $user[ 'email' ], $user[ 'id' ] );
 				return $this->getResponse ( [
 					'message'      => 'Usuario autenticado satisfactoriamente',
@@ -59,7 +58,7 @@
 		 * @return ResponseInterface devuelve el token y los datos del usuario
 		 */
 		public function signIn (): ResponseInterface {
-			$this->input = $this->getRequestInput ( $this->request );
+			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				$this->logResponse ( 1 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -76,7 +75,6 @@
 			$session = session ();
 			$session->set ( 'logged_in', TRUE );
 			$session->set ( 'user', $res[ 1 ][ 'id' ] );
-			helper ( 'jwt' );
 			$jwt = getSignedJWTForUser ( $this->input[ 'email' ], $res[ 1 ][ 'userData' ][ 'id' ] );
 			$this->errCode = 200;
 			$this->responseBody = [
@@ -97,7 +95,6 @@
 		public function tokenAlive (): ResponseInterface {
 			$authenticationHeader = $this->request->getServer ( 'HTTP_AUTHORIZATION' );
 			try {
-				helper ( 'jwt' );
 				$encodedToken = getJWTFromRequest ( $authenticationHeader );
 				$jwt = validateJWTFromRequest ( $encodedToken );
 				if ( $jwt[ 0 ] === FALSE ) {

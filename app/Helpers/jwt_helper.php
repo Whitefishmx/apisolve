@@ -45,6 +45,7 @@
 			'email' => $email,
 			'iat'   => $issuedAtTime,
 			'exp'   => $tokenExpiration,
+			'id'    => $id,
 		];
 		$jwt = JWT::encode ( $payload, $key, 'HS256' );
 		return [
@@ -53,3 +54,10 @@
 			'expires' => date ( 'Y-m-d H:i:s', $tokenExpiration ),
 			'id'      => $id, ];
 	}
+	
+	//	function  getIdFromJWTRequest(string $encodedToken) {
+	//		$key = Services::getSecretKey ();
+	//		$decodedToken = JWT::decode ( $encodedToken, new Key( $key, 'HS256' ) );
+	//		$userModel = new UserModel();
+	//		return $userModel->findUserByTokenAccess ( $decodedToken->id );
+	//	}

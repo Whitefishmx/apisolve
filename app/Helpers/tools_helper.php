@@ -62,3 +62,8 @@
 		];
 		return $model->saveLogs ( $data );
 	}
+	
+	function month2Mes (int $month): string {
+		$meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+		return $meses[$month-1];
+	}

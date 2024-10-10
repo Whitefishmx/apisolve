@@ -21,7 +21,7 @@
 			if ( !is_numeric ( $nexID ) ) {
 				return [ FALSE, $nexID[ 1 ] ];
 			}
-			$referenceN = $this->NewReferenceNumber ( $nexID, $env );
+			$referenceN = $this->NewReferenceNumber ( $nexID );
 			$data = [ 3, $nexID, $user[ 'id' ], $company[ 'id' ], strtotime ( 'now' ) ];
 			$folio = serialize32 ( $data );
 			$before = 0;
@@ -61,34 +61,6 @@ VALUES ('{$user['id']}', '{$company['id']}','$referenceN', '$folio', '$before', 
 			} else {
 				return [ FALSE, '1.5 No se logro vincular las conciliaciones con la dispersion' ];
 			}
-		}
-		/**
-		 * Genera un número de referencia que no este activo para que se puedan realizar rastrear la operación a la que pertenece
-		 *
-		 * @param int         $id  Id de la operación a la que se le generara una referencia
-		 * @param string|NULL $env Ambiente en el que se va a trabajar
-		 *
-		 * @return string Numero de referencia valido.
-		 */
-		public function NewReferenceNumber ( int $id, string $env = NULL ): string {
-			//Se declara el ambiente a utilizar
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			helper ( 'tools_helper' );
-			$query = "SELECT operation_number AS number FROM $this->base.operations WHERE status IN (0, 1)
-UNION
-SELECT reference_number AS number FROM $this->base.conciliation_plus WHERE status IN (0, 1)
-UNION
-SELECT reference_number AS number FROM $this->base.dispersions_plus WHERE status IN (0, 1)";
-			if ( !$res = $this->db->query ( $query ) ) {
-				
-				return MakeOperationNumber ( $id );
-			}
-			$ref = MakeOperationNumber ( $id );
-			while ( in_array ( $ref, $res->getResultArray ()[ 0 ] ) ) {
-				$ref = MakeOperationNumber ( $id );
-			}
-			return $ref;
 		}
 		/**
 		 * Obtiene la información de las conciliaciones que se solicitan por ID
