@@ -74,9 +74,12 @@
 		 * @throws \Exception
 		 */
 		public function getRequestInput ( IncomingRequest $request ): mixed {
+//			var_dump ($request);
+//			die();
 			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
 			$encodedToken = getJWTFromRequest ( $authenticationHeader );
 			$tokenData = validateJWTFromRequest ($encodedToken);
+			
 			$this->user = $tokenData[1]['id'];
 			$method = strtolower ( $request->getMethod () );
 			if ( $method === 'post' ) {

@@ -29,7 +29,7 @@
 		 * @var list<string>
 		 */
 		public array $allowedHostnames = [ 'http://api-solve.local', 'http://api-solve.local/', 'https://apisandbox.solve.com.mx/public/' ,
-			'https://compensapay.local'];
+			'https://compensapay.local', 'https://solveexpress.local/'];
 		/**
 		 * --------------------------------------------------------------------------
 		 * Index File

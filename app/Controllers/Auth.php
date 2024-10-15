@@ -75,7 +75,7 @@
 			$session = session ();
 			$session->set ( 'logged_in', TRUE );
 			$session->set ( 'user', $res[ 1 ][ 'id' ] );
-			$jwt = getSignedJWTForUser ( $this->input[ 'email' ], $res[ 1 ][ 'userData' ][ 'id' ] );
+			$jwt = getSignedJWTForUser ( $res[ 1 ]['userData']['email'], $res[ 1 ][ 'userData' ][ 'id' ] );
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'        => 0,

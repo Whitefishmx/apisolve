@@ -12,28 +12,22 @@
 		use ResponseTrait;
 		
 		/**
-		 * Do whatever processing this filter needs to do.
-		 * By default it should not return anything during
-		 * normal execution. However, when an abnormal state
-		 * is found, it should return an instance of
-		 * CodeIgniter\HTTP\Response. If it does, script
-		 * execution will end and that Response will be
-		 * sent back to the client, allowing for error pages,
-		 * redirects, etc.
-		 *
 		 * @param RequestInterface $request
 		 * @param array|null       $arguments
 		 *
 		 * @return ResponseInterface|RequestInterface
+		 * @throws \Exception
 		 */
-		public function before ( RequestInterface $request, $arguments = NULL ): ResponseInterface|RequestInterface {
+		public function before ( RequestInterface $request, $arguments = NULL ) {
 			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
+			helper ( 'jwt' );
+//			$encodedToken = getJWTFromRequest ( $authenticationHeader );
+//			var_dump (  validateJWTFromRequest ( $encodedToken ) );
+//			die();
 			try {
-				helper ( 'jwt' );
 				$encodedToken = getJWTFromRequest ( $authenticationHeader );
 				validateJWTFromRequest ( $encodedToken );
 				return $request;
-				
 			} catch ( \Exception $e ) {
 				return Services::response ()
 				               ->setJSON ( [

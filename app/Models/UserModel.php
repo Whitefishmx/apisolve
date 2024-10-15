@@ -57,7 +57,7 @@ FROM users t1
 WHERE (t1.nickname = '$login' AND t1.password = '$password')
    OR (t1.email = '$login' AND t1.password = '$password') ";
 			if ( $platform === 5 ) {
-				$query .= "OR (t2.rfc = '$login' AND t1.password = '$password') ";
+				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
 			}
 			$query .= "AND t1.active = 1 ";
 			$res = $this->db->query ( $query );
