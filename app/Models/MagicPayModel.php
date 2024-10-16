@@ -1,9 +1,6 @@
 <?php
 	
-	namespace app\Models;
-	
-	use App\Models\BaseModel;
-	
+	namespace App\Models;
 	class MagicPayModel extends BaseModel {
 		private array $apiKey = [
 			'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
@@ -50,26 +47,31 @@
 			}
 			return [ TRUE, 'response' => $res[ 'response' ] ];
 		}
-		public function createTransfer ( array $args ): bool|array {
+		public function createTransfer ( array $args, $referenceNum = NULL, string $folio = NULL, $user = NULL ): bool|array {
+			$user = $user === NULL ? 2 : $user;
 			$env = getenv ( 'CI_ENVIRONMENT' );
-			helper ( 'tetraoctal_helper' );
-			$folio = $this->generateFolio ( 10, 'logs', 2 );
-			helper ( 'tools_helper' );
-			$referenceNum = MakeOperationNumber ( $this->getNexId ( 'logs' ) );
+			if ( $referenceNum === NULL ) {
+				helper ( 'tools_helper' );
+				$referenceNum = MakeOperationNumber ( $this->getNexId ( 'logs' ) );
+			}
+			if ( $folio === NULL ) {
+				helper ( 'tetraoctal_helper' );
+				$folio = $this->generateFolio ( 10, 'logs', 2 );
+			}
 			$data = [
 				'apiKey'        => $this->apiKey[ strtolower ( $env ) ],
-				'transferId'    => $folio,
+				'transferId'    => "$folio",
 				'description'   => $args[ 'description' ],
 				'account'       => $args[ 'account' ],
-				'numReference'  => $referenceNum,
+				'numReference'  => "$referenceNum",
 				'amount'        => floatval ( $args[ 'amount' ] ),
 				'bank'          => $args[ 'bank' ],
 				'owner'         => $args[ 'owner' ],
 				'validateOwner' => $args[ 'validateOwner' ],
 			];
-			//			die( var_dump ( $data ) );
+//			die( var_dump ( $data ) );
 			$res = $this->sendRequest ( 'speiTransfer', $data, 'POST', 'JSON', NULL );
-			saveLog ( 2, 9, $res[ 'code' ], json_encode ( $data ), $res[ 'response' ] );
+			saveLog ( $user, 9, $res[ 'code' ], json_encode ( $data ), $res[ 'response' ] );
 			if ( !$res[ 0 ] ) {
 				return FALSE;
 			}

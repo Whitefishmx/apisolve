@@ -80,4 +80,25 @@ WHERE t2.id_platform = $platform AND t1.id  = $userid";
 			$data = [ 'id' => $userid, 'permissions' => $res->getResultArray (), 'userData' => $user ];
 			return [ TRUE, $data ];
 		}
+		public function getBankAccountsByUser ( int $user ): array {
+			$query = "SELECT b.clabe, b.card, b.month, b.year, c.bnk_alias, c.bnk_nombre, c.magicAlias
+FROM bank_accounts b
+    INNER JOIN cat_bancos c ON c.id = b.bank_id
+    INNER JOIN users u ON b.user_id = u.id
+WHERE u.id = $user";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows > 1 || $rows === 0 ) {
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 22, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+				$res->getResultArray ()[ 0 ], TRUE ) );
+			return [ TRUE, $res->getResultArray ()[ 0 ] ];
+		}
 	}

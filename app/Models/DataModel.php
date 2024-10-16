@@ -71,15 +71,33 @@
 		public function saveLogs ( array $args ): bool {
 			$query = "INSERT INTO logs ( id_user, task, code, data_in, result )
 VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
-			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '" . $args['dataIn'] . "', ";
-			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '" .  $args[ 'dataOut' ] . "' ) ";
-	/*		var_dump ($query);
-			die();*/
+			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '".$args[ 'dataIn' ]."', ";
+			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '".$args[ 'dataOut' ]."' ) ";
+			/*		var_dump ($query);
+					die();*/
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			$this->db->query ( $query );
 			if ( $this->db->affectedRows () === 0 ) {
 				return FALSE;
 			}
 			return TRUE;
+		}
+		public function getBankByAccount ( string $clabe, int $user ): array {
+			$clabe = substr ( $clabe, 0, 3 );
+			$query = "SELECT c.* FROM cat_bancos c WHERE c.bnk_clave like '$clabe' ";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 21, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows > 1 || $rows === 0 ) {
+				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+				$res->getResultArray ()[ 0 ], TRUE ) );
+			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
 	}

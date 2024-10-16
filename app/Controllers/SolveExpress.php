@@ -3,10 +3,18 @@
 	namespace App\Controllers;
 	
 	use Exception;
+	use App\Models\UserModel;
+	use App\Models\MagicPayModel;
 	use App\Models\SolveExpressModel;
+	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class SolveExpress extends PagesStatusCode {
+		private $express = '';
+		public function __construct () {
+			parent::__construct ();
+			$this->express = new SolveExpressModel();
+		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
 		 * @return ResponseInterface
@@ -51,11 +59,10 @@
 			$this->logResponse ( 11 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
-
-        /**
-         * @throws Exception
-         */
-        public function dashboard (): ResponseInterface {
+		/**
+		 * @throws Exception
+		 */
+		public function dashboard (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				$this->logResponse ( 13 );
@@ -132,12 +139,14 @@
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$order = $express->generateOrder ( $this->user, floatval ( $this->input[ 'amount' ] ), floatval ( $res[ 1 ][ 'amount_available' ] ), $res[ 1 ][ 'plan' ] );
-			if (!$order[ 0 ] ) {
-                $this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
-                $this->logResponse ( 15 );
-                return $this->getResponse ( $this->responseBody, $this->errCode );
-            }
+			$order = $this->makeOrder ( $res[ 1 ] );
+			if ( !$order[ 0 ] ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$transfer = $this->doTransfer ( $order[ 1 ], $res[ 1 ] );
+			if ( !$transfer [ 0 ] ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud procesada',
@@ -177,5 +186,57 @@
 				return [ FALSE, 'Alcanzo el máximo de adelantos por día permitidos para su empresa.' ];
 			}
 			return [ TRUE, 'ok' ];
+		}
+		/**
+		 * @throws \DateMalformedStringException
+		 */
+		public function makeOrder ( $data ): array {
+			$order = $this->express->generateOrder ( $this->user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ] );
+			if ( !$order[ 0 ] ) {
+				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
+				$this->logResponse ( 15 );
+				return [ FALSE, 'error' ];
+			}
+			return [ TRUE, $order[ 1 ] ];
+		}
+		public function doTransfer ( $order, $res ): array {
+			$user = new userModel();
+			$bank = $user->getBankAccountsByUser ( intval ( $this->user ) );
+			if ( !$bank[ 0 ] ) {
+				$this->serverError ( 'Error en el servicio', 'Error con la cuenta clabe' );
+				$this->logResponse ( 15 );
+				return [ FALSE, 'error' ];
+			}
+			//			die(var_dump ($order));
+			$data = [
+				'description'   => $order [ 'refNumber' ],
+				'account'       => $bank[ 1 ][ 'clabe' ],
+				//				'amount'        => $order[ 'amount' ],
+				'amount'        => '0.01',
+				'bank'          => $bank[ 1 ][ 'magicAlias' ],
+				'owner'         => "{$res['name']} {$res['last_name']} {$res['sure_name']}",
+				'validateOwner' => TRUE ];
+			$magic = new MagicPayModel();
+			$transfer = $magic->createTransfer ( $data, $order[ 'refNumber' ], $order[ 'folio' ] );
+			if ( !$transfer[ 0 ] ) {
+				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
+				return [ FALSE, 'error' ];
+			}
+			$bankO = $user->getBankAccountsByUser ( 1 );
+			$transferData = [
+				'opId'          => $order[ 'payrollId' ],
+				'transactionId' => $transfer[ 'response' ][ 'speiId' ],
+				'description'   => $data[ 'refNumber' ],
+				'noReference'   => $data[ 'refNumber' ],
+				'amount'        => $order[ 'amount' ],
+				'destination'   => $bank[ 1 ][ 'clabe' ],
+				'origin'        => $bankO[ 1 ][ 'clabe' ], ];
+			$transaction = new TransactionsModel();
+			$save = $transaction->insertTransaction ( 'payroll_id', $transferData, $this->user );
+			if ( !$save[ 0 ] ) {
+				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
+				return [ FALSE, 'error' ];
+			}
+			return [ TRUE, $save[ 1 ] ];
 		}
 	}

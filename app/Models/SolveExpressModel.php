@@ -3,14 +3,14 @@
 	namespace App\Models;
 	
 	use DateTime;
-	use MongoDB\Driver\Query;
 	use DateMalformedStringException as DateMalformedStringExceptionAlias;
 	
 	class SolveExpressModel extends BaseModel {
+		private float $commissions = 70;
 		public function getReport ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, e.external_id, e.plan, e.net_salary,
-              t1.requested_amount, t1.remaining_amount, t1.period, t1.folio, t2.noReference,
+              t1.requested_amount, t1.remaining_amount, t1.period, t1.folio, t2.noReference, t2.cep,
               t3.clabe, t3.card, t4.bnk_alias, t1.created_at as 'Fecha_solicitud', t2.created_at as 'Ultima_modificación'" )
 			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'left' )
 			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
@@ -57,7 +57,7 @@
 			if ( !empty( $args[ 'name' ] ) ) {
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
-			$sqlQuery = $builder->getCompiledSelect();
+			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -65,16 +65,16 @@
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
-			if (  $rows > 0 ) {
+			if ( $rows > 0 ) {
 				if ( $res->getNumRows () === 1 ) {
 					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
 					return [ TRUE, $res->getResult ()[ 0 ] ];
 				}
 				$res = $res->getResultArray ();
-				saveLog ( $user, 12, 200, json_encode (  [ 'args' => $args ] ), json_encode ( $res ) );
+				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
 				return [ TRUE, $res ];
 			} else {
-				saveLog ( $user, 12, 404, json_encode (  [ 'args' => $args ] ), json_encode
+				saveLog ( $user, 12, 404, json_encode ( [ 'args' => $args ] ), json_encode
 				( [ 'res' => 'No se encontraron resultados' ] ) );
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
@@ -167,8 +167,9 @@ FROM users u
 VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			if ( $this->db->query ( $query ) ) {
-				saveLog ( $user, 19, 201, json_encode ( $dataIn ), json_encode ( [ 'id' => $this->db->insertId () ], TRUE ) );
-				return [ TRUE, $this->db->insertId () ];
+				saveLog ( $user, 19, 200, json_encode ( $dataIn ), json_encode ( [ 'id' => $this->db->insertId () ], TRUE ) );
+				$dataOut = [ 'folio' => $folio, 'refNumber' => $refNumber, 'amount' => $amount - $this->commissions, 'payrollId' => $this->db->insertId () ];
+				return [ TRUE, $dataOut ];
 			} else {
 				saveLog ( $user, 19, 400, json_encode ( $dataIn ), json_encode ( [
 					FALSE,
