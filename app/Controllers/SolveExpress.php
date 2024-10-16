@@ -108,7 +108,7 @@
 			$validation->setRules (
 				[
 					'user'   => 'required|permit_empty|max_length[7]|numeric',
-					'amount' => 'required|max_length[18]|greater_than_equal_to[250]|less_than_equal_to[4000]',
+					'amount' => 'required|max_length[18]|greater_than_equal_to[0]|less_than_equal_to[4000]',
 				],
 				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
 			if ( !$validation->run ( $this->input ) ) {
@@ -147,6 +147,7 @@
 			if ( !$transfer [ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			$express->updateAvailableAmount ( $res[1]['employeeId'], floatval ($this->input[ 'amount' ]), $this->user);
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud procesada',
@@ -223,7 +224,7 @@
 				return [ FALSE, 'error' ];
 			}
 			$bankO = $user->getBankAccountsByUser ( 1 );
-//			die(var_dump ($transfer));
+			//			die(var_dump ($transfer));
 			$transferData = [
 				'opId'          => $order[ 'payrollId' ],
 				'transactionId' => $transfer[ 1 ][ 'speiId' ],
@@ -238,6 +239,17 @@
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
 				return [ FALSE, 'error' ];
 			}
-			return [ TRUE, $save[ 1 ] ];
+			return [ TRUE, "El pago esta en proceso, el tiempo de espera dependerá de su banco" ];
+		}
+		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
+			
+			if ($transaction !== NULL){
+				$tModel = new TransactionsModel();
+				$res = $tModel->updateTransactionStatus ($transaction['folio'], $transaction['noRef'], $transaction['status'], $this->user);
+			}
+			if ($operation !== NULL){
+				$opModel = new updateOperationStatus();
+				$res2 = $opModel->updateTransactionStatus ($operation['folio'], $operation['noRef'], $operation['status'], $this->user);
+			}
 		}
 	}

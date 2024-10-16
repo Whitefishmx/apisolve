@@ -14,7 +14,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->errCode = 200;
-			$this->input = $this->getRequestInput ( $this->request );
+			$this->input = $this->getRequestLogin ( $this->request );
 			$out = [
 				'error'       => $this->errCode,
 				'description' => 'Información recibida.',

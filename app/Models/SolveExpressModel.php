@@ -6,7 +6,8 @@
 	use DateMalformedStringException as DateMalformedStringExceptionAlias;
 	
 	class SolveExpressModel extends BaseModel {
-		private float $commissions = 70;
+//		private float $commissions = 70;
+		private float $commissions = 0;
 		public function getReport ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, e.external_id, e.plan, e.net_salary,
@@ -80,7 +81,8 @@
 			}
 		}
 		public function getDashboard ( int $user ): array {
-			$query = "SELECT p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available
+			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
+       p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available
     FROM advancePayroll_control t1
         INNER JOIN employee e ON e.id = t1.employee_id
         INNER JOIN person p ON p.id = e.person_id
@@ -167,7 +169,7 @@ FROM users u
 VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			if ( $this->db->query ( $query ) ) {
-				$id = $this->db->insertId () ;
+				$id = $this->db->insertId ();
 				saveLog ( $user, 19, 200, json_encode ( $dataIn ), json_encode ( [ 'id' => $id ], TRUE ) );
 				$dataOut = [ 'folio' => $folio, 'refNumber' => $refNumber, 'amount' => $amount - $this->commissions, 'payrollId' => $id ];
 				return [ TRUE, $dataOut ];
@@ -207,17 +209,54 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			$semanaDelMes = ceil ( $dia / 7 );
 			switch ( $plan ) {
 				case 's':
-					return "{$semanaDelMes}ª semana de {$mes} {$anio}";
+					return "{$semanaDelMes}ª semana de $mes $anio";
 				case 'q':
 					if ( $dia <= 15 ) {
-						return "1ª quincena de {$mes} {$anio}";
+						return "1ª quincena de $mes $anio";
 					} else {
-						return "2ª quincena de {$mes} {$anio}";
+						return "2ª quincena de $mes $anio";
 					}
 				case 'm':
-					return "{$mes} {$anio}";
+					return "$mes $anio";
 				default:
 					return "Plan de pago no válido.";
 			}
+		}
+		public function updateOperationStatus ( $folio, $noRef, $status, $user ): array {
+			$query = "UPDATE advance_payroll SET status = '$status' WHERE folio like '%$folio%' AND reference_number = '$noRef'";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+				}
+				saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+				( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+		}
+		public function updateAvailableAmount ( int $employeeId, float $requestAmount, int $user ) {
+			
+			$query = "UPDATE advancePayroll_control
+SET amount_available = amount_available-$requestAmount, req_day = req_day+1, req_week = req_week+1, req_biweekly = req_biweekly+1, req_month = req_month+1
+WHERE employee_id = $employeeId";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					saveLog ( $user, 25, 200, json_encode ( [ 'requestAmount' => $requestAmount ] ), json_encode
+					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+				}
+				saveLog ( $user, 25, 200, json_encode ( [ 'requestAmount' => $requestAmount ] ), json_encode
+				( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			saveLog ( $user, 25, 200, json_encode ( [ 'requestAmount' => $requestAmount ] ), json_encode
+			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
 	}
