@@ -150,7 +150,7 @@
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud procesada',
-				'response'    => $res[ 1 ],
+				'response'    => $transfer[ 1 ],
 			];
 			$this->logResponse ( 15 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -223,14 +223,15 @@
 				return [ FALSE, 'error' ];
 			}
 			$bankO = $user->getBankAccountsByUser ( 1 );
+//			die(var_dump ($transfer));
 			$transferData = [
 				'opId'          => $order[ 'payrollId' ],
-				'transactionId' => $transfer[ 'response' ][ 'speiId' ],
-				'description'   => $data[ 'refNumber' ],
-				'noReference'   => $data[ 'refNumber' ],
+				'transactionId' => $transfer[ 1 ][ 'speiId' ],
+				'description'   => $order[ 'refNumber' ],
+				'noReference'   => $order[ 'refNumber' ],
 				'amount'        => $order[ 'amount' ],
-				'destination'   => $bank[ 1 ][ 'clabe' ],
-				'origin'        => $bankO[ 1 ][ 'clabe' ], ];
+				'destination'   => $bank[ 1 ][ 'id' ],
+				'origin'        => $bankO[ 1 ][ 'id' ], ];
 			$transaction = new TransactionsModel();
 			$save = $transaction->insertTransaction ( 'payroll_id', $transferData, $this->user );
 			if ( !$save[ 0 ] ) {

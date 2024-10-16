@@ -81,7 +81,7 @@ WHERE t2.id_platform = $platform AND t1.id  = $userid";
 			return [ TRUE, $data ];
 		}
 		public function getBankAccountsByUser ( int $user ): array {
-			$query = "SELECT b.clabe, b.card, b.month, b.year, c.bnk_alias, c.bnk_nombre, c.magicAlias
+			$query = "SELECT b.id, b.clabe, b.card, b.month, b.year, c.bnk_alias, c.bnk_nombre, c.magicAlias
 FROM bank_accounts b
     INNER JOIN cat_bancos c ON c.id = b.bank_id
     INNER JOIN users u ON b.user_id = u.id

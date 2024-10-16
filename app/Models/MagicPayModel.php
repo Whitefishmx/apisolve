@@ -69,13 +69,13 @@
 				'owner'         => $args[ 'owner' ],
 				'validateOwner' => $args[ 'validateOwner' ],
 			];
-//			die( var_dump ( $data ) );
+			//			die( var_dump ( $data ) );
 			$res = $this->sendRequest ( 'speiTransfer', $data, 'POST', 'JSON', NULL );
 			saveLog ( $user, 9, $res[ 'code' ], json_encode ( $data ), $res[ 'response' ] );
 			if ( !$res[ 0 ] ) {
 				return FALSE;
 			}
-			return [ TRUE, 'response' => $res[ 'response' ] ];
+			return [ TRUE, json_decode ( $res[ 'response' ], TRUE )['result'] ];
 		}
 		private function sendRequest ( string $endpoint, array $data, ?string $method, ?string $dataType, ?array $headers ): array {
 			$env = getenv ( 'CI_ENVIRONMENT' );

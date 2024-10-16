@@ -167,8 +167,9 @@ FROM users u
 VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			if ( $this->db->query ( $query ) ) {
-				saveLog ( $user, 19, 200, json_encode ( $dataIn ), json_encode ( [ 'id' => $this->db->insertId () ], TRUE ) );
-				$dataOut = [ 'folio' => $folio, 'refNumber' => $refNumber, 'amount' => $amount - $this->commissions, 'payrollId' => $this->db->insertId () ];
+				$id = $this->db->insertId () ;
+				saveLog ( $user, 19, 200, json_encode ( $dataIn ), json_encode ( [ 'id' => $id ], TRUE ) );
+				$dataOut = [ 'folio' => $folio, 'refNumber' => $refNumber, 'amount' => $amount - $this->commissions, 'payrollId' => $id ];
 				return [ TRUE, $dataOut ];
 			} else {
 				saveLog ( $user, 19, 400, json_encode ( $dataIn ), json_encode ( [
