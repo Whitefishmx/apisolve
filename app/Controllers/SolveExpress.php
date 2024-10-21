@@ -86,7 +86,7 @@
 				$this->dataNotFound ();
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$res[ 1 ][ "min-available" ] = 250;
+			$res[ 1 ][ 'min_available' ] = 250;
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Updated Dashboard',
@@ -147,7 +147,7 @@
 			if ( !$transfer [ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$express->updateAvailableAmount ( $res[1]['employeeId'], floatval ($this->input[ 'amount' ]), $this->user);
+			$express->updateAvailableAmount ( $res[ 1 ][ 'employeeId' ], floatval ( $this->input[ 'amount' ] ), $this->user );
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud procesada',
@@ -216,7 +216,7 @@
 				'amount'        => '0.01',
 				'bank'          => $bank[ 1 ][ 'magicAlias' ],
 				'owner'         => "{$res['name']} {$res['last_name']} {$res['sure_name']}",
-				'validateOwner' => TRUE ];
+				'validateOwner' => FALSE ];
 			$magic = new MagicPayModel();
 			$transfer = $magic->createTransfer ( $data, $order[ 'refNumber' ], $order[ 'folio' ] );
 			if ( !$transfer[ 0 ] ) {
@@ -243,13 +243,13 @@
 		}
 		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
 			
-			if ($transaction !== NULL){
+			if ( $transaction !== NULL ) {
 				$tModel = new TransactionsModel();
-				$res = $tModel->updateTransactionStatus ($transaction['folio'], $transaction['noRef'], $transaction['status'], $this->user);
+				$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
 			}
-			if ($operation !== NULL){
+			if ( $operation !== NULL ) {
 				$opModel = new updateOperationStatus();
-				$res2 = $opModel->updateTransactionStatus ($operation['folio'], $operation['noRef'], $operation['status'], $this->user);
+				$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
 			}
 		}
 	}

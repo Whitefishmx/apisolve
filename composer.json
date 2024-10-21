@@ -19,7 +19,8 @@
     "ext-zip": "*",
     "codeigniter4/framework": "^4.0",
     "dompdf/dompdf": "^3.0",
-    "firebase/php-jwt": "^6.10"
+    "firebase/php-jwt": "^6.10",
+    "ext-fileinfo": "*"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9",

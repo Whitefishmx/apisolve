@@ -15,7 +15,7 @@
 		 *
 		 * E.g., http://example.com/
 		 */
-		public string $baseURL = 'https://api-solve.local/'; //Local URL
+		public string $baseURL = 'http://api.solvegcm.mx/'; //Local URL
 	//public string $baseURL = 'https://apisandbox.solve.com.mx/public/'; //SandBox_Cloud URL
 		/**
 		 * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

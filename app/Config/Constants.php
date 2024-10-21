@@ -85,5 +85,3 @@
 	 * @deprecated Use \CodeIgniter\Events\Events::PRIORITY_HIGH instead.
 	 */
 	const EVENT_PRIORITY_HIGH = 10;
-	const BASEPATH = 'https://api-solve.local'; //Local URL
-//	const BASEPATH = 'https://apisandbox.solve.com.mx/public/'; //SandBox_Cloud URL

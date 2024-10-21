@@ -2,6 +2,7 @@
 	
 	namespace App\Controllers\Fintech;
 	
+	use Exception;
 	use App\Models\MagicPayModel;
 	use App\Controllers\PagesStatusCode;
 	use CodeIgniter\HTTP\ResponseInterface;
@@ -46,6 +47,9 @@
 				'response'    => json_decode ( $res[ 'response' ], TRUE )[ 'result' ] ];
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		/**
+		 * @throws Exception
+		 */
 		public function getTransfers (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
@@ -69,6 +73,9 @@
 			$this->logResponse ( 6 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		/**
+		 * @throws Exception
+		 */
 		public function getTransfersById (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
@@ -105,6 +112,9 @@
 			$this->logResponse ( 8 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		/**
+		 * @throws Exception
+		 */
 		public function transfer (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

@@ -12,7 +12,7 @@
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, e.external_id, e.plan, e.net_salary,
               t1.requested_amount, t1.remaining_amount, t1.period, t1.folio, t2.noReference, t2.cep,
-              t3.clabe, t3.card, t4.bnk_alias, t1.created_at as 'Fecha_solicitud', t2.created_at as 'Ultima_modificación'" )
+              t3.clabe, t3.card, t4.bnk_alias, t1.created_at as 'Fecha_solicitud', t2.created_at as 'Ultima_modificacion'" )
 			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'left' )
 			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
 			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
@@ -160,7 +160,7 @@ FROM users u
 		public function generateOrder ( int $user, float $amount, $preRemaining, $plan ): array {
 			$folio = $this->generateFolio ( 19, 'advance_payroll', $user );
 			$nexID = $this->getNexId ( 'advance_payroll' );
-			$refNumber = MakeOperationNumber ( $nexID );
+			$refNumber = $this->NewReferenceNumber ( $nexID );
 			$employee = intval ( $this->getEmployee ( $user ) );
 			$remaining = $preRemaining - $amount;
 			$period = $this->getPeriod ( $plan );
@@ -239,7 +239,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
-		public function updateAvailableAmount ( int $employeeId, float $requestAmount, int $user ) {
+		public function updateAvailableAmount ( int $employeeId, float $requestAmount, int $user ): array {
 			
 			$query = "UPDATE advancePayroll_control
 SET amount_available = amount_available-$requestAmount, req_day = req_day+1, req_week = req_week+1, req_biweekly = req_biweekly+1, req_month = req_month+1

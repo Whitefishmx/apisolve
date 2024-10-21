@@ -13,7 +13,7 @@
 <div class="row deep-purple lighten-3">
 	<div class="col l4 valign-wrapper">
 		<img
-				src="<?= base_url () ?>assets/img/logo_purple_s.svg" alt="solve"
+				src="<?= base_url () ?>/public/assets/img/logo_purple_s.svg" alt="solve"
 				style="display: flex;width: 250px;bottom: auto;margin: auto;top: 35px;position: relative;">
 	</div>
 	<div class="col l8">

@@ -18,6 +18,10 @@
 	$routes->add ( 'stpTransactions', 'Fintech\STP::wbDispersion' /**@uses \App\Controllers\Fintech\STP::wbDispersion* */ );
 	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
 	$routes->add ( 'MagicWH', 'Fintech\MagicPay::MagicWH' /**@uses \App\Controllers\Fintech\MagicPay::MagicWH* */ );
+	//========================|| CRON ||========================
+	$routes->add ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
+	//========================|| CRON ||========================
+	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
 	//========================|| GET ||========================
 	$routes->add ( 'token', 'Auth::login' /**@uses \App\Controllers\Auth::Login* */ );
 	$routes->add ( '/', 'Home' );

@@ -18,9 +18,9 @@
 		 * @return array|bool
 		 */
 		public function verifyRules ( string $method, mixed $request, ?string $dataType ): array|bool {
-//			var_dump ($request->is ( $method ));
-			if (!$request->is('OPTIONS')){
-				if ( !$request->is ( $method )  ) {
+			//			var_dump ($request->is ( $method ));
+			if ( !$request->is ( 'OPTIONS' ) ) {
+				if ( !$request->is ( $method ) ) {
 					return $this->methodNotAllowed ( $request->getPath () );
 				}
 			}
