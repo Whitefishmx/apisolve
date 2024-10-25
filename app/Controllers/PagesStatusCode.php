@@ -31,6 +31,15 @@
 			}
 			return FALSE;
 		}
+		public function validateArgsRules ( $rules, $errors ) {
+			$validation = service ( 'validation' );
+			$validation->setRules ( $rules, $errors );
+			if ( !$validation->run ( $this->input ) ) {
+				$this->errDataSupplied ( $validation->getErrors () );
+				return FALSE;
+			}
+			return TRUE;
+		}
 		public function validateRequest ( $input, $rules, array $messages = [] ): bool {
 			$this->validator = Services::validation ()->setRules ( $rules );
 			if ( is_string ( $rules ) ) {
