@@ -3,7 +3,6 @@
 	namespace CodeIgniter\Commands\Utilities\Routes;
 	
 	use CodeIgniter\Router\RouteCollection;
-	use function Sodium\add;
 	
 	/**
 	 * @var RouteCollection $routes
@@ -36,7 +35,7 @@
 	$routes->add ( 'getMagicBalance', 'Fintech\MagicPay::getBalance' /**@uses \App\Controllers\Fintech\MagicPay::getBalance* */ );
 	//=========================================================|| POST ||=========================================================
 	//========================|| Profile ||========================
-	$routes->add ( 'changePassword', 'Users::changePassword' /**@uses \App\Controllers\Users::changePassword* */ );
+	$routes->patch ( 'changePassword', 'Users::changePassword' /**@uses \App\Controllers\Users::changePassword* */ );
 	//========================|| Conciliaciones ||========================
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
 	$routes->add ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion' /**@uses \App\Controllers\Dispersiones::chosenForDispersion* */ );

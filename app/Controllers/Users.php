@@ -12,7 +12,8 @@
 		 */
 		public function changePassword () {
 			$this->input = $this->getRequestInput ( $this->request );
-			if ( $data = $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+			if ( $data = $this->verifyRules ( 'PATCH', $this->request, NULL ) ) {
+				$this->logResponse ( 31 );
 				return ( $data );
 			}
 			$rules = [
@@ -25,19 +26,23 @@
 			];
 			$validated = $this->validateArgsRules ( $rules, $errors );
 			if ( !$validated ) {
+				$this->logResponse ( 31 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			helper ( 'crypt_helper' );
 			$user = new UserModel ();
 			$res = $user->updatePassword ( $this->user, passwordEncrypt ( $this->input[ 'contraseña' ] ) );
 			if ( !$res[ 0 ] ) {
-				$this->serverError ( '', $res[ 1 ] );
+				$this->serverError ( 'Error en la transaccion', $res[ 1 ] );
+				$this->logResponse ( 31 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			$this->errCode = 200;
 			$this->responseBody = [
 				'error'       => 200,
 				'description' => 'Contraseña actualizada exitosamente',
 				'response'    => 'ok' ];
-			return $this->getResponse ( $this->responseBody, 200 );
+			$this->logResponse ( 31 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 	}
