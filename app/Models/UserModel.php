@@ -101,4 +101,19 @@ WHERE u.id = $user";
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
+		public function updatePassword ( int $user, string $password ): array {
+			$query = "UPDATE users SET password = '$password' WHERE id = $user";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					saveLog ( $user, 32, 200, json_encode ( [ 'newPassword' => $password, ] ), json_encode
+					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó correctamente la contraseña' ];
+				}
+				saveLog ( $user, 32, 404, json_encode ( [ 'newPassword' => $password, ] ), json_encode ( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			saveLog ( $user, 32, 500, json_encode ( [ 'newPassword' => $password, ] ), json_encode ( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar la contraseña' ];
+		}
 	}

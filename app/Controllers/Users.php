@@ -17,22 +17,27 @@
 			}
 			$rules = [
 				'contraseña'  => 'required|min_length[8]|max_length[255]',
-				'contraseña2' => 'required|min_length[8]|max_length[255]|differs[contraseña]',
+				'contraseña2' => 'required|min_length[8]|max_length[255]|matches[contraseña]',
 			];
 			$errors = [
-				'contraseña' =>['required'=> 'el campo contraseña es obligatorio'],
-				'contraseña2' => [
-                    'differs' => 'Las contraseñas no coinciden',
-                ],
+				'contraseña'  => [ 'required' => 'el campo contraseña es obligatorio' ],
+				'contraseña2' => [],
 			];
-			$validated = $this->validateArgsRules ($rules, $errors );
-			return $this->getResponse ( $this->responseBody, $this->errCode );
-			var_dump ( $validated );
-			die();
-			if ( !$validated) {
-				$this->errDataSupplied ( 'Usuario y/o contraseña incorrectos.' );
+			$validated = $this->validateArgsRules ( $rules, $errors );
+			if ( !$validated ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			return $this->getResponse ( $this->responseBody, $this->errCode );
+			helper ( 'crypt_helper' );
+			$user = new UserModel ();
+			$res = $user->updatePassword ( $this->user, passwordEncrypt ( $this->input[ 'contraseña' ] ) );
+			if ( !$res[ 0 ] ) {
+				$this->serverError ( '', $res[ 1 ] );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => 200,
+				'description' => 'Contraseña actualizada exitosamente',
+				'response'    => 'ok' ];
+			return $this->getResponse ( $this->responseBody, 200 );
 		}
 	}

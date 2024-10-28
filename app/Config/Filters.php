@@ -77,6 +77,7 @@
 					"getMagicTransfers",
 					"sExpressReport",
 					"sExpressDashboard",
+					"changePassword"
 				],
 			],
 	/*		'cors'=>[

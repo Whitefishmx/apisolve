@@ -79,7 +79,8 @@
 			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
 			$encodedToken = getJWTFromRequest ( $authenticationHeader );
 			$tokenData = validateJWTFromRequest ($encodedToken);
-			
+//			var_dump ($tokenData );
+//			die();
 			$this->user = $tokenData[1]['id'];
 			$method = strtolower ( $request->getMethod () );
 			if ( $method === 'post' ) {

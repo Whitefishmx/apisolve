@@ -31,7 +31,7 @@
 			}
 			return FALSE;
 		}
-		public function validateArgsRules ( $rules, $errors ) {
+		public function validateArgsRules ( $rules, $errors ): bool {
 			$validation = service ( 'validation' );
 			$validation->setRules ( $rules, $errors );
 			if ( !$validation->run ( $this->input ) ) {
