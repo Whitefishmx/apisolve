@@ -57,8 +57,11 @@
 	$routes->add ( 'magicTransfer', 'Fintech\MagicPay::transfer' /**@uses \App\Controllers\Fintech\MagicPay::transfer* */ );
 	//========================|| Solve Express ||========================
 	$routes->add ( 'sExpressReport', 'SolveExpress::payrollAdvanceReport' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReport */ );
+	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
+	$routes->add ( 'sExpressPeriods', 'SolveExpress::getPeriods' /**@uses \App\Controllers\SolveExpress::getPeriods */ );
 	$routes->add ( 'sExpressDashboard', 'SolveExpress::dashboard' /**@uses \App\Controllers\SolveExpress::dashboard */ );
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance () */ );
+	$routes->add ( 'sExpressVerifyCurp', 'SolveExpress::verifyCurp' /**@uses \App\Controllers\SolveExpress::verifyCurp () */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| DELETE ||========================

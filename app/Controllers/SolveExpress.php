@@ -62,6 +62,98 @@
 		/**
 		 * @throws Exception
 		 */
+		public function payrollAdvanceReportC (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'employee' => 'permit_empty|max_length[7]',
+					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'plan'     => 'permit_empty|max_length[1]|alpha',
+					'period'   => 'permit_empty|max_length[25]',
+					'rfc'      => 'permit_empty|max_length[18]|regex_match[^[A-ZÑ&]{3,4}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[A-Z\d]{2}[A\d]$]',
+					'name'     => 'permit_empty|alpha_space|max_length[150]|',
+				],
+				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getReportCompany ( $this->input, intval ( $this->user ) );
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Reporte generado correctamente',
+				'response'    => $res[ 1 ],
+			];
+			$this->logResponse ( 33 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function getPeriods(): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, NULL) ) {
+				$this->logResponse ( 36 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getPeriods ( $this->input['company'], intval ( $this->user ) );
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				$this->logResponse ( 36 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Reporte generado correctamente',
+				'response'    => $res[1],
+			];
+			$this->logResponse ( 36 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function verifyCurp(): ResponseInterface {
+			$this->input = $this->getRequestLogin  ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON') ) {
+				$this->logResponse ( 37 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->verifyCurp ( $this->input['curp'] );
+			if ( !$res[ 0 ] ) {
+				$this->serverError ('Error al validar CURP', $res[1]);
+				$this->logResponse ( 37 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'CURP validada',
+				'response'    => $res[1]
+			];
+			$this->logResponse ( 36 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
 		public function dashboard (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

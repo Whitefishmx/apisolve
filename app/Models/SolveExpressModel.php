@@ -6,8 +6,42 @@
 	use DateMalformedStringException as DateMalformedStringExceptionAlias;
 	
 	class SolveExpressModel extends BaseModel {
-//		private float $commissions = 70;
+		//		private float $commissions = 70;
 		private float $commissions = 0;
+		public function verifyCurp($curp){
+			$query = "SELECT p.curp, u.id, u.password
+FROM person p
+    INNER JOIN employee e ON e.person_id  = p.id
+    LEFT JOIN person_user pu ON pu.person_id = p.id
+    LEFT JOIN users u ON pu.user_id = u.id
+WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( 1, 38, 404, json_encode ( [ 'curp' => $curp ] ), json_encode ( [
+					FALSE,
+					'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				saveLog ( 1, 38, 404, json_encode ( [ 'curp' => $curp ]), json_encode ( [
+					FALSE,
+					'La curp ingresada no esta registrada, contacta a recursos humanos' ] ) );
+				return [ FALSE,'La curp ingresada no esta registrada, contacta a recursos humanos'];
+			}
+			saveLog ( 1, 38, 200, json_encode ( [ 'curp' => $curp ] ), json_encode ($res->getResultArray(), TRUE ) );
+			if ( $res->getNumRows () > 1 ) {
+				$message = "Registro erroneo con la CURP ingresada, contacte a soporte tecnico";
+				saveLog ( 1, 38, 404, json_encode ( [ 'curp' => $curp ]), json_encode ( [FALSE, $message ] ) );
+				return [ FALSE,$message];
+			}
+			$res = $res->getResultArray ();
+			if($res[0]['password'] != NULL){
+				$message = "La CURP ingresada ya fue verificada y tiene un usuario activo";
+				saveLog ( 1, 38, 404, json_encode ( [ 'curp' => $curp ]), json_encode ( [FALSE, $message ] ) );
+				return [ FALSE,$message];
+			}
+			return [ TRUE, $res[0] ];
+		}
 		public function getReport ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, e.external_id, e.plan, e.net_salary,
@@ -18,7 +52,8 @@
 			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
 			                    ->join ( 'employee e', 't1.employee_id = e.id', 'inner' )
 			                    ->join ( 'person p', 'e.person_id = p.id', 'inner' )
-			                    ->join ( 'users u', 'p.user_id = u.id', 'inner' )
+			                    ->join ( 'person_user pu', 'p.id = pu.person_id', 'inner' ) // Relación intermedia entre person y users
+			                    ->join ( 'users u', 'pu.user_id = u.id', 'inner' )          // Relación entre person_user y users
 			                    ->join ( 'companies c', 'e.company_id = c.id', 'inner' );
 			if ( !empty( $args[ 'user' ] ) ) {
 				$builder->where ( 'u.id', $args[ 'user' ] );
@@ -80,17 +115,117 @@
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
 		}
+		public function getReportCompany ( array $args, int $user ): array {
+			$builder = $this->db->table ( 'advance_payroll t1' )
+			                    ->select ( "e.external_id, t1.employee_id , p.name, p.last_name, p.sure_name, p.rfc, e.plan, e.net_salary,
+SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_amount) AS 'remaining_amount', t1.period" )
+			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'INNER' )
+			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'INNER' )
+			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
+			                    ->join ( 'employee e', 't1.employee_id = e.id', 'inner' )
+			                    ->join ( 'person p', 'e.person_id = p.id', 'inner' )
+			                    ->join ( 'companies c', 'e.company_id = c.id', 'inner' );
+			if ( !empty( $args[ 'employee' ] ) ) {
+				$builder->where ( 'e.external_id', $args[ 'employee' ] );
+			}
+			if ( !empty( $args[ 'company' ] ) ) {
+				$builder->where ( 'c.id', $args[ 'company' ] );
+			}
+			if ( !empty( $args[ 'initDate' ] ) ) {
+				try {
+					$initDate = new DateTime( $args[ 'initDate' ] );
+					$initDate->setTime ( 0, 0 );
+					$initDate = $initDate->format ( 'Y-m-d H:i:s' );
+					$builder->where ( 't1.created_at >=', $initDate );
+				} catch ( DateMalformedStringExceptionAlias ) {
+					$builder->where ( 't1.created_at >=', $args[ 'initDate' ] );
+				}
+			}
+			if ( !empty( $args[ 'endDate' ] ) ) {
+				try {
+					$fechaFin = new DateTime( $args[ 'endDate' ] );
+					$fechaFin->setTime ( 0, 0 );
+					$fechaFin = $fechaFin->modify ( '+1 day' )->format ( 'Y-m-d H:i:s' );
+					$builder->where ( 't2.created_at <=', $fechaFin );
+				} catch ( DateMalformedStringExceptionAlias ) {
+					$builder->where ( 't2.created_at <=', $args[ 'endDate' ] );
+				}
+			}
+			if ( !empty( $args[ 'plan' ] ) ) {
+				$builder->where ( 'e.plan', $args[ 'plan' ] );
+			}
+			if ( !empty( $args[ 'period' ] ) ) {
+				$builder->like ( 't1.period', $args[ 'period' ] );
+			}
+			if ( !empty( $args[ 'rfc' ] ) ) {
+				$builder->like ( 'p.rfc', $args[ 'rfc' ] );
+			}
+			if ( !empty( $args[ 'name' ] ) ) {
+				$builder->like ( 'p.name', $args[ 'name' ] );
+			}
+			$builder->groupBy ( 't1.period' );
+			$builder->groupBy ( 't1.employee_id' );
+			$sqlQuery = $builder->getCompiledSelect ();
+			if ( !$res = $this->db->query ( $sqlQuery ) ) {
+				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
+					FALSE,
+					'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows > 0 ) {
+				if ( $res->getNumRows () === 1 ) {
+					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
+					return [ TRUE, $res->getResult ()[ 0 ] ];
+				}
+				$res = $res->getResultArray ();
+				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
+				return [ TRUE, $res ];
+			} else {
+				saveLog ( $user, 12, 404, json_encode ( [ 'args' => $args ] ), json_encode
+				( [ 'res' => 'No se encontraron resultados' ] ) );
+				return [ FALSE, 'No se encontraron resultados' ];
+			}
+		}
+		public function getPeriods ( $company, $user ): array {
+			$query = "SELECT ap.period FROM advance_payroll ap INNER JOIN employee e ON e.id = ap.employee_id WHERE e.company_id = $company GROUP BY ap.period";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 35, 404, json_encode ( [ 'company' => $company ] ), json_encode ( [
+					FALSE,
+					'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				saveLog ( $user, 35, 404, json_encode ( [ 'company' => $company ] ), json_encode ( [
+					FALSE,
+					'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 35, 200, json_encode ( [ 'company' => $company ] ), json_encode (
+				$res->getResultArray
+				(), TRUE ) );
+			if ( $res->getNumRows () > 1 ) {
+				$p = [];
+				foreach ( $res->getResultArray () as $row ) {
+					$p[] = $row['period'];
+				}
+				return [ TRUE, $p ];
+			}
+			return [ TRUE, $res->getResultArray () ];
+		}
 		public function getDashboard ( int $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
        p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available
     FROM advancePayroll_control t1
         INNER JOIN employee e ON e.id = t1.employee_id
         INNER JOIN person p ON p.id = e.person_id
-        INNER JOIN users u ON u.id = p.user_id
+        INNER JOIN person_user pu ON p.id = pu.person_id
+        INNER JOIN users u ON u.id = pu.user_id
         INNER JOIN companies c ON c.id = e.company_id
         WHERE u.id = $user";
-			//			var_dump (json_encode ( [ 'query' => str_replace ("\n"," ",$query) ],JSON_UNESCAPED_UNICODE ));
-			//			die();
+			//						var_dump ($query);
+			//						die();
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode ( [
 					FALSE,
@@ -112,7 +247,8 @@
 		public function getCompanyRules ( int $user ): array {
 			$query = "SELECT r.*
 FROM users u
-    INNER JOIN person p ON p.user_id = u.id
+    INNER JOIN person_user pu ON u.id = pu.user_id
+    INNER JOIN person p ON p.id = pu.person_id
     INNER JOIN employee e ON e.person_id = p.id
     INNER JOIN companies c ON c.id = e.company_id
     INNER JOIN advancePayroll_rules r ON r.company_id = c.id
@@ -135,7 +271,8 @@ FROM users u
 		public function getControlByUSer ( int $user ): array {
 			$query = "SELECT c.*
 FROM users u
-    INNER JOIN person p ON p.user_id = u.id
+    INNER JOIN person_user pu ON u.id = pu.user_id
+    INNER JOIN person p ON p.id = pu.person_id
     INNER JOIN employee e ON e.person_id = p.id
        INNER JOIN advancePayroll_control c ON c.employee_id = e.id
     WHERE u.id = $user";
@@ -181,7 +318,9 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			}
 		}
 		public function getEmployee ( int $user ): array {
-			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id INNER JOIN users u ON u.id = p.user_id WHERE u.id = $user";
+			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id
+    INNER JOIN person_user pu ON pu.person_id = p.id
+    INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
