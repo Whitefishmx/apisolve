@@ -11,12 +11,13 @@
 		 * @throws \Exception
 		 */
 		public function changePassword () {
-			$this->input = $this->getRequestInput ( $this->request );
-			if ( $data = $this->verifyRules ( 'PATCH', $this->request, NULL ) ) {
+			$this->input = $this->getRequestLogin  ( $this->request );
+			if ( $data = $this->verifyRules ( 'PATCH', $this->request, 'JSON' ) ) {
 				$this->logResponse ( 31 );
 				return ( $data );
 			}
 			$rules = [
+				'user' => 'required|max_length[7]',
 				'contraseña'  => 'required|min_length[8]|max_length[255]',
 				'contraseña2' => 'required|min_length[8]|max_length[255]|matches[contraseña]',
 			];
@@ -31,7 +32,7 @@
 			}
 			helper ( 'crypt_helper' );
 			$user = new UserModel ();
-			$res = $user->updatePassword ( $this->user, passwordEncrypt ( $this->input[ 'contraseña' ] ) );
+			$res = $user->updatePassword ( $this->input[ 'user' ], passwordEncrypt ( $this->input[ 'contraseña' ] ) );
 			if ( !$res[ 0 ] ) {
 				$this->serverError ( 'Error en la transaccion', $res[ 1 ] );
 				$this->logResponse ( 31 );
