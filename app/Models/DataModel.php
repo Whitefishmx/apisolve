@@ -73,8 +73,6 @@
 VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 			$query .= $args[ 'dataIn' ] === NULL ? " NULL, " : " '".$args[ 'dataIn' ]."', ";
 			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '".$args[ 'dataOut' ]."' ) ";
-			/*		var_dump ($query);
-					die();*/
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			$this->db->query ( $query );
 			if ( $this->db->affectedRows () === 0 ) {
@@ -98,6 +96,17 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 			}
 			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
+			return [ TRUE, $res->getResultArray ()[ 0 ] ];
+		}
+		public function getLaws ( $platform, $type, $user ): array {
+			$query = "SELECT l.content FROM laws l WHERE l.platform_id = $platform AND l.type = $type";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 40, 404, json_encode ( [ 'platform' => $platform, 'type' => $type ] ),
+					json_encode ( $res->getResultArray (), TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 40, 200, json_encode ( [ 'platform' => $platform, 'type' => $type ] ),
+				json_encode ( TRUE, TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
 	}
