@@ -216,13 +216,15 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 		}
 		public function getDashboard ( int $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
-       p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available
+       p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available,
+       apr.min_amount, apr.max_amount, apr.commission
     FROM advancePayroll_control t1
         INNER JOIN employee e ON e.id = t1.employee_id
         INNER JOIN person p ON p.id = e.person_id
         INNER JOIN person_user pu ON p.id = pu.person_id
         INNER JOIN users u ON u.id = pu.user_id
         INNER JOIN companies c ON c.id = e.company_id
+    	INNER JOIN advancePayroll_rules apr ON apr.company_id = c.id
         WHERE u.id = $user";
 			//						var_dump ($query);
 			//						die();
@@ -239,7 +241,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 14, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 14, 200, json_encode ( [  ] ), json_encode (
 				$res->getResultArray
 				()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];

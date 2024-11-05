@@ -75,7 +75,7 @@
 					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
 					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
 					'plan'     => 'permit_empty|max_length[1]|alpha',
-					'period'   => 'permit_empty|max_length[25]',
+					'period'   => 'permit_empty|max_length[50]',
 					'rfc'      => 'permit_empty|max_length[18]|regex_match[^[A-ZÑ&]{3,4}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[A-Z\d]{2}[A\d]$]',
 					'name'     => 'permit_empty|alpha_space|max_length[150]|',
 				],
@@ -178,7 +178,7 @@
 				$this->dataNotFound ();
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$res[ 1 ][ 'min_available' ] = 250;
+//			$res[ 1 ][ 'min_available' ] = 250;
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Updated Dashboard',
@@ -242,7 +242,7 @@
 			$express->updateAvailableAmount ( $res[ 1 ][ 'employeeId' ], floatval ( $this->input[ 'amount' ] ), $this->user );
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
-				'description' => 'Solicitud procesada',
+				'description' => 'Solicitud éxitosa!.',
 				'response'    => $transfer[ 1 ],
 			];
 			$this->logResponse ( 15 );
@@ -331,7 +331,7 @@
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
 				return [ FALSE, 'error' ];
 			}
-			return [ TRUE, "El pago esta en proceso, el tiempo de espera dependerá de su banco" ];
+			return [ TRUE, "Hemos transferido el monto; el tiempo de espera puede variar según su banco." ];
 		}
 		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
 			
