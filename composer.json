@@ -12,15 +12,17 @@
   "require": {
     "php": "^8.3",
     "ext-curl": "*",
+    "ext-fileinfo": "*",
     "ext-json": "*",
     "ext-openssl": "*",
     "ext-pcntl": "*",
     "ext-simplexml": "*",
     "ext-zip": "*",
-    "codeigniter4/framework": "^4.0",
+    "codeigniter4/framework": "4.4.8",
     "dompdf/dompdf": "^3.0",
     "firebase/php-jwt": "^6.10",
-    "ext-fileinfo": "*"
+    "maennchen/zipstream-php": "^2.2",
+    "phpoffice/phpspreadsheet": "^3.3"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9",
@@ -40,7 +42,10 @@
   "config": {
     "optimize-autoloader": true,
     "preferred-install": "dist",
-    "sort-packages": true
+    "sort-packages": true,
+    "platform": {
+      "php": "8.3.13"
+    }
   },
   "scripts": {
     "test": "phpunit"

@@ -75,9 +75,14 @@
 					"conciliationPlus",
 					"getMagicBalance",
 					"getMagicTransfers",
+					"changePassword",
 					"sExpressReport",
+					"sExpressReportCompany",
+					"sExpressPeriods",
 					"sExpressDashboard",
-					"changePassword"
+					"sExpressVerifyCurp",
+					"excelCompany",
+					
 				],
 			],
 	/*		'cors'=>[

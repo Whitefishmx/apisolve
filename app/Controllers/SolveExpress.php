@@ -8,6 +8,9 @@
 	use App\Models\SolveExpressModel;
 	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
+	use PhpOffice\PhpSpreadsheet\Spreadsheet;
+	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+	use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 	
 	class SolveExpress extends PagesStatusCode {
 		private $express = '';
@@ -35,7 +38,8 @@
 					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
 					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
 					'plan'     => 'permit_empty|max_length[1]|alpha',
-					'rfc'      => 'permit_empty|max_length[18]|regex_match[^[A-ZÑ&]{3,4}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[A-Z\d]{2}[A\d]$]',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
 					'name'     => 'permit_empty|alpha_space|max_length[150]|',
 				],
 				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
@@ -61,6 +65,7 @@
 		}
 		/**
 		 * @throws Exception
+		 * @noinspection DuplicatedCode
 		 */
 		public function payrollAdvanceReportC (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
@@ -105,14 +110,14 @@
 		/**
 		 * @throws Exception
 		 */
-		public function getPeriods(): ResponseInterface {
+		public function getPeriods (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, NULL) ) {
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				$this->logResponse ( 36 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->getPeriods ( $this->input['company'], intval ( $this->user ) );
+			$res = $express->getPeriods ( $this->input[ 'company' ], intval ( $this->user ) );
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -122,7 +127,7 @@
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Reporte generado correctamente',
-				'response'    => $res[1],
+				'response'    => $res[ 1 ],
 			];
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -130,23 +135,23 @@
 		/**
 		 * @throws Exception
 		 */
-		public function verifyCurp(): ResponseInterface {
-			$this->input = $this->getRequestLogin  ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, 'JSON') ) {
+		public function verifyCurp (): ResponseInterface {
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				$this->logResponse ( 37 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->verifyCurp ( $this->input['curp'] );
+			$res = $express->verifyCurp ( $this->input[ 'curp' ] );
 			if ( !$res[ 0 ] ) {
-				$this->serverError ('Error al validar CURP', $res[1]);
+				$this->serverError ( 'Error al validar CURP', $res[ 1 ] );
 				$this->logResponse ( 37 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'CURP validada',
-				'response'    => $res[1]
+				'response'    => $res[ 1 ],
 			];
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -178,7 +183,7 @@
 				$this->dataNotFound ();
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-//			$res[ 1 ][ 'min_available' ] = 250;
+			//			$res[ 1 ][ 'min_available' ] = 250;
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Updated Dashboard',
@@ -334,7 +339,6 @@
 			return [ TRUE, "Hemos transferido el monto; el tiempo de espera puede variar según su banco." ];
 		}
 		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
-			
 			if ( $transaction !== NULL ) {
 				$tModel = new TransactionsModel();
 				$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
@@ -342,6 +346,91 @@
 			if ( $operation !== NULL ) {
 				$opModel = new updateOperationStatus();
 				$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
+			}
+		}
+		/** @noinspection DuplicatedCode */
+		/**
+		 * @throws Exception
+		 */
+		public function excelFileReportCompany (): ResponseInterface|array {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'employee' => 'permit_empty|max_length[7]',
+					'company'  => 'permit_empty|max_length[7]|numeric',
+					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'plan'     => 'permit_empty|max_length[1]|alpha',
+					'period'   => 'permit_empty|max_length[50]',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'name'     => 'permit_empty|alpha_space|max_length[150]|',
+				],
+				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+//			var_dump ( $this->request );
+			if ( !$validation->run ( $this->input[ 'filters' ] ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], intval ( $this->user ) );
+//			var_dump ( $res );die();
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			try {
+				// Crea el archivo Excel en memoria
+				$spreadsheet = new Spreadsheet();
+				$sheet = $spreadsheet->getActiveSheet ();
+				$sheet->setTitle ( "ReporteNomina" );
+				$headers = array_keys ( reset ( $res[ 1 ] ) );
+				foreach ( $headers as $colIndex => $header ) {
+					$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 ); // Convierte índice numérico a columna (A, B, C...)
+					$sheet->setCellValue ( $column.'1', $header );
+					$sheet->getStyle ( $column.'1' )->applyFromArray (
+						[
+							'font' => [
+								'bold'  => TRUE,
+								'color' => [ 'rgb' => 'FFFFFF' ],
+								'size'  => 12,
+							],
+							'fill' => [
+								'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+								'color'    => [ 'rgb' => '2A5486' ],
+							],
+						]
+					);
+					$sheet->getColumnDimension ( $column )->setAutoSize ( TRUE );
+				}
+				foreach ( $res[ 1 ] as $rowIndex => $row ) {
+					foreach ( $headers as $colIndex => $header ) {
+						$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 );
+						$sheet->setCellValue ( $column.( $rowIndex + 2 ), $row[ $header ] ?? '' ); // Usa '' si la clave no existe
+					}
+				}
+				// Crea el escritor para la salida en memoria
+				$writer = new Xlsx( $spreadsheet );
+				ob_start ();
+				$writer->save ( 'php://output' );
+				$excelOutput = ob_get_clean ();
+				helper ( 'tools_helper' );
+				$name = month2Mes ( date ( 'm', strtotime ( 'now' ) ) - 1 )."_".date ( 'd_Y__H_i_s' );
+				return $this->response
+					->setContentType ( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' )
+					->setHeader ( 'Content-Disposition', 'attachment; filename="'.$name.'.xlsx"' )
+					->setBody ( $excelOutput );
+			} catch ( \Exception $e ) {
+				// Manejo de errores en caso de fallo en la generación
+				return $this->serverError ( 'No se pudo generar el archivo Excel ', 'Error al escribir el archivo' );
 			}
 		}
 	}

@@ -15,7 +15,7 @@
 				return $this->response->download($filePath, null)->setFileName($filename);
 			} else {
 				// Respuesta en caso de que el archivo no exista
-				return $this->failNotFound('El archivo no existe.');
+				return $this->failServerError('No se logro generar el archivo');
 			}
 		}
 	}
