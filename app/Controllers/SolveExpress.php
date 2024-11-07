@@ -81,7 +81,8 @@
 					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
 					'plan'     => 'permit_empty|max_length[1]|alpha',
 					'period'   => 'permit_empty|max_length[50]',
-					'rfc'      => 'permit_empty|max_length[18]|regex_match[^[A-ZÑ&]{3,4}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])[A-Z\d]{2}[A\d]$]',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
 					'name'     => 'permit_empty|alpha_space|max_length[150]|',
 				],
 				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
@@ -368,10 +369,11 @@
 					'plan'     => 'permit_empty|max_length[1]|alpha',
 					'period'   => 'permit_empty|max_length[50]',
 					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
 					'name'     => 'permit_empty|alpha_space|max_length[150]|',
 				],
 				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
-//			var_dump ( $this->request );
+			//			var_dump ( $this->request );
 			if ( !$validation->run ( $this->input[ 'filters' ] ) ) {
 				$errors = $validation->getErrors ();
 				$this->errDataSupplied ( $errors );
@@ -380,7 +382,7 @@
 			}
 			$express = new SolveExpressModel();
 			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], intval ( $this->user ) );
-//			var_dump ( $res );die();
+			//			var_dump ( $res );die();
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -432,5 +434,24 @@
 				// Manejo de errores en caso de fallo en la generación
 				return $this->serverError ( 'No se pudo generar el archivo Excel ', 'Error al escribir el archivo' );
 			}
+		}
+		public function ExpressWH (): ResponseInterface|bool|array {
+			$this->user = 20;
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 41, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->errCode = 200;
+			$out = [
+				'error'       => $this->errCode,
+				'description' => 'Información recibida.',
+				'reason'      => 'Los datos se recibieron y procesaron con éxito.' ];
+			if ( !$this->logResponse ( 41, $this->input, $out ) ) {
+				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = $out;
+			return $this->getResponse ( $this->responseBody );
 		}
 	}

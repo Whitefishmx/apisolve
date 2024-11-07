@@ -120,7 +120,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 		}
 		public function getReportCompany ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
-			                    ->select ( "e.external_id, t1.employee_id , p.name, p.last_name, p.sure_name, p.rfc, e.plan, e.net_salary,
+			                    ->select ( "e.external_id, t1.employee_id , p.name, p.last_name, p.sure_name, p.rfc, p.curp, e.plan, e.net_salary,
 SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_amount) AS 'remaining_amount', t1.period" )
 			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'INNER' )
 			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'INNER' )
@@ -162,6 +162,9 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			}
 			if ( !empty( $args[ 'rfc' ] ) ) {
 				$builder->like ( 'p.rfc', $args[ 'rfc' ] );
+			}
+			if ( !empty( $args[ 'curp' ] ) ) {
+				$builder->like ( 'p.curp', $args[ 'curp' ] );
 			}
 			if ( !empty( $args[ 'name' ] ) ) {
 				$builder->like ( 'p.name', $args[ 'name' ] );

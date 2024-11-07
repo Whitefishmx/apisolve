@@ -26,7 +26,7 @@
 			'invalidchars' => InvalidChars::class,
 			'secureheaders' => SecureHeaders::class,
 			'auth' => JWTAuthenticationFilter::class,
-//			'cors' => CorsFilter::class,
+			'cors' => CorsFilter::class,
 		];
 		/**
 		 * List of filter aliases that are always
@@ -36,7 +36,7 @@
 		 */
 		public array $globals = [
 			'before' => [
-//				'cors',
+				'cors',
 				// 'honeypot',
 				// 'csrf',
 				// 'invalidchars',
@@ -80,7 +80,6 @@
 					"sExpressReportCompany",
 					"sExpressPeriods",
 					"sExpressDashboard",
-					"sExpressVerifyCurp",
 					"excelCompany",
 					
 				],

@@ -17,6 +17,7 @@
 	$routes->add ( 'stpTransactions', 'Fintech\STP::wbDispersion' /**@uses \App\Controllers\Fintech\STP::wbDispersion* */ );
 	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
 	$routes->add ( 'MagicWH', 'Fintech\MagicPay::MagicWH' /**@uses \App\Controllers\Fintech\MagicPay::MagicWH* */ );
+	$routes->add ( 'metaExpressWH', 'SolveExpress::ExpressWH' /**@uses \App\Controllers\SolveExpress::ExpressWH * */ );
 	//========================|| CRON ||========================
 	$routes->add ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
 	//========================|| CRON ||========================
@@ -61,7 +62,7 @@
 	$routes->add ( 'sExpressDashboard', 'SolveExpress::dashboard' /**@uses \App\Controllers\SolveExpress::dashboard */ );
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance () */ );
 	$routes->add ( 'sExpressVerifyCurp', 'SolveExpress::verifyCurp' /**@uses \App\Controllers\SolveExpress::verifyCurp () */ );
-	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany () */);
+	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany () */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================

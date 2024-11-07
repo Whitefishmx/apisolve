@@ -51,11 +51,12 @@ WHERE (t1.email = '$mail' and t1.active = 1)
 			return [ FALSE, 'Error con la conexión a la fuente de información' ];
 		}
 		public function validateAccess ( string $login, string $password, int $platform ): array {
-			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login, t3.company_id
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login, t3.company_id, c.short_name
 FROM users t1
     INNER JOIN person_user pu ON t1.id = pu.user_id
     INNER JOIN person t2 ON pu.person_id = t2.id
     LEFT JOIN employee t3 ON t3.person_id = t2.id
+    INNER JOIN companies c ON c.id = t3.company_id
 WHERE (t1.nickname = '$login' AND t1.password = '$password')
    OR (t1.email = '$login' AND t1.password = '$password') ";
 			if ( $platform === 6 ) {
