@@ -75,7 +75,6 @@
 					"conciliationPlus",
 					"getMagicBalance",
 					"getMagicTransfers",
-					"changePassword",
 					"sExpressReport",
 					"sExpressReportCompany",
 					"sExpressPeriods",

@@ -149,10 +149,37 @@
 				$this->logResponse ( 37 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			if ( intval ( $res[ 1 ][ 'curp_validated' ] ) === 1 ) {
+				if ( $res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint' ] ) {
+					$this->serverError ( 'Dispositivo no reconocido', 'Ya se iniciado el proceso de validación desde otro dispositivo.' );
+				}
+				if ( intval ( $res[ 1 ][ 'metamap' ] ) === 1 ) {
+					$this->responseBody = [
+						'error'       => $this->errCode = 200,
+						'description' => 'CURP validada',
+						'response'    => $res[ 1 ],
+					];
+					$this->logResponse ( 36 );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
+				$this->responseBody = [
+					'error'       => $this->errCode = 202,
+					'description' => 'CURP validada',
+					'response'    => 'Aun no se termina de validar su identidad, por favor intente mas tarde',
+				];
+				$this->logResponse ( 36 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$update = $express->updateFlagCurp ( $res[ 1 ][ 'employee' ], $this->input[ 'fingerprint' ] );
+			if ( !$update[ 1 ] ) {
+				$this->serverError ( 'Error al validar CURP', $res[ 1 ] );
+				$this->logResponse ( 37 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
 			$this->responseBody = [
-				'error'       => $this->errCode = 200,
+				'error'       => $this->errCode = 201,
 				'description' => 'CURP validada',
-				'response'    => $res[ 1 ],
+				'response'    => 'Por favor continue con el proceso de validación de identidad',
 			];
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );

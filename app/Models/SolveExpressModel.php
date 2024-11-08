@@ -8,8 +8,25 @@
 	class SolveExpressModel extends BaseModel {
 		//		private float $commissions = 70;
 		private float $commissions = 0;
-		public function verifyCurp ( $curp ) {
-			$query = "SELECT p.curp, u.id, u.password
+		public function updateFlagCurp ( $employee, $fingerprint ) {
+			$query = "UPDATE employee set curp_validated = 1, device = '$fingerprint' WHERE id = '$employee'";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					//					saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+					//					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó el estatus de validación' ];
+				}
+				//				saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+				//				( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			//			saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
+			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar el estado de la validación' ];
+		}
+		public function verifyCurp ( $curp ): array {
+			$query = "SELECT p.curp, u.id, u.password, e.curp_validated, e.device, e.metamap, e.id as 'employee'
 FROM person p
     INNER JOIN employee e ON e.person_id  = p.id
     LEFT JOIN person_user pu ON pu.person_id = p.id
@@ -283,7 +300,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			if ( $rows > 0 ) {
 				if ( $res->getNumRows () === 1 ) {
 					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
-					return [ TRUE,  json_decode ( json_encode ( $res->getResult ()[ 0 ] ), TRUE )];
+					return [ TRUE, json_decode ( json_encode ( $res->getResult ()[ 0 ] ), TRUE ) ];
 				}
 				$res = $res->getResultArray ();
 				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
