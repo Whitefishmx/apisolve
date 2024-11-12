@@ -478,7 +478,24 @@
 				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			$data = json_decode ( json_encode ( $this->input ), TRUE );
+			if ( isset ( $data [ 'step' ][ 'id' ] ) ) {
+				if ( $data [ 'step' ][ 'id' ] === 'facematch' ) {
+					$this->faceMatch ( $data, $this->user );
+				}
+				if ( $data [ 'step' ][ 'id' ] === 'document-reading' ) {
+					$upDateData = [
+						'name' => $data[ 'step' ][ 'data' ][ 'firstName' ][ 'value' ] ];
+				}
+			}
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
+		}
+		private function faceMatch ( $data, $user ): int {
+			$score = intval ( $data[ 'step' ][ 'data' ][ 'score' ] > 60 );
+			$sExpress = new SolveExpressModel();
+			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
+			//SendNotification
+			return $score;
 		}
 	}

@@ -525,4 +525,23 @@ WHERE employee_id = $employeeId";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
+		public function updateMetaValidation ( mixed $curp, int $score, int $user ) {
+			$approved = "UPDATE employee set metamap = 1 WHERE employee.person_id = (SELECT id FROM person WHERE curp = '$curp')";
+			$reject = "UPDATE employee set metamap = 0, curp_validated = 0, device = NULL WHERE employee.person_id = (SELECT id FROM person WHERE curp = '$curp')";
+			$query = $score > 0 ? $approved : $reject;
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+				}
+				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+				( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
+			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+		}
 	}

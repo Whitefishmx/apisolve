@@ -63,10 +63,9 @@ WHERE (t1.nickname = '$login' AND t1.password = '$password')
 				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
 			}
 			$query .= "AND t1.active = 1 ";
-//			var_dump ($query);
-//			die();
+//			var_dump ($query);die();
 			$res = $this->db->query ( $query );
-//			var_dump($res->getNumRows ());
+//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
 			}
@@ -79,8 +78,7 @@ FROM permissions p
     JOIN users u ON p.user_id = u.id
     JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
 WHERE pa.id_platform = $platform AND u.id  = $userid";
-//			var_dump ($query);
-//			die();
+//			var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];

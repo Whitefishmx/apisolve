@@ -67,6 +67,7 @@
 			helper ( 'crypt_helper' );
 			$res = $user->validateAccess ( $this->input[ 'email' ], $this->input[ 'password' ] = ( passwordEncrypt (
 				$this->input[ 'password' ] ) ), intval ( $this->input[ 'platform' ] ) );
+//			var_dump ($res);die ();
 			if ( !$res[ 0 ] ) {
 				$this->errDataSupplied ( 'Las credenciales ingresadas son incorrectas' );
 				//				$this->logResponse ( 1 );
