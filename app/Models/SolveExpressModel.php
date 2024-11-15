@@ -189,6 +189,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			$builder->groupBy ( 't1.period' );
 			$builder->groupBy ( 't1.employee_id' );
 			$sqlQuery = $builder->getCompiledSelect ();
+			//			var_dump ($sqlQuery );die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -199,7 +200,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			if ( $rows > 0 ) {
 				if ( $res->getNumRows () === 1 ) {
 					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
-					return [ TRUE, $res->getResult ()[ 0 ] ];
+					return [ TRUE, $res->getResult () ];
 				}
 				$res = $res->getResultArray ();
 				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
@@ -300,7 +301,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			if ( $rows > 0 ) {
 				if ( $res->getNumRows () === 1 ) {
 					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
-					return [ TRUE, json_decode ( json_encode ( $res->getResult ()[ 0 ] ), TRUE ) ];
+					return [ TRUE, json_decode ( json_encode ( $res->getResult () ), TRUE ) ];
 				}
 				$res = $res->getResultArray ();
 				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
@@ -312,7 +313,8 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			}
 		}
 		public function getPeriods ( $company, $user ): array {
-			$query = "SELECT ap.period FROM advance_payroll ap INNER JOIN employee e ON e.id = ap.employee_id WHERE e.company_id = $company GROUP BY ap.period";
+			$query = "SELECT ap.period FROM advance_payroll ap INNER JOIN employee e ON e.id = ap.employee_id WHERE e.company_id = $company
+                                                                                        GROUP BY ap.period ORDER BY MAX(ap.created_at) DESC";
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 35, 404, json_encode ( [ 'company' => $company ] ), json_encode ( [
 					FALSE,
@@ -543,5 +545,8 @@ WHERE employee_id = $employeeId";
 			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+		}
+		public function updateNomina ( $args, $company ) {
+			$query
 		}
 	}

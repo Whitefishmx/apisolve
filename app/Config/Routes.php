@@ -63,6 +63,7 @@
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance () */ );
 	$routes->add ( 'sExpressVerifyCurp', 'SolveExpress::verifyCurp' /**@uses \App\Controllers\SolveExpress::verifyCurp () */ );
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany () */ );
+	$routes->add ( 'sExpressUploadNomina', 'SolveExpress::uploadNomina' /**@uses \App\Controllers\SolveExpress::uploadNomina () */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================

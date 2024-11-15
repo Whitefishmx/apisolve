@@ -80,7 +80,7 @@
 					"sExpressPeriods",
 					"sExpressDashboard",
 					"excelCompany",
-					
+					"sExpressUploadNomina"
 				],
 			],
 	/*		'cors'=>[

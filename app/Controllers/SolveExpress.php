@@ -8,6 +8,7 @@
 	use App\Models\SolveExpressModel;
 	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
+	use PhpOffice\PhpSpreadsheet\IOFactory;
 	use PhpOffice\PhpSpreadsheet\Spreadsheet;
 	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 	use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -497,5 +498,63 @@
 			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
 			//SendNotification
 			return $score;
+		}
+		public function uploadNomina () {
+			$file = $this->request->getFile ( 'nomina' );
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				$this->logResponse ( 41, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
+			$encryptionMethod = 'AES-256-CBC';
+			$iv = openssl_random_pseudo_bytes ( openssl_cipher_iv_length ( $encryptionMethod ) );
+			if ( !$file->isValid () ) {
+				return $this->serverError ( 'No se cargo el archivo', 'No es un archivo valido' );
+			}
+			try {
+				$spreadsheet = IOFactory::load ( $file->getTempName () );
+				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
+				$requiredHeaders = [
+					"Área",
+					"Número de empleado",
+					"RFC",
+					"CURP",
+					"Apellido paterno",
+					"Apellido materno",
+					"Nombre",
+					"Fecha de alta",
+					"Puesto funcional",
+					"Confianza",
+					"Sueldo base",
+					"Sueldo Neto",
+					"Banco",
+					"Cuenta",
+				];
+				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+				foreach ( $requiredHeaders as $header ) {
+					$index = array_search ( $header, $headers );
+					$headerIndices[ $header ] = $index;
+				}
+				$dataToInsert = [];
+				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
+					$row = $sheetData[ $i ];
+					$mappedRow = [];
+					foreach ( $headerIndices as $header => $index ) {
+						$value = isset( $row[ $index ] ) ? $row[ $index ] : NULL;
+						if ( $value !== NULL ) {
+							$encryptedValue = openssl_encrypt ( $value, $encryptionMethod, $encryptionKey, 0, $iv );
+							$mappedRow[ $header ] = $encryptedValue;
+						} else {
+							$mappedRow[ $header ] = NULL;
+						}
+					}
+					$mappedRow[ 'iv' ] = base64_encode ( $iv );
+					$dataToInsert[] = $mappedRow;
+				}
+				return $this->getResponse ( [ 'ok' => $dataToInsert ], 200 );
+			} catch ( \Exception $e ) {
+				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+			}
 		}
 	}

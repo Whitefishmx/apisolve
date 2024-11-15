@@ -10,7 +10,7 @@
 		/**
 		 * @throws \Exception
 		 */
-		public function changePassword () {
+		public function changePassword (): ResponseInterface|bool|array {
 			$this->input = $this->getRequestLogin  ( $this->request );
 			if ( $data = $this->verifyRules ( 'PATCH', $this->request, 'JSON' ) ) {
 				$this->logResponse ( 31 );
