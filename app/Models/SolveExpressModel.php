@@ -7,7 +7,7 @@
 	
 	class SolveExpressModel extends BaseModel {
 		//		private float $commissions = 70;
-		private float $commissions = 0;
+		private float $commissions = 1;
 		public function updateFlagCurp ( $employee, $fingerprint ) {
 			$query = "UPDATE employee set curp_validated = 1, device = '$fingerprint' WHERE id = '$employee'";
 			if ( $this->db->query ( $query ) ) {
@@ -113,6 +113,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 			if ( !empty( $args[ 'name' ] ) ) {
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
+			$builder->orderBy ('t1.created_at','DESC');
 			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
@@ -427,7 +428,7 @@ FROM users u
 			$folio = $this->generateFolio ( 19, 'advance_payroll', $user );
 			$nexID = $this->getNexId ( 'advance_payroll' );
 			$refNumber = $this->NewReferenceNumber ( $nexID );
-			$employee = intval ( $this->getEmployee ( $user ) );
+			$employee =  $this->getEmployee ( $user )[0]['id'] ;
 			$remaining = $preRemaining - $amount;
 			$period = $this->getPeriod ( $plan );
 			$dataIn = [ $employee, $folio, $refNumber, $amount, $remaining, $period ];
@@ -450,6 +451,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id
     INNER JOIN person_user pu ON pu.person_id = p.id
     INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
+			//var_dump ( $query);die();
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
@@ -463,7 +465,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			}
 			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
-			return [ TRUE, $res->getResultArray ()[ 0 ] ];
+			return [ $res->getResultArray ()[0]];
 		}
 		/**
 		 * @throws DateMalformedStringExceptionAlias
@@ -546,7 +548,25 @@ WHERE employee_id = $employeeId";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
-		public function updateNomina ( $args, $company ) {
-			$query
+		public function updateNomina ( $args, $company, $user ) {
+				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
+values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
+        '{$args['CURP']}','{$args['iv']}')
+ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
+                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+					( [ 'affected' => $affected ] ) );
+					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+				}
+				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+				( [ FALSE, 'affected' => $affected ] ) );
+				return [ FALSE, 'No se encontró registro a actualizar' ];
+			}
+			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
+			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
 	}

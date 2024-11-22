@@ -3,12 +3,10 @@
 	namespace App\Controllers;
 	
 	use Exception;
-	use App\Models\UserModel;
-	use App\Models\MagicPayModel;
-	use App\Models\SolveExpressModel;
-	use App\Models\TransactionsModel;
+	use App\Models\{UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use CodeIgniter\HTTP\ResponseInterface;
 	use PhpOffice\PhpSpreadsheet\IOFactory;
+	use PhpOffice\PhpSpreadsheet\Style\Fill;
 	use PhpOffice\PhpSpreadsheet\Spreadsheet;
 	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 	use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -243,6 +241,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
+			$this->user = $this->input[ 'user' ];
 			$res = $express->getDashboard ( intval ( $this->input[ 'user' ] ) );
 			if ( !$res[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Por favor intente nuevamente o volver a iniciar sesión.' );
@@ -259,13 +258,14 @@
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			$this->user = $this->input[ 'user' ];
 			$rules = $this->cRules ( $this->input[ 'user' ] );
 			if ( !$rules[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', $rules[ 1 ] );
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$order = $this->makeOrder ( $res[ 1 ] );
+			$order = $this->makeOrder ( $res[ 1 ] , $this->input['user']);
 			if ( !$order[ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -317,8 +317,9 @@
 		/**
 		 * @throws \DateMalformedStringException
 		 */
-		public function makeOrder ( $data ): array {
-			$order = $this->express->generateOrder ( $this->user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ] );
+		public function makeOrder ( $data, $user ): array {
+			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ] );
+//			die(var_dump ($order));
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );
@@ -338,12 +339,13 @@
 			$data = [
 				'description'   => $order [ 'refNumber' ],
 				'account'       => $bank[ 1 ][ 'clabe' ],
-				//				'amount'        => $order[ 'amount' ],
-				'amount'        => '0.01',
+								'amount'        => $order[ 'amount' ],
+//				'amount'        => '0.01',
 				'bank'          => $bank[ 1 ][ 'magicAlias' ],
 				'owner'         => "{$res['name']} {$res['last_name']} {$res['sure_name']}",
 				'validateOwner' => FALSE ];
 			$magic = new MagicPayModel();
+//			die(var_dump ($data));
 			$transfer = $magic->createTransfer ( $data, $order[ 'refNumber' ], $order[ 'folio' ] );
 			if ( !$transfer[ 0 ] ) {
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
@@ -367,16 +369,16 @@
 			}
 			return [ TRUE, "Hemos transferido el monto; el tiempo de espera puede variar según su banco." ];
 		}
-		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
-			if ( $transaction !== NULL ) {
-				$tModel = new TransactionsModel();
-				$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
-			}
-			if ( $operation !== NULL ) {
-				$opModel = new updateOperationStatus();
-				$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
-			}
-		}
+		//		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
+		//			if ( $transaction !== NULL ) {
+		//				$tModel = new TransactionsModel();
+		//				$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
+		//			}
+		//			if ( $operation !== NULL ) {
+		//				$opModel = new updateOperationStatus();
+		//				$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
+		//			}
+		//		}
 		/** @noinspection DuplicatedCode */
 		/**
 		 * @throws Exception
@@ -409,7 +411,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], intval ( $this->user ) );
+			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], $this->user );
 			//			var_dump ( $res );die();
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
@@ -434,7 +436,7 @@
 								'size'  => 12,
 							],
 							'fill' => [
-								'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+								'fillType' => Fill::FILL_SOLID,
 								'color'    => [ 'rgb' => '2A5486' ],
 							],
 						]
@@ -458,7 +460,7 @@
 					->setContentType ( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' )
 					->setHeader ( 'Content-Disposition', 'attachment; filename="'.$name.'.xlsx"' )
 					->setBody ( $excelOutput );
-			} catch ( \Exception $e ) {
+			} catch ( Exception ) {
 				// Manejo de errores en caso de fallo en la generación
 				return $this->serverError ( 'No se pudo generar el archivo Excel ', 'Error al escribir el archivo' );
 			}
@@ -499,18 +501,19 @@
 			//SendNotification
 			return $score;
 		}
-		public function uploadNomina () {
+		public function uploadNomina (): ResponseInterface|array {
 			$file = $this->request->getFile ( 'nomina' );
 			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				$this->logResponse ( 41, $this->input, $this->responseBody );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			helper ( 'crypt_helper' );
 			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
-			$encryptionMethod = 'AES-256-CBC';
-			$iv = openssl_random_pseudo_bytes ( openssl_cipher_iv_length ( $encryptionMethod ) );
+			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
+			$ivSearch = generateIV ( $ivSeedSearch );
 			if ( !$file->isValid () ) {
-				return $this->serverError ( 'No se cargo el archivo', 'No es un archivo valido' );
+				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
 			}
 			try {
 				$spreadsheet = IOFactory::load ( $file->getTempName () );
@@ -518,6 +521,7 @@
 				$requiredHeaders = [
 					"Área",
 					"Número de empleado",
+					"Estatus",
 					"RFC",
 					"CURP",
 					"Apellido paterno",
@@ -532,6 +536,7 @@
 					"Cuenta",
 				];
 				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+				$headerIndices = [];
 				foreach ( $requiredHeaders as $header ) {
 					$index = array_search ( $header, $headers );
 					$headerIndices[ $header ] = $index;
@@ -540,21 +545,33 @@
 				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
 					$row = $sheetData[ $i ];
 					$mappedRow = [];
+					$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
+					$iv = generateIV ( $ivSeed );
 					foreach ( $headerIndices as $header => $index ) {
-						$value = isset( $row[ $index ] ) ? $row[ $index ] : NULL;
-						if ( $value !== NULL ) {
-							$encryptedValue = openssl_encrypt ( $value, $encryptionMethod, $encryptionKey, 0, $iv );
+						$value = $row[ $index ] ?? NULL;
+						if ( $header === "Estatus" || $header === "Confianza" ) {
+							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
+						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
+							$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
 							$mappedRow[ $header ] = $encryptedValue;
 						} else {
-							$mappedRow[ $header ] = NULL;
+							if ( $value !== NULL ) {
+								$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
+								$mappedRow[ $header ] = $encryptedValue;
+							} else {
+								$mappedRow[ $header ] = NULL;
+							}
 						}
+						$mappedRow[ 'iv' ] = $iv;
 					}
-					$mappedRow[ 'iv' ] = base64_encode ( $iv );
 					$dataToInsert[] = $mappedRow;
 				}
-				return $this->getResponse ( [ 'ok' => $dataToInsert ], 200 );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
 			}
+			if ( empty( $dataToInsert ) ) {
+				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+			}
+			
 		}
 	}

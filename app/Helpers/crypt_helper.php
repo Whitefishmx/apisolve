@@ -5,20 +5,15 @@
 		$crypt = openssl_encrypt ( $password, 'ChaCha20', $clave, 0, $iv );
 		return ( $crypt );
 	}
-	
-	function decryptData ( $encryptedValue, $iv ): string {
-		// Obtener la clave de cifrado del archivo .env
-		$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
-		// Verificar que la clave sea válida
-		if ( $encryptionKey === FALSE ) {
-			throw new \RuntimeException( 'Encryption key not found in .env file.' );
-		}
-		// Método de cifrado utilizado
+	function encryptValue ( $value, $key, $iv ): false|string {
 		$encryptionMethod = 'AES-256-CBC';
-		// Desencriptar el valor
-		$decryptedValue = openssl_decrypt ( $encryptedValue, $encryptionMethod, $encryptionKey, 0, base64_decode ( $iv ) );
-		if ( $decryptedValue === FALSE ) {
-			throw new \RuntimeException( 'Decryption failed.' );
-		}
-		return $decryptedValue;
+		return openssl_encrypt ( $value, $encryptionMethod, $key, 0, $iv );
+	}
+	
+	function decryptValue ( $encryptedValue, $key, $iv ): false|string {
+		$encryptionMethod = 'AES-256-CBC';
+		return openssl_decrypt ( $encryptedValue, $encryptionMethod, $key, 0, $iv );
+	}
+	function generateIV ( $seed ): string {
+		return substr ( hash ( 'sha256', $seed ), 0, openssl_cipher_iv_length ( 'AES-256-CBC' ) );
 	}
