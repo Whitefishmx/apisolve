@@ -22,6 +22,7 @@
 	$routes->add ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
 	//========================|| CRON ||========================
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
+	$routes->add ( 'layoutDownloader/(:segment)', 'FileController::downloadLayout/$1' /**@uses \App\Controllers\FileController::downloadLayout* */ );
 	//========================|| GET ||========================
 	$routes->add ( 'token', 'Auth::login' /**@uses \App\Controllers\Auth::Login* */ );
 	$routes->add ( '/', 'Home' );
