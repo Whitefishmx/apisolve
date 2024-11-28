@@ -3,12 +3,15 @@
 	namespace App\Models;
 	
 	use DateTime;
+	use http\Client\Curl\User;
+	use CodeIgniter\Database\Query;
+	use CodeIgniter\Database\BaseResult;
 	use DateMalformedStringException as DateMalformedStringExceptionAlias;
 	
 	class SolveExpressModel extends BaseModel {
 		//		private float $commissions = 70;
 		private float $commissions = 1;
-		public function updateFlagCurp ( $employee, $fingerprint ) {
+		public function updateFlagCurp ( $employee, $fingerprint ): array {
 			$query = "UPDATE employee set curp_validated = 1, device = '$fingerprint' WHERE id = '$employee'";
 			if ( $this->db->query ( $query ) ) {
 				$affected = $this->db->affectedRows ();
@@ -113,7 +116,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 			if ( !empty( $args[ 'name' ] ) ) {
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
-			$builder->orderBy ('t1.created_at','DESC');
+			$builder->orderBy ( 't1.created_at', 'DESC' );
 			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
@@ -428,7 +431,7 @@ FROM users u
 			$folio = $this->generateFolio ( 19, 'advance_payroll', $user );
 			$nexID = $this->getNexId ( 'advance_payroll' );
 			$refNumber = $this->NewReferenceNumber ( $nexID );
-			$employee =  $this->getEmployee ( $user )[0]['id'] ;
+			$employee = $this->getEmployee ( $user )[ 0 ][ 'id' ];
 			$remaining = $preRemaining - $amount;
 			$period = $this->getPeriod ( $plan );
 			$dataIn = [ $employee, $folio, $refNumber, $amount, $remaining, $period ];
@@ -465,7 +468,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			}
 			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
-			return [ $res->getResultArray ()[0]];
+			return [ $res->getResultArray ()[ 0 ] ];
 		}
 		/**
 		 * @throws DateMalformedStringExceptionAlias
@@ -529,7 +532,7 @@ WHERE employee_id = $employeeId";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
-		public function updateMetaValidation ( mixed $curp, int $score, int $user ) {
+		public function updateMetaValidation ( mixed $curp, int $score, int $user ): array {
 			$approved = "UPDATE employee set metamap = 1 WHERE employee.person_id = (SELECT id FROM person WHERE curp = '$curp')";
 			$reject = "UPDATE employee set metamap = 0, curp_validated = 0, device = NULL WHERE employee.person_id = (SELECT id FROM person WHERE curp = '$curp')";
 			$query = $score > 0 ? $approved : $reject;
@@ -548,25 +551,121 @@ WHERE employee_id = $employeeId";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
-		public function updateNomina ( $args, $company, $user ) {
-				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
-values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
-        '{$args['CURP']}','{$args['iv']}')
-ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
-                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
-			if ( $this->db->query ( $query ) ) {
-				$affected = $this->db->affectedRows ();
-				if ( $affected > 0 ) {
-					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-					( [ 'affected' => $affected ] ) );
-					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
-				}
-				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-				( [ FALSE, 'affected' => $affected ] ) );
-				return [ FALSE, 'No se encontró registro a actualizar' ];
+		public function getPeriodsCompany ( $company_id, $current_date, $user ): array {
+			$query = "SELECT * FROM payroll_periods
+              WHERE company_id = $company_id
+              AND start_date <= '$current_date'
+              AND end_date >= '$current_date'
+              ORDER BY start_date ASC
+              LIMIT 1";
+			$res = $this->db->query ( $query )->getResultArray ();
+			if ( !$res ) {
+				$query = "SELECT * FROM payroll_periods
+                  WHERE company_id = $company_id
+                  AND start_date > '$current_date'
+                  ORDER BY start_date ASC
+                  LIMIT 1";
+				$res = $this->db->query ( $query )->getResultArray ();
 			}
-			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
-			( [ FALSE, 'affected' => $this->db->error () ] ) );
-			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+			if ( !$res ) {
+				saveLog ( $user, 46, 404, json_encode ( [ 'args' => [ $company_id, $current_date, $user ] ] ), json_encode ( [
+					FALSE,
+					'No se encontró información',
+				] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 46, 200, json_encode ( [ 'args' => [ $company_id, $current_date, $user ] ] ), json_encode ( $res ) );
+			return $res[ 0 ];
+		}
+		public function getSumRequest ( $employee, $period_name ) {
+			return $this->db->query ( "
+                    SELECT IFNULL(SUM(requested_amount), 0) AS total_requested
+                    FROM advance_payroll
+                    WHERE employee_id = ?
+                      AND period = ?
+                ", [ $employee[ 'id' ], $period_name ] )->getRow ()->total_requested;
+		}
+		public function updateNomina ( $args, $company, $user ) {
+			//				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
+			//values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
+			//        '{$args['CURP']}','{$args['iv']}')
+			//ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
+			//                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
+			//			if ( $this->db->query ( $query ) ) {
+			//				$affected = $this->db->affectedRows ();
+			//				if ( $affected > 0 ) {
+			//					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+			//					( [ 'affected' => $affected ] ) );
+			//					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+			//				}
+			//				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+			//				( [ FALSE, 'affected' => $affected ] ) );
+			//				return [ FALSE, 'No se encontró registro a actualizar' ];
+			//			}
+			//			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
+			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
+			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+		}
+		public function resetCounters ( $company_id, $current_date, $period ): void {
+			$this->db->query ( "UPDATE advancePayroll_control
+            SET req_day = 0,
+                req_week = IF(WEEK(?) > WEEK(updated_at), 0, req_week),
+                req_biweekly = IF(WEEK(?) > WEEK(updated_at) + 2, 0, req_biweekly),
+                req_month = IF(MONTH(?) != MONTH(updated_at), 0, req_month)
+            WHERE employee_id IN (
+                SELECT id FROM employee WHERE company_id = ?
+            )
+        ", [ $current_date, $current_date, $current_date, $company_id ] );
+		}
+		public function getAdvancePayrollControl ( $employee_id, $user ): array {
+			$query = "SELECT * FROM advancePayroll_control WHERE employee_id = $employee_id";
+			//			var_dump ( $query );
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 47, 404, json_encode ( [ 'employee' => $employee_id ] ), json_encode ( [
+					FALSE,
+					'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$res = $res->getResultArray ();
+			saveLog ( $user, 47, 200, json_encode ( [ 'employee' => $employee_id ] ), json_encode ( $res ) );
+			return $res;
+		}
+		public function updateAdvancePayrollControl ( $id, $period_name, $days_worked, $amount_available, $available, $user ): BaseResult|array|bool|Query {
+			$builder = $this->db->table ( 'advancePayroll_control' );
+			$builder->where ( 'id', $id );
+			$builder->update ( [
+				'actual_period'    => $period_name,
+				'worked_days'      => $days_worked,
+				'amount_available' => $amount_available,
+				'available'        => $available,
+			] );
+			$sqlQuery = $builder->getCompiledSelect ();
+			if ( !$res = $this->db->query ( $sqlQuery ) ) {
+				saveLog ( $user, 47, 404, json_encode ( [ 'args' => [ $id, $period_name, $amount_available, $days_worked ] ] ), json_encode ( [
+					FALSE,
+					'No se actualizo' ] ) );
+				return [ FALSE, 'No se actualizo' ];
+			}
+			saveLog ( $user, 47, 200, json_encode ( [ 'args' => [ $id, $period_name, $amount_available, $days_worked ] ] ), json_encode ( $res ) );
+			return $res;
+		}
+		public function insertAdvancePayrollControl ( $employee, $period_name, $days_worked, $amount_available, $available, $user ): Query|bool|array|BaseResult {
+			$builder = $this->db->table ( 'advancePayroll_control' );
+			$builder->insert ( [
+				'employee_id'      => $employee,
+				'actual_period'    => $period_name,
+				'worked_days'      => $days_worked,
+				'amount_available' => $amount_available,
+				'available'        => $available,
+			] );
+			$sqlQuery = $builder->getCompiledSelect ();
+			if ( !$res = $this->db->query ( $sqlQuery ) ) {
+				saveLog ( $user, 47, 404, json_encode ( [ 'args' => [ $employee, $period_name, $amount_available, $days_worked ] ] ), json_encode ( [
+					FALSE,
+					'No se actualizo' ] ) );
+				return [ FALSE, 'No se actualizo' ];
+			}
+			saveLog ( $user, 47, 200, json_encode ( [ 'args' => [ $employee, $period_name, $amount_available, $days_worked ] ] ), json_encode ( $res ) );
+			return $res;
 		}
 	}

@@ -22,7 +22,8 @@
     "dompdf/dompdf": "^3.0",
     "firebase/php-jwt": "^6.10",
     "maennchen/zipstream-php": "^2.2",
-    "phpoffice/phpspreadsheet": "^3.3"
+    "phpoffice/phpspreadsheet": "^3.3",
+    "ext-calendar": "*"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9",

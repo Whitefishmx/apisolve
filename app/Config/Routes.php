@@ -20,6 +20,7 @@
 	$routes->add ( 'metaExpressWH', 'SolveExpress::ExpressWH' /**@uses \App\Controllers\SolveExpress::ExpressWH * */ );
 	//========================|| CRON ||========================
 	$routes->add ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
+	$routes->add ( 'updPayControl', 'SolveExpress::updateAdvancePayrollControl' /**@uses \App\Controllers\SolveExpress::updateAdvancePayrollControl* */ );
 	//========================|| CRON ||========================
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
 	$routes->add ( 'layoutDownloader/(:segment)', 'FileController::downloadLayout/$1' /**@uses \App\Controllers\FileController::downloadLayout* */ );

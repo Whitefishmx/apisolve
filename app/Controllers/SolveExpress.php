@@ -2,8 +2,10 @@
 	
 	namespace App\Controllers;
 	
+	use DateTime;
 	use Exception;
-	use App\Models\{UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
+	use App\Models\{DataModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
+	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use PhpOffice\PhpSpreadsheet\IOFactory;
 	use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -265,7 +267,7 @@
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$order = $this->makeOrder ( $res[ 1 ] , $this->input['user']);
+			$order = $this->makeOrder ( $res[ 1 ], $this->input[ 'user' ] );
 			if ( !$order[ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -315,11 +317,11 @@
 			return [ TRUE, 'ok' ];
 		}
 		/**
-		 * @throws \DateMalformedStringException
+		 * @throws DateMalformedStringException
 		 */
 		public function makeOrder ( $data, $user ): array {
 			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ] );
-//			die(var_dump ($order));
+			//			die(var_dump ($order));
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );
@@ -339,13 +341,13 @@
 			$data = [
 				'description'   => $order [ 'refNumber' ],
 				'account'       => $bank[ 1 ][ 'clabe' ],
-								'amount'        => $order[ 'amount' ],
-//				'amount'        => '0.01',
+				'amount'        => $order[ 'amount' ],
+				//				'amount'        => '0.01',
 				'bank'          => $bank[ 1 ][ 'magicAlias' ],
 				'owner'         => "{$res['name']} {$res['last_name']} {$res['sure_name']}",
 				'validateOwner' => FALSE ];
 			$magic = new MagicPayModel();
-//			die(var_dump ($data));
+			//			die(var_dump ($data));
 			$transfer = $magic->createTransfer ( $data, $order[ 'refNumber' ], $order[ 'folio' ] );
 			if ( !$transfer[ 0 ] ) {
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
@@ -501,77 +503,182 @@
 			//SendNotification
 			return $score;
 		}
-		public function uploadNomina (): ResponseInterface|array {
-			$file = $this->request->getFile ( 'nomina' );
-			$this->input = $this->getRequestLogin ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
-				$this->logResponse ( 41, $this->input, $this->responseBody );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			helper ( 'crypt_helper' );
-			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
-			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
-			$ivSearch = generateIV ( $ivSeedSearch );
-			if ( !$file->isValid () ) {
-				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
-			}
-			try {
-				$spreadsheet = IOFactory::load ( $file->getTempName () );
-				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
-				$requiredHeaders = [
-					"Área",
-					"Número de empleado",
-					"Estatus",
-					"RFC",
-					"CURP",
-					"Apellido paterno",
-					"Apellido materno",
-					"Nombre",
-					"Fecha de alta",
-					"Puesto funcional",
-					"Confianza",
-					"Sueldo base",
-					"Sueldo Neto",
-					"Banco",
-					"Cuenta",
-				];
-				$headers = array_map ( 'trim', $sheetData[ 0 ] );
-				$headerIndices = [];
-				foreach ( $requiredHeaders as $header ) {
-					$index = array_search ( $header, $headers );
-					$headerIndices[ $header ] = $index;
-				}
-				$dataToInsert = [];
-				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
-					$row = $sheetData[ $i ];
-					$mappedRow = [];
-					$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
-					$iv = generateIV ( $ivSeed );
-					foreach ( $headerIndices as $header => $index ) {
-						$value = $row[ $index ] ?? NULL;
-						if ( $header === "Estatus" || $header === "Confianza" ) {
-							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
-						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
-							$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
-							$mappedRow[ $header ] = $encryptedValue;
-						} else {
-							if ( $value !== NULL ) {
-								$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
-								$mappedRow[ $header ] = $encryptedValue;
-							} else {
-								$mappedRow[ $header ] = NULL;
-							}
-						}
-						$mappedRow[ 'iv' ] = $iv;
+		//		public function uploadNomina (): ResponseInterface|array {
+		//			$file = $this->request->getFile ( 'nomina' );
+		//			$this->input = $this->getRequestLogin ( $this->request );
+		//			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+		//				$this->logResponse ( 41, $this->input, $this->responseBody );
+		//				return $this->getResponse ( $this->responseBody, $this->errCode );
+		//			}
+		//			helper ( 'crypt_helper' );
+		//			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
+		//			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
+		//			$ivSearch = generateIV ( $ivSeedSearch );
+		//			if ( !$file->isValid () ) {
+		//				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
+		//			}
+		//			try {
+		//				$spreadsheet = IOFactory::load ( $file->getTempName () );
+		//				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
+		//				$requiredHeaders = [
+		//					"Área",
+		//					"Número de empleado",
+		//					"Estatus",
+		//					"RFC",
+		//					"CURP",
+		//					"Apellido paterno",
+		//					"Apellido materno",
+		//					"Nombre",
+		//					"Fecha de alta",
+		//					"Puesto funcional",
+		//					"Confianza",
+		//					"Sueldo base",
+		//					"Sueldo Neto",
+		//					"Banco",
+		//					"Cuenta",
+		//				];
+		//				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+		//				$headerIndices = [];
+		//				foreach ( $requiredHeaders as $header ) {
+		//					$index = array_search ( $header, $headers );
+		//					$headerIndices[ $header ] = $index;
+		//				}
+		//				$dataToInsert = [];
+		//				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
+		//					$row = $sheetData[ $i ];
+		//					$mappedRow = [];
+		//					$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
+		//					$iv = generateIV ( $ivSeed );
+		//					foreach ( $headerIndices as $header => $index ) {
+		//						$value = $row[ $index ] ?? NULL;
+		//						if ( $header === "Estatus" || $header === "Confianza" ) {
+		//							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
+		//						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
+		//							$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
+		//							$mappedRow[ $header ] = $encryptedValue;
+		//						} else {
+		//							if ( $value !== NULL ) {
+		//								$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
+		//								$mappedRow[ $header ] = $encryptedValue;
+		//							} else {
+		//								$mappedRow[ $header ] = NULL;
+		//							}
+		//						}
+		//						$mappedRow[ 'iv' ] = $iv;
+		//					}
+		//					$dataToInsert[] = $mappedRow;
+		//				}
+		//			} catch ( Exception $e ) {
+		//				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+		//			}
+		//			if ( empty( $dataToInsert ) ) {
+		//				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+		//			}
+		//
+		//		}
+		/**
+		 * @throws DateMalformedStringException
+		 */
+		public function updateAdvancePayrollControl (): ResponseInterface {
+			$current_date = date ( 'Y-m-d', strtotime ( 'now' ) );
+			$dataM = new DataModel();
+			$companies = $dataM->getCompanies ( $this->user );
+			foreach ( $companies as $company ) {
+				$company_id = $company[ 'id' ];
+				$employees = $dataM->getEmployeesFromCompany ( $company_id, $this->user );
+				foreach ( $employees as $employee ) {
+					$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
+					if ( !$period ) {
+						continue;
 					}
-					$dataToInsert[] = $mappedRow;
+					$plan = $employee[ 'plan' ];
+					$net_salary = $employee[ 'net_salary' ];
+					$start_date = new DateTime($period['start_date']);
+					$end_date = new DateTime($period['end_date']);
+					$current = new DateTime($current_date);
+					$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $plan, $current_date );
+					
+					if ($current < $start_date) {
+						$days_worked = 0;
+					} elseif ($current > $end_date) {
+						$days_worked = $end_date->diff($start_date)->days + 1;
+					} else {
+						$days_worked = $current->diff($start_date)->days + 1;
+					}
+					
+					$total_requests = $this->express->getSumRequest ( $employee, $period_name );
+					$days_in_month =
+						cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
+					$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
+					
+					if ( $current_date === $period[ 'cutoff_date' ] ) {
+						$available = 0;
+					} else {
+						$available = 1;
+					}
+					
+					$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
+					if ( $existing ) {
+						$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+					} else {
+						$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+					}
 				}
-			} catch ( Exception $e ) {
-				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+				$this->express->resetCounters ( $company_id, $current_date, $this->user );
+				return $this->getResponse ( [ "message" => "OK" ], 200 );
 			}
-			if ( empty( $dataToInsert ) ) {
-				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+		}
+		private function getMonthName ( $month ): string {
+			$months = [
+				1  => 'Enero',
+				2  => 'Febrero',
+				3  => 'Marzo',
+				4  => 'Abril',
+				5  => 'Mayo',
+				6  => 'Junio',
+				7  => 'Julio',
+				8  => 'Agosto',
+				9  => 'Septiembre',
+				10 => 'Octubre',
+				11 => 'Noviembre',
+				12 => 'Diciembre',
+			];
+			return $months[ $month ] ?? '';
+		}
+		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $plan, $current_date ): string {
+			$start = new DateTime( $start_date );
+			$end = new DateTime( $end_date );
+			$cutoff = new DateTime( $cutoff_date );
+			$current = new DateTime( $current_date );
+			$month = $this->getMonthName ( $start->format ( 'n' ) );
+			$year = $start->format ( 'Y' );
+			switch ( strtoupper ( $plan ) ) {
+				case 'Q': // Quincenal
+					if ( $current <= $cutoff ) {
+						// Antes o igual a la fecha de corte
+						if ( $start->format ( 'd' ) <= 15 ) {
+							return "1ª quincena de $month $year";
+						} else {
+							return "2ª quincena de $month $year";
+						}
+					} else {
+						// Después de la fecha de corte
+						$next_month = $this->getMonthName ( $end->format ( 'n' ) );
+						$next_year = $end->format ( 'Y' );
+						if ( $end->format ( 'd' ) <= 15 ) {
+							return "1ª quincena de $next_month $next_year";
+						} else {
+							return "2ª quincena de $next_month $next_year";
+						}
+					}
+				case 'S': // Semanal
+					return "Semana del {$start->format('d')} al {$end->format('d')} de $month $year";
+				case 'C': // Catorcenal
+					return "Catorcena del {$start->format('d')} al {$end->format('d')} de $month $year";
+				case 'M': // Mensual
+					return "Mes de $month $year";
+				default:
+					return "Periodo del {$start->format('d')} al {$end->format('d')} de $month $year";
 			}
-			
 		}
 	}
