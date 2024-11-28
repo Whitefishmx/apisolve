@@ -347,7 +347,7 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
        p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available,
        apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe',
-       req_day, req_biweekly, req_month
+       t1.req_day, t1.req_biweekly, t1.req_month, apr.limit_day, apr.limit_biweekly, apr.limit_month 
     FROM advancePayroll_control t1
         INNER JOIN employee e ON e.id = t1.employee_id
         INNER JOIN person p ON p.id = e.person_id
