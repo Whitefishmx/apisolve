@@ -3,7 +3,6 @@
 	namespace App\Models;
 	
 	use DateTime;
-	use http\Client\Curl\User;
 	use CodeIgniter\Database\Query;
 	use CodeIgniter\Database\BaseResult;
 	use DateMalformedStringException as DateMalformedStringExceptionAlias;
@@ -347,7 +346,8 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 		public function getDashboard ( int $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
        p.name, p.last_name, p.sure_name, c.short_name, e.net_salary, e.plan, t1.amount_available, t1.worked_days, t1.available,
-       apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'
+       apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe',
+       req_day, req_biweekly, req_month
     FROM advancePayroll_control t1
         INNER JOIN employee e ON e.id = t1.employee_id
         INNER JOIN person p ON p.id = e.person_id
@@ -556,14 +556,14 @@ WHERE employee_id = $employeeId";
               WHERE company_id = $company_id
               AND start_date <= '$current_date'
               AND end_date >= '$current_date'
-              ORDER BY start_date ASC
+              ORDER BY start_date
               LIMIT 1";
 			$res = $this->db->query ( $query )->getResultArray ();
 			if ( !$res ) {
 				$query = "SELECT * FROM payroll_periods
                   WHERE company_id = $company_id
                   AND start_date > '$current_date'
-                  ORDER BY start_date ASC
+                  ORDER BY start_date
                   LIMIT 1";
 				$res = $this->db->query ( $query )->getResultArray ();
 			}
@@ -585,28 +585,28 @@ WHERE employee_id = $employeeId";
                       AND period = ?
                 ", [ $employee[ 'id' ], $period_name ] )->getRow ()->total_requested;
 		}
-		public function updateNomina ( $args, $company, $user ) {
-			//				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
-			//values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
-			//        '{$args['CURP']}','{$args['iv']}')
-			//ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
-			//                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
-			//			if ( $this->db->query ( $query ) ) {
-			//				$affected = $this->db->affectedRows ();
-			//				if ( $affected > 0 ) {
-			//					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-			//					( [ 'affected' => $affected ] ) );
-			//					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
-			//				}
-			//				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-			//				( [ FALSE, 'affected' => $affected ] ) );
-			//				return [ FALSE, 'No se encontró registro a actualizar' ];
-			//			}
-			//			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
-			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
-			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
-		}
-		public function resetCounters ( $company_id, $current_date, $period ): void {
+//		public function updateNomina ( $args, $company, $user ) {
+//			//				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
+//			//values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
+//			//        '{$args['CURP']}','{$args['iv']}')
+//			//ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
+//			//                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
+//			//			if ( $this->db->query ( $query ) ) {
+//			//				$affected = $this->db->affectedRows ();
+//			//				if ( $affected > 0 ) {
+//			//					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+//			//					( [ 'affected' => $affected ] ) );
+//			//					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+//			//				}
+//			//				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+//			//				( [ FALSE, 'affected' => $affected ] ) );
+//			//				return [ FALSE, 'No se encontró registro a actualizar' ];
+//			//			}
+//			//			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
+//			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
+//			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+//		}
+		public function resetCounters ( $company_id, $current_date ): void {
 			$this->db->query ( "UPDATE advancePayroll_control
             SET req_day = 0,
                 req_week = IF(WEEK(?) > WEEK(updated_at), 0, req_week),

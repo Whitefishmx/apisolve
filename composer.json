@@ -23,7 +23,8 @@
     "firebase/php-jwt": "^6.10",
     "maennchen/zipstream-php": "^2.2",
     "phpoffice/phpspreadsheet": "^3.3",
-    "ext-calendar": "*"
+    "ext-calendar": "*",
+    "ext-http": "*"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9",

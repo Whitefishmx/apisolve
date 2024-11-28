@@ -622,7 +622,7 @@
 						$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
 					}
 				}
-				$this->express->resetCounters ( $company_id, $current_date, $this->user );
+				$this->express->resetCounters ( $company_id, $current_date );
 				return $this->getResponse ( [ "message" => "OK" ], 200 );
 			}
 			return $this->getResponse ( [ "message" => "false" ], 500 );
