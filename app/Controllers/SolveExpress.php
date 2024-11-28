@@ -7,14 +7,13 @@
 	use App\Models\{DataModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
-	use PhpOffice\PhpSpreadsheet\IOFactory;
 	use PhpOffice\PhpSpreadsheet\Style\Fill;
 	use PhpOffice\PhpSpreadsheet\Spreadsheet;
 	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 	use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 	
 	class SolveExpress extends PagesStatusCode {
-		private $express = '';
+		protected string|SolveExpressModel $express = '';
 		public function __construct () {
 			parent::__construct ();
 			$this->express = new SolveExpressModel();
@@ -50,7 +49,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->getReport ( $this->input, intval ( $this->user ) );
+			$res = $express->getReport ( $this->input, $this->user );
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -94,7 +93,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->getReportCompany ( $this->input, intval ( $this->user ) );
+			$res = $express->getReportCompany ( $this->input, $this->user );
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -119,7 +118,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$express = new SolveExpressModel();
-			$res = $express->getPeriods ( $this->input[ 'company' ], intval ( $this->user ) );
+			$res = $express->getPeriods ( $this->input[ 'company' ], $this->user );
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -331,7 +330,7 @@
 		}
 		public function doTransfer ( $order, $res ): array {
 			$user = new userModel();
-			$bank = $user->getBankAccountsByUser ( intval ( $this->user ) );
+			$bank = $user->getBankAccountsByUser ( $this->user );
 			if ( !$bank[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error con la cuenta clabe' );
 				$this->logResponse ( 15 );
@@ -488,20 +487,19 @@
 				if ( $data [ 'step' ][ 'id' ] === 'facematch' ) {
 					$this->faceMatch ( $data, $this->user );
 				}
-				if ( $data [ 'step' ][ 'id' ] === 'document-reading' ) {
-					$upDateData = [
-						'name' => $data[ 'step' ][ 'data' ][ 'firstName' ][ 'value' ] ];
-				}
+//				if ( $data [ 'step' ][ 'id' ] === 'document-reading' ) {
+//					$upDateData = [
+//						'name' => $data[ 'step' ][ 'data' ][ 'firstName' ][ 'value' ] ];
+//				}
 			}
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
 		}
-		private function faceMatch ( $data, $user ): int {
+		private function faceMatch ( $data, $user ): void {
 			$score = intval ( $data[ 'step' ][ 'data' ][ 'score' ] > 60 );
 			$sExpress = new SolveExpressModel();
 			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
 			//SendNotification
-			return $score;
 		}
 		//		public function uploadNomina (): ResponseInterface|array {
 		//			$file = $this->request->getFile ( 'nomina' );
@@ -627,6 +625,7 @@
 				$this->express->resetCounters ( $company_id, $current_date, $this->user );
 				return $this->getResponse ( [ "message" => "OK" ], 200 );
 			}
+			return $this->getResponse ( [ "message" => "false" ], 500 );
 		}
 		private function getMonthName ( $month ): string {
 			$months = [
@@ -645,6 +644,9 @@
 			];
 			return $months[ $month ] ?? '';
 		}
+		/**
+		 * @throws DateMalformedStringException
+		 */
 		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $plan, $current_date ): string {
 			$start = new DateTime( $start_date );
 			$end = new DateTime( $end_date );
