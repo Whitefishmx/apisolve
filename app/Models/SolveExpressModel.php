@@ -65,7 +65,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, p.curp, e.external_id, e.plan, e.net_salary,
               t1.requested_amount, t1.remaining_amount, t1.period, t1.folio, t2.noReference, t2.cep,
-              t3.clabe, t3.card, t4.bnk_alias, t1.created_at as 'Fecha_solicitud', t2.created_at as 'Ultima_modificacion'" )
+              t3.clabe, t3.card, t4.bnk_alias, DATE_FORMAT(t1.created_at, '%d-%m-%Y %H:%i:%s') AS 'Fecha_solicitud', DATE_FORMAT(t2.created_at, '%d-%m-%Y %H:%i:%s') AS 'Ultima_modificacion'" )
 			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'left' )
 			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
 			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
