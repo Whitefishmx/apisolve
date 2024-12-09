@@ -7,6 +7,7 @@
 	use App\Models\{DataModel, EmployeeModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
+	use PhpOffice\PhpSpreadsheet\IOFactory;
 	use PhpOffice\PhpSpreadsheet\Style\Fill;
 	use PhpOffice\PhpSpreadsheet\Spreadsheet;
 	use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -177,6 +178,60 @@
 			];
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function uploadFires (): ResponseInterface|array {
+			$file = $this->request->getFile ( 'bajas' );
+			$this->input = $this->getRequestInput ( $this->request );
+			//			var_dump ($file, $this->input);die();
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				$this->logResponse ( 54, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			if ( !$file->isValid () ) {
+				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
+			}
+			try {
+				$spreadsheet = IOFactory::load ( $file->getTempName () );
+				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
+				$requiredHeaders = [ "CURP" ];
+				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+				$headerIndices = [];
+				foreach ( $requiredHeaders as $header ) {
+					$index = array_search ( strtoupper ( $header ), $headers );
+					$headerIndices[ $header ] = $index;
+				}
+				$curp = [];
+				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
+					$row = $sheetData[ $i ];
+					foreach ( $headerIndices as $index ) {
+						$value = $row[ $index ] ?? NULL;
+						if ( $value !== NULL ) {
+							$curp[] = $value;
+						}
+					}
+				}
+			} catch ( Exception $e ) {
+				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+			}
+			if ( empty( $curp ) ) {
+				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+			}
+			$employee = new EmployeeModel();
+			$res = $employee->fireEmployees ( $curp, $this->input[ 'company' ], $this->user );
+			if ( !$res[ 0 ] ) {
+				$this->serverError ( 'Error al cargar bajas', $res[ 1 ] );
+				$this->logResponse ( 54, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Bajas cargadas',
+				'response'    => $res[ 1 ],
+			];
+			return $this->getResponse ( $this->responseBody );
 		}
 		/**
 		 * @throws Exception

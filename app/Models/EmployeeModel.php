@@ -55,15 +55,29 @@
 				$res->getResultArray (), TRUE ) );
 			return [ TRUE, $res->getResultArray () ];
 		}
-		public function fireEmployee(int $employee, $company, int $user): array {
+		public function fireEmployee ( int $employee, $company, int $user ): array {
 			$query = "UPDATE employee SET status = 0, fire_date = NOW() WHERE id = $employee AND company_id = $company";
-            if (!$res = $this->db->query($query)) {
-                saveLog($user, 53, 500, json_encode(['employee' => $employee, 'company' => $company]),
-                    json_encode($this->db->affectedRows (), TRUE));
-                return [FALSE, 'No se pudo dar de baja al empleado'];
-            }
-            saveLog($user, 53, 200, json_encode(['employee' => $employee, 'company' => $company]),
-                json_encode($this->db->affectedRows (), TRUE));
-            return [TRUE, 'El empleado se dio de baja exitosamente'];
+			if ( !$this->db->query ( $query ) ) {
+				saveLog ( $user, 53, 500, json_encode ( [ 'employee' => $employee, 'company' => $company ] ),
+					json_encode ( $this->db->affectedRows (), TRUE ) );
+				return [ FALSE, 'No se pudo dar de baja al empleado' ];
+			}
+			saveLog ( $user, 53, 200, json_encode ( [ 'employee' => $employee, 'company' => $company ] ),
+				json_encode ( $this->db->affectedRows (), TRUE ) );
+			return [ TRUE, 'El empleado se dio de baja exitosamente' ];
+		}
+		public function fireEmployees ( array $employees, int $company, int $user ): array {
+			$curp = implode ( ',', array_map ( fn( $value ) => "'".$this->db->escapeString ( $value )."'", $employees ) );
+			$query = "UPDATE employee e INNER JOIN person p ON e.person_id = p.id
+			SET e.status = 0, e.fire_date = NOW()
+			WHERE p.curp IN ($curp)";
+			if ( !$this->db->query ( $query ) ) {
+				saveLog ( $user, 55, 500, json_encode ( [ 'employees' => $employees, 'company' => $company ] ),
+					json_encode ( $this->db->affectedRows (), TRUE ) );
+				return [ FALSE, 'No se pudieron dar de baja a los empleados' ];
+			}
+			saveLog ( $user, 55, 500, json_encode ( [ 'employees' => $employees, 'company' => $company ] ),
+				json_encode ( $this->db->affectedRows (), TRUE ) );
+			return [ TRUE, 'Los empleados se dieron de baja con éxito' ];
 		}
 	}

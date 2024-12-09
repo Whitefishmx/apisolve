@@ -61,6 +61,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 			}
 			return [ TRUE, $res[ 0 ] ];
 		}
+		/** @noinspection DuplicatedCode */
 		public function getReport ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "p.name, p.last_name, p.sure_name, p.rfc, p.curp, e.external_id, e.plan, e.net_salary,
@@ -138,6 +139,7 @@ WHERE p.active = 1 and e.status = 1 AND p.curp = '$curp'";
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
 		}
+		/** @noinspection DuplicatedCode */
 		public function getReportCompany ( array $args, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' )
 			                    ->select ( "e.external_id, t1.employee_id , p.name, p.last_name, p.sure_name, p.rfc, p.curp, e.plan, e.net_salary,
@@ -214,33 +216,34 @@ SUM(t1.requested_amount) AS 'sum_request_amount', e.net_salary-SUM(t1.requested_
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
 		}
+		/** @noinspection DuplicatedCode */
 		public function getReportCompanyV2 ( array $args, array $columns, int $user ): array {
 			$builder = $this->db->table ( 'advance_payroll t1' );
-			if ( in_array ( 'noEmpleado', $columns, FALSE ) ) {
+			if ( in_array ( 'noEmpleado', $columns ) ) {
 				$builder->select ( "e.external_id AS '#Empleado'" );
 			}
-			if ( in_array ( 'name', $columns, FALSE ) ) {
+			if ( in_array ( 'name', $columns ) ) {
 				$builder->select ( "p.name AS 'Nombre'" );
 			}
-			if ( in_array ( 'lastName', $columns, FALSE ) ) {
+			if ( in_array ( 'lastName', $columns ) ) {
 				$builder->select ( "p.last_name AS 'Apellido Paterno'" );
 			}
-			if ( in_array ( 'sureName', $columns, FALSE ) ) {
+			if ( in_array ( 'sureName', $columns ) ) {
 				$builder->select ( "p.sure_name AS 'Apellido Materno'" );
 			}
-			if ( in_array ( 'rfc', $columns, FALSE ) ) {
+			if ( in_array ( 'rfc', $columns ) ) {
 				$builder->select ( "p.rfc AS 'RFC'" );
 			}
-			if ( in_array ( 'curp', $columns, FALSE ) ) {
+			if ( in_array ( 'curp', $columns ) ) {
 				$builder->select ( "p.curp AS 'CURP'" );
 			}
-			if ( in_array ( 'plan', $columns, FALSE ) ) {
+			if ( in_array ( 'plan', $columns ) ) {
 				$builder->select ( "CASE WHEN e.plan = 'q' THEN 'Quincenal' WHEN e.plan = 'm' THEN 'Mensual' WHEN plan = 's' THEN 'Semanal' ELSE 'Otro' END AS 'Esquema'" );
 			}
-			if ( in_array ( 'netSalary', $columns, FALSE ) ) {
+			if ( in_array ( 'netSalary', $columns ) ) {
 				$builder->select ( "e.net_salary AS 'Salario Neto'" );
 			}
-			if ( in_array ( 'period', $columns, FALSE ) ) {
+			if ( in_array ( 'period', $columns ) ) {
 				$builder->select ( "t1.period AS 'Periodo'" );
 			}
 			$builder->select ( "SUM(t1.requested_amount) AS 'Total solicitado', e.net_salary-SUM(t1.requested_amount) AS 'Restante', apr.concept" )
@@ -450,8 +453,6 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 				return [ FALSE, 'No se pudo generar el pedido' ];
 			}
 		}
-		
-		
 		/**
 		 * @throws DateMalformedStringExceptionAlias
 		 */
@@ -477,7 +478,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 					return "Plan de pago no válido.";
 			}
 		}
-		public function updateOperationStatus ( $folio, $noRef, $status, $user ): array {
+		/*public function updateOperationStatus ( $folio, $noRef, $status, $user ): array {
 			$query = "UPDATE advance_payroll SET status = '$status' WHERE folio like '%$folio%' AND reference_number = '$noRef'";
 			if ( $this->db->query ( $query ) ) {
 				$affected = $this->db->affectedRows ();
@@ -493,7 +494,7 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 			saveLog ( $user, 24, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
-		}
+		}*/
 		public function updateAvailableAmount ( int $employeeId, float $requestAmount, int $user ): array {
 			
 			$query = "UPDATE advancePayroll_control
