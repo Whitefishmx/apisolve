@@ -62,10 +62,10 @@ WHERE (t1.nickname = '$login' AND t1.password = '$password')
 			if ( $platform === 6 ) {
 				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
 			}
-			$query .= "AND t1.active = 1 ";
-//			var_dump ($query);die();
+			$query .= "AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
+			//			var_dump ($query);die();
 			$res = $this->db->query ( $query );
-//			var_dump($res->getNumRows ());die();
+			//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
 			}
@@ -78,7 +78,7 @@ FROM permissions p
     JOIN users u ON p.user_id = u.id
     JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
 WHERE pa.id_platform = $platform AND u.id  = $userid";
-//			var_dump ($query);die();
+			//			var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
@@ -107,19 +107,52 @@ WHERE u.id = $user";
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
-		public function updatePassword ( int $user, string $password ): array {
-			$query = "UPDATE users SET password = '$password' WHERE id = $user";
+		public function updateProfile ( string $nickname, string $email, string $password, $phone, int $user ): array {
+			$query = "UPDATE users SET nickname = '$nickname', email = '$email', password = '$password' WHERE id = $user";
 			if ( $this->db->query ( $query ) ) {
 				$affected = $this->db->affectedRows ();
 				if ( $affected > 0 ) {
+					if ($phone !== NULL){
+						$query = "UPDATE person SET phone = '$phone' WHERE id = $user";
+						if ( $this->db->query ( $query ) ) {
+							$affected = $this->db->affectedRows ();
+							if ( $affected > 0 ) {
+								saveLog ( $user, 32, 200, json_encode ( [ 'newPassword' => $password, ] ), json_encode
+								( [ 'affected' => $affected ] ) );
+								return [ TRUE, 'Se actualizó correctamente el perfil' ];
+							}
+						}
+					}
 					saveLog ( $user, 32, 200, json_encode ( [ 'newPassword' => $password, ] ), json_encode
 					( [ 'affected' => $affected ] ) );
-					return [ TRUE, 'Se actualizó correctamente la contraseña' ];
+					return [ TRUE, 'Se actualizó correctamente el perfil' ];
 				}
 				saveLog ( $user, 32, 404, json_encode ( [ 'newPassword' => $password, ] ), json_encode ( [ FALSE, 'affected' => $affected ] ) );
 				return [ FALSE, 'No se encontró registro a actualizar' ];
 			}
 			saveLog ( $user, 32, 500, json_encode ( [ 'newPassword' => $password, ] ), json_encode ( [ FALSE, 'affected' => $this->db->error () ] ) );
-			return [ FALSE, 'No se pudo actualizar la contraseña' ];
+			return [ FALSE, 'No se pudo actualizar el perfil' ];
+		}
+		public function getExpressProfile ( $user ): array {
+			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, p.name, p.last_name, p.sure_name, p.curp, p.phone,
+       u.nickname, u.email, c.short_name, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'
+				FROM employee e
+				    INNER JOIN person p ON p.id = e.person_id
+				    INNER JOIN person_user pu ON p.id = pu.person_id
+				    INNER JOIN users u ON u.id = pu.user_id
+				    INNER JOIN companies c ON c.id = e.company_id
+				    INNER JOIN bank_accounts ba ON ba.user_id  = u.id OR ba.person_id = p.id 
+				WHERE u.id = $user";
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 48, 404, json_encode ( [ 'user' => $user ] ), json_encode ( [ FALSE, 'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows > 1 || $rows === 0 ) {
+				saveLog ( $user, 48, 404, json_encode ( [ 'user' => $user ] ), json_encode ( [ FALSE, 'No se encontró información' ] ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 48, 200, json_encode ( [ 'user' => $user ] ), json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
 	}

@@ -26,6 +26,19 @@
 			$res = $res->getResultArray ()[ 0 ][ 'id' ];
 			return $res === NULL ? 1 : intval ( $res + 1 );
 		}
+		/**
+		 * Generates a unique folio (identifier) based on the given parameters.
+		 *
+		 * This function creates a serialized string that can be used as a unique identifier
+		 * for various operations in the system. It combines the function ID, next available ID
+		 * from the specified table, current timestamp, and optionally a user ID.
+		 *
+		 * @param int    $functionId The ID of the function or operation type.
+		 * @param string $table      The name of the table to get the next ID from.
+		 * @param int    $user       (Optional) The ID of the user associated with this folio.
+		 *
+		 * @return string A serialized string representing the unique folio.
+		 */
 		public function generateFolio ( int $functionId, string $table, int $user = NULL ): string {
 			helper ( 'tetraoctal_helper' );
 			$nextId = $this->getNexId ( $table );
@@ -57,5 +70,37 @@
 				$ref = MakeOperationNumber ( $id );
 			}
 			return $ref;
+		}
+		/**
+		 * Retrieves the employee ID associated with a given user ID.
+		 *
+		 * This function performs a database query to find the employee record
+		 * linked to the specified user through various table joins.
+		 *
+		 * @param int $user The ID of the user to look up.
+		 *
+		 * @return array An array containing either:
+		 *               - [0 => employee_id] if the employee is found
+		 *               - [false, 'No se encontró información'] if no employee is found or an error occurs
+		 */
+		public function getEmployeeByIdUser ( int $user ): array {
+			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id
+  INNER JOIN person_user pu ON pu.person_id = p.id
+  INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
+			//var_dump ( $query);die();
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows > 1 || $rows === 0 ) {
+				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
+				return [ FALSE, 'No se encontró información' ];
+			}
+			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+				$res->getResultArray ()[ 0 ], TRUE ) );
+			return [ $res->getResultArray ()[ 0 ] ];
 		}
 	}

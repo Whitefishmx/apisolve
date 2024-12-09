@@ -4,7 +4,7 @@
 	
 	use DateTime;
 	use Exception;
-	use App\Models\{DataModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
+	use App\Models\{DataModel, EmployeeModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -19,93 +19,27 @@
 			$this->express = new SolveExpressModel();
 		}
 		/**
-		 * Permite generar un reporte y filtrar los resultados
-		 * @return ResponseInterface
 		 * @throws Exception
 		 */
-		public function payrollAdvanceReport (): ResponseInterface {
+		public function fireOne (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				$this->logResponse ( 11 );
+			if ( $this->verifyRules ( 'DELETE', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 52 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$validation = service ( 'validation' );
-			$validation->setRules (
-				[
-					'user'     => 'permit_empty|max_length[7]|numeric',
-					'employee' => 'permit_empty|max_length[7]',
-					'company'  => 'permit_empty|max_length[7]|numeric',
-					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'plan'     => 'permit_empty|max_length[1]|alpha',
-					'rfc'      => 'permit_empty|max_length[18]',
-					'curp'     => 'permit_empty|max_length[18]',
-					'name'     => 'permit_empty|alpha_space|max_length[150]|',
-				],
-				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
-			if ( !$validation->run ( $this->input ) ) {
-				$errors = $validation->getErrors ();
-				$this->errDataSupplied ( $errors );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$express = new SolveExpressModel();
-			$res = $express->getReport ( $this->input, $this->user );
+			$employeeM = new EmployeeModel();
+			$res = $employeeM->fireEmployee ( $this->input[ 'employee' ], $this->input[ 'company' ], $this->user );
 			if ( !$res[ 0 ] ) {
-				$this->errCode = 404;
-				$this->dataNotFound ();
+				$this->serverError ( 'Error al cambiar el estatus del empleado', $res[ 1 ] );
+				$this->logResponse ( 52 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
-				'description' => 'Reporte generado correctamente',
-				'response'    => $res[ 1 ],
+				'description' => 'Cambio de estatus correcto',
+				'response'    => 'El empleado fue dado de baja con éxito',
 			];
-			$this->logResponse ( 11 );
-			return $this->getResponse ( $this->responseBody, $this->errCode );
-		}
-		/**
-		 * @throws Exception
-		 * @noinspection DuplicatedCode
-		 */
-		public function payrollAdvanceReportC (): ResponseInterface {
-			$this->input = $this->getRequestInput ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$validation = service ( 'validation' );
-			$validation->setRules (
-				[
-					'employee' => 'permit_empty|max_length[7]',
-					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'plan'     => 'permit_empty|max_length[1]|alpha',
-					'period'   => 'permit_empty|max_length[50]',
-					'rfc'      => 'permit_empty|max_length[18]',
-					'curp'     => 'permit_empty|max_length[18]',
-					'name'     => 'permit_empty|alpha_space|max_length[150]|',
-				],
-				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
-			if ( !$validation->run ( $this->input ) ) {
-				$errors = $validation->getErrors ();
-				$this->errDataSupplied ( $errors );
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$express = new SolveExpressModel();
-			$res = $express->getReportCompany ( $this->input, $this->user );
-			if ( !$res[ 0 ] ) {
-				$this->errCode = 404;
-				$this->dataNotFound ();
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$this->responseBody = [
-				'error'       => $this->errCode = 200,
-				'description' => 'Reporte generado correctamente',
-				'response'    => $res[ 1 ],
-			];
-			$this->logResponse ( 33 );
+			$this->logResponse ( 52 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
@@ -131,6 +65,66 @@
 				'response'    => $res[ 1 ],
 			];
 			$this->logResponse ( 36 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function dashboard (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 13 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'user' => 'required|permit_empty|max_length[7]|numeric',
+				],
+				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getDashboard ( intval ( $this->input[ 'user' ] ) );
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			//			$res[ 1 ][ 'min_available' ] = 250;
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Updated Dashboard',
+				'response'    => $res[ 1 ],
+			];
+			$this->logResponse ( 13 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function userProfile (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 49 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$user = new UserModel();
+			$profile = $user->getExpressProfile ( $this->input[ 'user' ] );
+			if ( !$profile[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Perfil generado',
+				'response'    => $profile[ 1 ],
+			];
+			$this->logResponse ( 49 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
@@ -187,37 +181,25 @@
 		/**
 		 * @throws Exception
 		 */
-		public function dashboard (): ResponseInterface {
+		public function getEmployees (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				$this->logResponse ( 13 );
+				$this->logResponse ( 50 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$validation = service ( 'validation' );
-			$validation->setRules (
-				[
-					'user' => 'required|permit_empty|max_length[7]|numeric',
-				],
-				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
-			if ( !$validation->run ( $this->input ) ) {
-				$errors = $validation->getErrors ();
-				$this->errDataSupplied ( $errors );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$express = new SolveExpressModel();
-			$res = $express->getDashboard ( intval ( $this->input[ 'user' ] ) );
+			$fire = $this->input[ 'fire' ] ? 1 : 0;
+			$employee = new EmployeeModel();
+			$res = $employee->getEmployees ( $this->input[ 'company' ], $fire, $this->input, $this->user );
 			if ( !$res[ 0 ] ) {
-				$this->errCode = 404;
 				$this->dataNotFound ();
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			//			$res[ 1 ][ 'min_available' ] = 250;
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
-				'description' => 'Updated Dashboard',
+				'description' => 'Empleados obtenidos',
 				'response'    => $res[ 1 ],
 			];
-			$this->logResponse ( 13 );
+			$this->logResponse ( 50 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
@@ -281,6 +263,182 @@
 				'response'    => $transfer[ 1 ],
 			];
 			$this->logResponse ( 15 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * Permite generar un reporte y filtrar los resultados
+		 * @return ResponseInterface
+		 * @throws Exception
+		 */
+		public function payrollAdvanceReport (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 11 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'user'     => 'permit_empty|max_length[7]|numeric',
+					'employee' => 'permit_empty|max_length[7]',
+					'company'  => 'permit_empty|max_length[7]|numeric',
+					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'plan'     => 'permit_empty|max_length[1]|alpha',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
+					'name'     => 'permit_empty|alpha_space|max_length[150]|',
+				],
+				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getReport ( $this->input, $this->user );
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Reporte generado correctamente',
+				'response'    => $res[ 1 ],
+			];
+			$this->logResponse ( 11 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/** @noinspection DuplicatedCode */
+		/**
+		 * @throws Exception
+		 */
+		public function excelFileReportCompany (): ResponseInterface|array {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'employee' => 'permit_empty|max_length[7]',
+					'company'  => 'permit_empty|max_length[7]|numeric',
+					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'plan'     => 'permit_empty|max_length[1]|alpha',
+					'period'   => 'permit_empty|max_length[50]',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
+					'name'     => 'permit_empty|alpha_space|max_length[150]|',
+				],
+				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			//			var_dump ( $this->request );
+			if ( !$validation->run ( $this->input[ 'filters' ] ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], $this->user );
+			//			var_dump ( $res );die();
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			try {
+				// Crea el archivo Excel en memoria
+				$spreadsheet = new Spreadsheet();
+				$sheet = $spreadsheet->getActiveSheet ();
+				$sheet->setTitle ( "ReporteNomina" );
+				$headers = array_keys ( reset ( $res[ 1 ] ) );
+				foreach ( $headers as $colIndex => $header ) {
+					$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 ); // Convierte índice numérico a columna (A, B, C...)
+					$sheet->setCellValue ( $column.'1', $header );
+					$sheet->getStyle ( $column.'1' )->applyFromArray (
+						[
+							'font' => [
+								'bold'  => TRUE,
+								'color' => [ 'rgb' => 'FFFFFF' ],
+								'size'  => 12,
+							],
+							'fill' => [
+								'fillType' => Fill::FILL_SOLID,
+								'color'    => [ 'rgb' => '2A5486' ],
+							],
+						]
+					);
+					$sheet->getColumnDimension ( $column )->setAutoSize ( TRUE );
+				}
+				foreach ( $res[ 1 ] as $rowIndex => $row ) {
+					foreach ( $headers as $colIndex => $header ) {
+						$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 );
+						$sheet->setCellValue ( $column.( $rowIndex + 2 ), $row[ $header ] ?? '' ); // Usa '' si la clave no existe
+					}
+				}
+				// Crea el escritor para la salida en memoria
+				$writer = new Xlsx( $spreadsheet );
+				ob_start ();
+				$writer->save ( 'php://output' );
+				$excelOutput = ob_get_clean ();
+				helper ( 'tools_helper' );
+				$name = month2Mes ( date ( 'm', strtotime ( 'now' ) ) - 1 )."_".date ( 'd_Y__H_i_s' );
+				return $this->response
+					->setContentType ( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' )
+					->setHeader ( 'Content-Disposition', 'attachment; filename="'.$name.'.xlsx"' )
+					->setBody ( $excelOutput );
+			} catch ( Exception ) {
+				// Manejo de errores en caso de fallo en la generación
+				return $this->serverError ( 'No se pudo generar el archivo Excel ', 'Error al escribir el archivo' );
+			}
+		}
+		/**
+		 * @throws Exception
+		 * @noinspection DuplicatedCode
+		 */
+		public function payrollAdvanceReportC (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'employee' => 'permit_empty|max_length[7]',
+					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
+					'plan'     => 'permit_empty|max_length[1]|alpha',
+					'period'   => 'permit_empty|max_length[50]',
+					'rfc'      => 'permit_empty|max_length[18]',
+					'curp'     => 'permit_empty|max_length[18]',
+					'name'     => 'permit_empty|alpha_space|max_length[150]|',
+				],
+				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$express = new SolveExpressModel();
+			$res = $express->getReportCompany ( $this->input, $this->user );
+			if ( !$res[ 0 ] ) {
+				$this->errCode = 404;
+				$this->dataNotFound ();
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Reporte generado correctamente',
+				'response'    => $res[ 1 ],
+			];
+			$this->logResponse ( 33 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		public function cRules ( int $user ): bool|array {
@@ -370,102 +528,6 @@
 			}
 			return [ TRUE, "Hemos transferido el monto; el tiempo de espera puede variar según su banco." ];
 		}
-		//		public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
-		//			if ( $transaction !== NULL ) {
-		//				$tModel = new TransactionsModel();
-		//				$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
-		//			}
-		//			if ( $operation !== NULL ) {
-		//				$opModel = new updateOperationStatus();
-		//				$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
-		//			}
-		//		}
-		/** @noinspection DuplicatedCode */
-		/**
-		 * @throws Exception
-		 */
-		public function excelFileReportCompany (): ResponseInterface|array {
-			$this->input = $this->getRequestInput ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$validation = service ( 'validation' );
-			$validation->setRules (
-				[
-					'employee' => 'permit_empty|max_length[7]',
-					'company'  => 'permit_empty|max_length[7]|numeric',
-					'initDate' => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'endDate'  => 'permit_empty|regex_match[\d{4}-\d{2}-\d{2}]',
-					'plan'     => 'permit_empty|max_length[1]|alpha',
-					'period'   => 'permit_empty|max_length[50]',
-					'rfc'      => 'permit_empty|max_length[18]',
-					'curp'     => 'permit_empty|max_length[18]',
-					'name'     => 'permit_empty|alpha_space|max_length[150]|',
-				],
-				[ 'employee' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
-			//			var_dump ( $this->request );
-			if ( !$validation->run ( $this->input[ 'filters' ] ) ) {
-				$errors = $validation->getErrors ();
-				$this->errDataSupplied ( $errors );
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$express = new SolveExpressModel();
-			$res = $express->getReportCompanyV2 ( $this->input[ 'filters' ], $this->input[ 'columns' ], $this->user );
-			//			var_dump ( $res );die();
-			if ( !$res[ 0 ] ) {
-				$this->errCode = 404;
-				$this->dataNotFound ();
-				$this->logResponse ( 33 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			try {
-				// Crea el archivo Excel en memoria
-				$spreadsheet = new Spreadsheet();
-				$sheet = $spreadsheet->getActiveSheet ();
-				$sheet->setTitle ( "ReporteNomina" );
-				$headers = array_keys ( reset ( $res[ 1 ] ) );
-				foreach ( $headers as $colIndex => $header ) {
-					$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 ); // Convierte índice numérico a columna (A, B, C...)
-					$sheet->setCellValue ( $column.'1', $header );
-					$sheet->getStyle ( $column.'1' )->applyFromArray (
-						[
-							'font' => [
-								'bold'  => TRUE,
-								'color' => [ 'rgb' => 'FFFFFF' ],
-								'size'  => 12,
-							],
-							'fill' => [
-								'fillType' => Fill::FILL_SOLID,
-								'color'    => [ 'rgb' => '2A5486' ],
-							],
-						]
-					);
-					$sheet->getColumnDimension ( $column )->setAutoSize ( TRUE );
-				}
-				foreach ( $res[ 1 ] as $rowIndex => $row ) {
-					foreach ( $headers as $colIndex => $header ) {
-						$column = Coordinate::stringFromColumnIndex ( $colIndex + 1 );
-						$sheet->setCellValue ( $column.( $rowIndex + 2 ), $row[ $header ] ?? '' ); // Usa '' si la clave no existe
-					}
-				}
-				// Crea el escritor para la salida en memoria
-				$writer = new Xlsx( $spreadsheet );
-				ob_start ();
-				$writer->save ( 'php://output' );
-				$excelOutput = ob_get_clean ();
-				helper ( 'tools_helper' );
-				$name = month2Mes ( date ( 'm', strtotime ( 'now' ) ) - 1 )."_".date ( 'd_Y__H_i_s' );
-				return $this->response
-					->setContentType ( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' )
-					->setHeader ( 'Content-Disposition', 'attachment; filename="'.$name.'.xlsx"' )
-					->setBody ( $excelOutput );
-			} catch ( Exception ) {
-				// Manejo de errores en caso de fallo en la generación
-				return $this->serverError ( 'No se pudo generar el archivo Excel ', 'Error al escribir el archivo' );
-			}
-		}
 		public function ExpressWH (): ResponseInterface|bool|array {
 			$this->user = 20;
 			$this->input = $this->getRequestLogin ( $this->request );
@@ -487,10 +549,10 @@
 				if ( $data [ 'step' ][ 'id' ] === 'facematch' ) {
 					$this->faceMatch ( $data, $this->user );
 				}
-//				if ( $data [ 'step' ][ 'id' ] === 'document-reading' ) {
-//					$upDateData = [
-//						'name' => $data[ 'step' ][ 'data' ][ 'firstName' ][ 'value' ] ];
-//				}
+				//				if ( $data [ 'step' ][ 'id' ] === 'document-reading' ) {
+				//					$upDateData = [
+				//						'name' => $data[ 'step' ][ 'data' ][ 'firstName' ][ 'value' ] ];
+				//				}
 			}
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
@@ -591,30 +653,26 @@
 					}
 					$plan = $employee[ 'plan' ];
 					$net_salary = $employee[ 'net_salary' ];
-					$start_date = new DateTime($period['start_date']);
-					$end_date = new DateTime($period['end_date']);
-					$current = new DateTime($current_date);
+					$start_date = new DateTime( $period[ 'start_date' ] );
+					$end_date = new DateTime( $period[ 'end_date' ] );
+					$current = new DateTime( $current_date );
 					$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $plan, $current_date );
-					
-					if ($current < $start_date) {
+					if ( $current < $start_date ) {
 						$days_worked = 0;
-					} elseif ($current > $end_date) {
-						$days_worked = $end_date->diff($start_date)->days + 1;
+					} else if ( $current > $end_date ) {
+						$days_worked = $end_date->diff ( $start_date )->days + 1;
 					} else {
-						$days_worked = $current->diff($start_date)->days + 1;
+						$days_worked = $current->diff ( $start_date )->days + 1;
 					}
-					
 					$total_requests = $this->express->getSumRequest ( $employee, $period_name );
 					$days_in_month =
 						cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
 					$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
-					
 					if ( $current_date === $period[ 'cutoff_date' ] ) {
 						$available = 0;
 					} else {
 						$available = 1;
 					}
-					
 					$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
 					if ( $existing ) {
 						$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
@@ -683,4 +741,14 @@
 					return "Periodo del {$start->format('d')} al {$end->format('d')} de $month $year";
 			}
 		}
+		/*			public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
+				if ( $transaction !== NULL ) {
+					$tModel = new TransactionsModel();
+					$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
+				}
+				if ( $operation !== NULL ) {
+					$opModel = new updateOperationStatus();
+					$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
+				}
+			}*/
 	}

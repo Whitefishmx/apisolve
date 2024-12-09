@@ -431,7 +431,7 @@ FROM users u
 			$folio = $this->generateFolio ( 19, 'advance_payroll', $user );
 			$nexID = $this->getNexId ( 'advance_payroll' );
 			$refNumber = $this->NewReferenceNumber ( $nexID );
-			$employee = $this->getEmployee ( $user )[ 0 ][ 'id' ];
+			$employee = $this->getEmployeeByIdUser ( $user )[ 0 ][ 'id' ];
 			$remaining = $preRemaining - $amount;
 			$period = $this->getPeriod ( $plan );
 			$dataIn = [ $employee, $folio, $refNumber, $amount, $remaining, $period ];
@@ -450,26 +450,8 @@ VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
 				return [ FALSE, 'No se pudo generar el pedido' ];
 			}
 		}
-		public function getEmployee ( int $user ): array {
-			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id
-    INNER JOIN person_user pu ON pu.person_id = p.id
-    INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
-			//var_dump ( $query);die();
-			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
-					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
-				return [ FALSE, 'No se encontró información' ];
-			}
-			$rows = $res->getNumRows ();
-			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
-					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
-				return [ FALSE, 'No se encontró información' ];
-			}
-			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
-				$res->getResultArray ()[ 0 ], TRUE ) );
-			return [ $res->getResultArray ()[ 0 ] ];
-		}
+		
+		
 		/**
 		 * @throws DateMalformedStringExceptionAlias
 		 */
@@ -585,27 +567,27 @@ WHERE employee_id = $employeeId";
                       AND period = ?
                 ", [ $employee[ 'id' ], $period_name ] )->getRow ()->total_requested;
 		}
-//		public function updateNomina ( $args, $company, $user ) {
-//			//				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
-//			//values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
-//			//        '{$args['CURP']}','{$args['iv']}')
-//			//ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
-//			//                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
-//			//			if ( $this->db->query ( $query ) ) {
-//			//				$affected = $this->db->affectedRows ();
-//			//				if ( $affected > 0 ) {
-//			//					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-//			//					( [ 'affected' => $affected ] ) );
-//			//					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
-//			//				}
-//			//				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
-//			//				( [ FALSE, 'affected' => $affected ] ) );
-//			//				return [ FALSE, 'No se encontró registro a actualizar' ];
-//			//			}
-//			//			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
-//			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
-//			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
-//		}
+		//		public function updateNomina ( $args, $company, $user ) {
+		//			//				$query="INSERT INTO person (name, last_name, sure_name, active, rfc, curp, iv)
+		//			//values ('{$args['Nombre']}', '{$args['Apellido paterno']}', '{$args['Apellido materno']}','{$args['Estatus']}','{$args['RFC']}',
+		//			//        '{$args['CURP']}','{$args['iv']}')
+		//			//ON DUPLICATE KEY UPDATE name = '{$args['Nombre']}', last_name = '{$args['Nombre']}', sure_name = '{$args['Nombre']}', full_name = '{$args['Nombre']}',
+		//			//                        active= '{$args['Nombre']}', rfc = '{$args['Nombre']}', curp = '{$args['CURP']}' ";
+		//			//			if ( $this->db->query ( $query ) ) {
+		//			//				$affected = $this->db->affectedRows ();
+		//			//				if ( $affected > 0 ) {
+		//			//					saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+		//			//					( [ 'affected' => $affected ] ) );
+		//			//					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
+		//			//				}
+		//			//				saveLog ( $user, 41, 200, json_encode ( [ 'score' => $score ] ), json_encode
+		//			//				( [ FALSE, 'affected' => $affected ] ) );
+		//			//				return [ FALSE, 'No se encontró registro a actualizar' ];
+		//			//			}
+		//			//			saveLog ( $user, 25, 200, json_encode ( [ [ 'score' => $score ] ] ), json_encode
+		//			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
+		//			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
+		//		}
 		public function resetCounters ( $company_id, $current_date ): void {
 			$this->db->query ( "UPDATE advancePayroll_control
             SET req_day = 0,
