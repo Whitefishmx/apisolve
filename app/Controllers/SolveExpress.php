@@ -186,10 +186,6 @@
 			$file = $this->request->getFile ( 'bajas' );
 			$this->input = $this->getRequestInput ( $this->request );
 			//			var_dump ($file, $this->input);die();
-			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
-				$this->logResponse ( 54, $this->input, $this->responseBody );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
 			if ( !$file->isValid () ) {
 				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
 			}
