@@ -112,7 +112,7 @@ WHERE u.id = $user";
 			if ( $this->db->query ( $query ) ) {
 				$affected = $this->db->affectedRows ();
 				if ( $affected > 0 ) {
-					if ($phone !== NULL){
+					if ( $phone !== NULL ) {
 						$query = "UPDATE person SET phone = '$phone' WHERE id = $user";
 						if ( $this->db->query ( $query ) ) {
 							$affected = $this->db->affectedRows ();
@@ -154,5 +154,55 @@ WHERE u.id = $user";
 			}
 			saveLog ( $user, 48, 200, json_encode ( [ 'user' => $user ] ), json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
+		}
+		public function getUserByCurp ( $curp ): array {
+			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, CapitalizarTexto(p.name) AS name,
+       CapitalizarTexto(p.last_name) AS lastName, CapitalizarTexto(p.sure_name) AS sureName,u.email
+FROM employee e
+    INNER JOIN person p ON p.id = e.person_id
+    INNER JOIN person_user pu ON p.id = pu.person_id
+    INNER JOIN users u ON u.id = pu.user_id AND u.id = p.primary_user_id
+WHERE p.curp = '$curp' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
+			if ( $res = $this->db->query ( $query ) ) {
+				if ( $res->getNumRows () > 0 ) {
+					return [ TRUE, $res->getResultArray () ];
+				}
+				return [ FALSE, 'No se encontró usuario con el correo proporcionado' ];
+			}
+			return [ FALSE, 'Error con la conexión a la fuente de información' ];
+		}
+		public function setRecoveryCode ( $code, $user ): bool {
+			$query = "UPDATE users SET recovery_code = '$code', recovery_date = NOW(), active = 0 WHERE id = $user";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					return TRUE;
+				}
+				return FALSE;
+			}
+			return FALSE;
+		}
+		public function validateRecoveryCode ( $user, $code, $resetCode ): bool {
+			$query = "UPDATE users SET recovery_code = NULL, recovery_date = NULL, reset_code = '$resetCode', reset_date = NOW()
+             WHERE id = $user AND recovery_code = '$code'";
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					return TRUE;
+				}
+				return FALSE;
+			}
+			return FALSE;
+		}
+		public function resetPassword ( mixed $user, string $code, string $password ): bool {
+			$query = "UPDATE users SET password = '$password', active = 1, reset_code = NULL, reset_date = NOW() WHERE id = $user AND reset_code = '$code'";
+            if ( $this->db->query ( $query ) ) {
+                $affected = $this->db->affectedRows ();
+                if ( $affected > 0 ) {
+                    return TRUE;
+                }
+                return FALSE;
+            }
+            return FALSE;
 		}
 	}

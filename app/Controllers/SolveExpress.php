@@ -321,6 +321,97 @@
 		 * @return ResponseInterface
 		 * @throws Exception
 		 */
+		public function initRecovery (): ResponseInterface {
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 56 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'curp' => 'required|exact_length[18]|regex_match[^[A-Z]{4}\d{6}[HM][A-Z]{2}[A-Z0-9]{3}[A-Z0-9]\d$]',
+				],
+				[
+					'curp' => [
+						'required'     => 'El campo CURP es obligatorio',
+						'exact_length' => 'La CURP debe tener exactamente {param} caracteres',
+						'regex_match'  => 'El formato es invalido' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				$this->logResponse ( 56 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$user = new UserModel();
+			$userData = $user->getUserByCurp ( $this->input[ 'curp' ] );
+			if ( !$userData[ 0 ] ) {
+				$this->dataNotFound ( 'Usuario no encontrado', 'La CURP que ingreso no esta registrada, contacte a Recursos Humanos.' );
+				$this->logResponse ( 56 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			helper ( 'crypt_helper' );
+			$code = getRecoveryCode ();
+			if ( !$user->setRecoveryCode ( $code[ 'cypher' ], $userData[ 1 ][ 0 ][ 'userId' ] ) ) {
+				$this->serverError ( 'No se logro actualizar los registros', 'No se logro generar el codigo de recuperación' );
+				$this->logResponse ( 56 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$emailController = new Email();
+			$name = $userData[ 1 ][ 0 ][ 'lastName' ]." ".$userData[ 1 ][ 0 ][ 'name' ];
+			$emailResponse = $emailController->sendPasswordResetEmail ( $userData[ 1 ][ 0 ][ 'email' ], $code[ 'code' ], $name );
+			if ( $emailResponse[ 'status' ] !== 'success' ) {
+				$this->serverError ( 'No se logro actualizar los registros', 'No se logro generar el codigo de recuperación' );
+				$this->logResponse ( 56 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'CURP validada',
+				'response'    => $userData[ 1 ][ 0 ][ 'userId' ],
+			];
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		public function validateCode (): ResponseInterface {
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 57 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$validation = service ( 'validation' );
+			$validation->setRules (
+				[
+					'code' => 'required|exact_length[6]|regex_match[([\dA-Z]{6})]',
+					'user' => 'required|max_length[7]|numeric',
+				],
+				[ 'user' => [ 'max_length' => 'El id de usuario no debe tener mas de {param} caracteres' ] ] );
+			if ( !$validation->run ( $this->input ) ) {
+				$errors = $validation->getErrors ();
+				$this->errDataSupplied ( $errors );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$userdata = new UserModel();
+			helper ( 'crypt_helper' );
+			$codes = getPasswordCode ();
+			$user = $userdata->validateRecoveryCode ( $this->input[ 'user' ], passwordEncrypt ( $this->input[ 'code' ] ), $codes[ 'cypher' ] );
+			//			var_dump ($this->input[ 'user' ], passwordEncrypt($this->input[ 'code' ]), $codes[ 'cypher' ] );die();
+			if ( !$user ) {
+				$this->errCode = 404;
+				$this->dataNotFound ( 'Datos incorrectos', 'El codigo que ingreso es incorrecto, inténtelo nuevamente, verifique su carpeta de spam' );
+				$this->logResponse ( 57 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Codigo Correcto',
+				'response'    => $codes[ 'code' ],
+			];
+			$this->logResponse ( 57 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
 		public function payrollAdvanceReport (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
@@ -346,8 +437,7 @@
 				$this->errDataSupplied ( $errors );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$express = new SolveExpressModel();
-			$res = $express->getReport ( $this->input, $this->user );
+			$res = $this->express->getReport ( $this->input, $this->user );
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -759,24 +849,25 @@
 		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $plan, $current_date ): string {
 			$start = new DateTime( $start_date );
 			$end = new DateTime( $end_date );
-			$cutoff = new DateTime( $cutoff_date );
+			new DateTime( $cutoff_date );
 			$current = new DateTime( $current_date );
 			$month = $this->getMonthName ( $start->format ( 'n' ) );
 			$year = $start->format ( 'Y' );
 			switch ( strtoupper ( $plan ) ) {
 				case 'Q': // Quincenal
-					if ( $current <= $cutoff ) {
-						// Antes o igual a la fecha de corte
-						if ( $start->format ( 'd' ) <= 15 ) {
+					// Verificar si la fecha actual está dentro del rango de este periodo
+					if ( $current >= $start && $current <= $end ) {
+						// Determinar si es 1ª o 2ª quincena del mes basándose en el día de inicio
+						if ( (int)$current->format ( 'd' ) <= 15 ) {
 							return "1ª quincena de $month $year";
 						} else {
 							return "2ª quincena de $month $year";
 						}
 					} else {
-						// Después de la fecha de corte
+						// Si la fecha actual no está dentro del rango, asumimos que corresponde al siguiente periodo
 						$next_month = $this->getMonthName ( $end->format ( 'n' ) );
 						$next_year = $end->format ( 'Y' );
-						if ( $end->format ( 'd' ) <= 15 ) {
+						if ( (int)$end->format ( 'd' ) <= 15 ) {
 							return "1ª quincena de $next_month $next_year";
 						} else {
 							return "2ª quincena de $next_month $next_year";

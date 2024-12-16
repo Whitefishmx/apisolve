@@ -66,6 +66,8 @@
 	$routes->add ( 'sExpressEmployees', 'SolveExpress::getEmployees' /**@uses \App\Controllers\SolveExpress::getEmployees */ );
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance */ );
 	$routes->add ( 'sExpressUploadNomina', 'SolveExpress::uploadNomina' /**@uses \App\Controllers\SolveExpress::uploadNomina */ );
+	$routes->add ( 'sExpressInitRecovery', 'SolveExpress::initRecovery' /**@uses \App\Controllers\SolveExpress::initRecovery */ );
+	$routes->add ( 'sExpressValidateCode', 'SolveExpress::validateCode' /**@uses \App\Controllers\SolveExpress::validateCode */ );
 	$routes->add ( 'sExpressReport', 'SolveExpress::payrollAdvanceReport' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReport */ );
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
@@ -73,6 +75,8 @@
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================
 	$routes->patch ( 'setUser', 'Users::setUser' /**@uses \App\Controllers\Users::setUser* */ );
+	$routes->patch ( 'resetPassword', 'Users::resetPassword' /**@uses \App\Controllers\Users::resetPassword */ );
+	$routes->add ( 'sendMailPassword', 'Users::requestReset' /**@uses \App\Controllers\Users::requestReset */ );
 	//========================|| DELETE ||========================
 	$routes->add ( 'sExpressFireOne', 'SolveExpress::fireOne' /**@uses \App\Controllers\SolveExpress::fireOne */ );
 	//========================|| END ||========================

@@ -106,12 +106,12 @@
 				'description' => 'Recurso no encontrada',
 				'reason'      => 'Verifique que el endpoint sea correcto' ], ResponseInterface::HTTP_NOT_FOUND );
 		}
-		public function dataNotFound (): array {
+		public function dataNotFound ( $description = NULL, $reason = NULL ): array {
 			$this->errCode = 404;
 			$this->responseBody = [
 				'error'       => $this->errCode,
-				'description' => 'Recurso no encontrada',
-				'reason'      => 'No se encontró información con los datos ingresados' ];
+				'description' => $description !== NULL ? $description : 'Recurso no encontrada',
+				'reason'      => $reason !== NULL ? $reason :'No se encontró información con los datos ingresados' ];
 			return $this->responseBody;
 		}
 		public function redirectLogIn (): array {
