@@ -3,8 +3,9 @@
 	namespace App\Models;
 	class MagicPayModel extends BaseModel {
 		private array $apiKey = [
-			'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
-			'production'  => 'sk_prodd_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v' ];
+			//			'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
+			'development' => 'sk_live_jMMnyG9ZrqKPqCd9SjKzMIdI41ecI7ex',
+			'production'  => 'sk_prod_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v' ];
 		public function getBalance (): bool|array {
 			$env = getenv ( 'CI_ENVIRONMENT' );
 			$data = [ 'apiKey' => $this->apiKey[ strtolower ( $env ) ] ];
@@ -73,7 +74,10 @@
 			$res = $this->sendRequest ( 'speiTransfer', $data, 'POST', 'JSON', NULL );
 			saveLog ( $user, 9, $res[ 'code' ], json_encode ( $data ), json_encode ( $res, JSON_FORCE_OBJECT | JSON_ERROR_NONE ) );
 			if ( !$res[ 0 ] ) {
-				return FALSE;
+				return [FALSE, $res[ 'response' ]];
+			}
+			if (!isset(json_decode ( $res[ 'response' ], TRUE )[ 'result' ])){
+				return [FALSE, json_decode ( $res[ 'response' ], TRUE )[ 'error' ]];
 			}
 			return [ TRUE, json_decode ( $res[ 'response' ], TRUE )[ 'result' ] ];
 		}
