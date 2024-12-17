@@ -274,9 +274,8 @@
 				$this->errDataSupplied ( $errors );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$express = new SolveExpressModel();
 			$this->user = $this->input[ 'user' ];
-			$res = $express->getDashboard ( intval ( $this->input[ 'user' ] ) );
+			$res = $this->express->getDashboard ( intval ( $this->input[ 'user' ] ) );
 			if ( !$res[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Por favor intente nuevamente o volver a iniciar sesión.' );
 				$this->logResponse ( 15 );
@@ -307,7 +306,7 @@
 			if ( !$transfer [ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$express->updateAvailableAmount ( $res[ 1 ][ 'employeeId' ], floatval ( $this->input[ 'amount' ] ), $this->user );
+			$this->express->updateAvailableAmount ( $res[ 1 ][ 'employeeId' ], floatval ( $this->input[ 'amount' ] ), $this->user );
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud éxitosa!.',
