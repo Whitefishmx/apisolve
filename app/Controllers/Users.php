@@ -25,7 +25,7 @@
 			$rules = [
 				'user'        => 'required|max_length[7]',
 				'nickName'    => 'required|max_length[10]|is_unique[users.nickname]',
-				'email'       => 'required|valid_email',
+				'email'       => 'required|valid_email|is_unique[users.email]',
 				'phone'       => 'permit_empty|exact_length[10]|numeric',
 				'contraseña'  => 'required|min_length[8]|max_length[100]',
 				'contraseña2' => 'required|min_length[8]|max_length[255]|matches[contraseña]',
