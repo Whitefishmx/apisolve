@@ -4,7 +4,7 @@
 	class MagicPayModel extends BaseModel {
 		private array $apiKey = [
 			'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
-			'production'  => 'sk_prod_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v' ];
+			'production'  => 'sk_prodd_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v' ];
 		public function getBalance (): bool|array {
 			$env = getenv ( 'CI_ENVIRONMENT' );
 			$data = [ 'apiKey' => $this->apiKey[ strtolower ( $env ) ] ];

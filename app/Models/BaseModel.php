@@ -84,10 +84,11 @@
 		 *               - [false, 'No se encontró información'] if no employee is found or an error occurs
 		 */
 		public function getEmployeeByIdUser ( int $user ): array {
-			$query = "SELECT e.id FROM employee e INNER JOIN person p ON e.person_id = p.id
-  INNER JOIN person_user pu ON pu.person_id = p.id
-  INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
-			//var_dump ( $query);die();
+			$query = "SELECT e.id FROM employee e
+    INNER JOIN person p ON e.person_id = p.id
+    INNER JOIN person_user pu ON pu.person_id = p.id
+    INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
+//			var_dump ( $query);die();
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );

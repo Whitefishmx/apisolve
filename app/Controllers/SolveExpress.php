@@ -645,7 +645,6 @@
 				'owner'         => "{$res['name']} {$res['last_name']} {$res['sure_name']}",
 				'validateOwner' => FALSE ];
 			$magic = new MagicPayModel();
-			//			die(var_dump ($data));
 			$transfer = $magic->createTransfer ( $data, $order[ 'refNumber' ], $order[ 'folio' ] );
 			if ( !$transfer[ 0 ] ) {
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
