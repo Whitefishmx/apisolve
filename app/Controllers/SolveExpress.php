@@ -378,7 +378,7 @@
 								$mappedRow[ $header ] = NULL;
 							}
 						}
-//						$mappedRow[ 'iv' ] = $iv;
+						//						$mappedRow[ 'iv' ] = $iv;
 					}
 					$dataToInsert[] = $mappedRow;
 				}
@@ -388,7 +388,16 @@
 			if ( empty( $dataToInsert ) ) {
 				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
 			}
+			$data = $this->proccesNomina($dataToInsert);
 			return $this->getResponse ( $dataToInsert, 200 );
+		}
+		private function proccesNomina($dataToInsert) {
+			$user = new UserModel();
+			$person = [];
+			foreach ( $dataToInsert as $value){
+				$person[$value['CURP']] = $user->existsBycurp($value['CURP']);
+			}
+			var_dump ($person);die();
 		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados

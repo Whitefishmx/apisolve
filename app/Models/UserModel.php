@@ -205,4 +205,16 @@ WHERE p.curp = '$curp' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
             }
             return FALSE;
 		}
+		public function existsByCurp ( $curp ): array {
+			$query = "SELECT p.id as 'personId', e.id as 'employeeId', u.id as 'userId'
+FROM person p
+INNER JOIN employee e ON e.person_id = p.id
+LEFT JOIN person_user pu ON pu.person_id = p.id
+INNER JOIN users u ON u.id = pu.user_id AND p.primary_user_id = u.id
+WHERE p.curp = '$curp'";
+            if ( $res = $this->db->query ( $query ) ) {
+	            return [ TRUE, $res->getResultArray ()[0] ];
+            }
+            return [FALSE,'No se encontraron resultados'];
+		}
 	}
