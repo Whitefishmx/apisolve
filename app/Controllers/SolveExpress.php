@@ -315,6 +315,81 @@
 			$this->logResponse ( 15 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		public function uploadNomina (): ResponseInterface|array {
+			$file = $this->request->getFile ( 'nomina' );
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				$this->logResponse ( 41, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			/*helper ( 'crypt_helper' );
+			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
+			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
+			$ivSearch = generateIV ( $ivSeedSearch );*/
+			if ( !$file->isValid () ) {
+				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
+			}
+			try {
+				$spreadsheet = IOFactory::load ( $file->getTempName () );
+				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
+				$requiredHeaders = [
+					"Área",
+					"Número de empleado",
+					"Estatus",
+					"RFC",
+					"CURP",
+					"Apellido paterno",
+					"Apellido materno",
+					"Nombre",
+					"Fecha de alta",
+					"Puesto funcional",
+					"Confianza",
+					"Sueldo base",
+					"Sueldo Neto",
+					"Banco",
+					"Cuenta",
+				];
+				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+				$headerIndices = [];
+				foreach ( $requiredHeaders as $header ) {
+					$index = array_search ( $header, $headers );
+					$headerIndices[ $header ] = $index;
+				}
+				$dataToInsert = [];
+				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
+					$row = $sheetData[ $i ];
+					$mappedRow = [];
+					/*$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
+					$iv = generateIV ( $ivSeed );*/
+					foreach ( $headerIndices as $header => $index ) {
+						$value = $row[ $index ] ?? NULL;
+						if ( $header === "Estatus" || $header === "Confianza" ) {
+							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
+						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
+							/*$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
+							$mappedRow[ $header ] = $encryptedValue;*/
+							$mappedRow[ $header ] = $value;
+						} else {
+							if ( $value !== NULL ) {
+								/*$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
+								$mappedRow[ $header ] = $encryptedValue;*/
+								$mappedRow[ $header ] = $value;
+							} else {
+								$mappedRow[ $header ] = NULL;
+							}
+						}
+//						$mappedRow[ 'iv' ] = $iv;
+					}
+					$dataToInsert[] = $mappedRow;
+				}
+			} catch ( Exception $e ) {
+				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+			}
+			if ( empty( $dataToInsert ) ) {
+				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+			}
+			return $this->getResponse ( $dataToInsert, 200 );
+		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
 		 * @return ResponseInterface
@@ -702,79 +777,6 @@
 			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
 			//SendNotification
 		}
-		//		public function uploadNomina (): ResponseInterface|array {
-		//			$file = $this->request->getFile ( 'nomina' );
-		//			$this->input = $this->getRequestLogin ( $this->request );
-		//			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
-		//				$this->logResponse ( 41, $this->input, $this->responseBody );
-		//				return $this->getResponse ( $this->responseBody, $this->errCode );
-		//			}
-		//			helper ( 'crypt_helper' );
-		//			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
-		//			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
-		//			$ivSearch = generateIV ( $ivSeedSearch );
-		//			if ( !$file->isValid () ) {
-		//				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
-		//			}
-		//			try {
-		//				$spreadsheet = IOFactory::load ( $file->getTempName () );
-		//				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
-		//				$requiredHeaders = [
-		//					"Área",
-		//					"Número de empleado",
-		//					"Estatus",
-		//					"RFC",
-		//					"CURP",
-		//					"Apellido paterno",
-		//					"Apellido materno",
-		//					"Nombre",
-		//					"Fecha de alta",
-		//					"Puesto funcional",
-		//					"Confianza",
-		//					"Sueldo base",
-		//					"Sueldo Neto",
-		//					"Banco",
-		//					"Cuenta",
-		//				];
-		//				$headers = array_map ( 'trim', $sheetData[ 0 ] );
-		//				$headerIndices = [];
-		//				foreach ( $requiredHeaders as $header ) {
-		//					$index = array_search ( $header, $headers );
-		//					$headerIndices[ $header ] = $index;
-		//				}
-		//				$dataToInsert = [];
-		//				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
-		//					$row = $sheetData[ $i ];
-		//					$mappedRow = [];
-		//					$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
-		//					$iv = generateIV ( $ivSeed );
-		//					foreach ( $headerIndices as $header => $index ) {
-		//						$value = $row[ $index ] ?? NULL;
-		//						if ( $header === "Estatus" || $header === "Confianza" ) {
-		//							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
-		//						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
-		//							$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
-		//							$mappedRow[ $header ] = $encryptedValue;
-		//						} else {
-		//							if ( $value !== NULL ) {
-		//								$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
-		//								$mappedRow[ $header ] = $encryptedValue;
-		//							} else {
-		//								$mappedRow[ $header ] = NULL;
-		//							}
-		//						}
-		//						$mappedRow[ 'iv' ] = $iv;
-		//					}
-		//					$dataToInsert[] = $mappedRow;
-		//				}
-		//			} catch ( Exception $e ) {
-		//				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
-		//			}
-		//			if ( empty( $dataToInsert ) ) {
-		//				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
-		//			}
-		//
-		//		}
 		/**
 		 * @throws DateMalformedStringException
 		 */
