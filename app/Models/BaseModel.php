@@ -39,7 +39,7 @@
 		 *
 		 * @return string A serialized string representing the unique folio.
 		 */
-		public function generateFolio ( int $functionId, string $table, int $user = NULL ): string {
+		public function generateFolio ( int $functionId, string $table, ?int $user = NULL ): string {
 			helper ( 'tetraoctal_helper' );
 			$nextId = $this->getNexId ( $table );
 			if ( $user != NULL ) {

@@ -15,7 +15,7 @@
 		 *
 		 * @return array|null  resultados
 		 */
-		public function getCPInfo ( array $args, string $env = NULL ): ?array {
+		public function getCPInfo ( array $args, ?string $env = NULL ): ?array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "SELECT t1.* FROM $this->base.cat_zipcode t1
@@ -47,7 +47,7 @@
 		 *
 		 * @return array|null Resultados
 		 */
-		public function getRegimen ( string $clave, int $limit = NULL, string $env = NULL ): ?array {
+		public function getRegimen ( string $clave, ?int $limit = NULL, ?string $env = NULL ): ?array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "SELECT rg_regimen FROM $this->base.cat_regimenfiscal WHERE rg_clave = '$clave'";
