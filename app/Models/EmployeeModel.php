@@ -14,16 +14,17 @@
 		 */
 		public function getEmployees ( int $company, int $fire, array $args, mixed $user ): array {
 			//			var_dump ($company, $fire, $user);die();
-			$builder = $this->db->table ( 'employee e' )
+			$builder = $this->db->table ( 'users u' )
 			                    ->select ( "u.id as userId, p.id as personId, e.id as employeeId, e.external_id,
-            p.name, p.last_name, p.sure_name, p.curp,
-            e.hiring_date as 'hiringDate', e.fire_date as 'fireDate',
+            CapitalizarTexto(p.name) as 'name', CapitalizarTexto(p.last_name) as 'last_name', CapitalizarTexto(p.sure_name) as 'sure_name', p.curp,
+           FORMAT_DATE( e.hiring_date) as 'hiringDate', FORMAT_DATE(e.fire_date) as 'fireDate',
             CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'" )
-			                    ->join ( 'person p', 'p.id = e.person_id', 'inner' )
-			                    ->join ( 'person_user pu', 'p.id = pu.person_id', 'inner' )
-			                    ->join ( 'users u', 'u.id = pu.user_id AND p.primary_user_id = u.id', 'inner' )
-			                    ->join ( 'companies c', 'c.id = e.company_id', 'inner' )
-			                    ->join ( 'bank_accounts ba', 'ba.user_id = u.id OR ba.person_id = p.id', 'left' )
+			                    ->join ( 'employee_user eu', 'u.id  = eu.user_id', 'INNER' )
+			                    ->join ( 'employee e', 'e.id = eu.employee_id', 'INNER' )
+			                    ->join ( 'person_user pu', 'u.id = pu.user_id', 'INNER' )
+			                    ->join ( 'person p', 'pu.person_id = p.id', 'INNER' )
+			                    ->join ( 'companies c', 'c.id = e.company_id', 'INNER' )
+			                    ->join ( 'bank_accounts ba', 'ba.user_id = u.id AND ba.company_id = c.id AND ba.active = 1', 'INNER' )
 			                    ->where ( 'c.id', $company )
 			                    ->orderBy ( 'p.last_name', 'ASC' )->orderBy ( 'p.name', 'ASC' );
 			if ( $fire === 0 ) {
@@ -45,7 +46,6 @@
 				$builder->like ( 'p.full_name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-			//var_dump ( $sqlQuery);die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 51, 404, json_encode ( [ 'args' => [ $company, $fire, $user ] ] ),
 					json_encode ( $res->getResultArray (), TRUE ) );

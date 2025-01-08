@@ -52,6 +52,17 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/markbaker/matrix" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/phpoffice/phpspreadsheet" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/myclabs/php-enum" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/codeStyles" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/inspectionProfiles" />
+      <excludeFolder url="file://$MODULE_DIR$/build" />
+      <excludeFolder url="file://$MODULE_DIR$/public/boveda/CEP/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/dompdf" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/maennchen" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/markbaker" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/masterminds" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/phpoffice" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/sabberworm" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

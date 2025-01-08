@@ -67,7 +67,7 @@
 			helper ( 'crypt_helper' );
 			$res = $user->validateAccess ( $this->input[ 'email' ], $this->input[ 'password' ] = ( passwordEncrypt (
 				$this->input[ 'password' ] ) ), intval ( $this->input[ 'platform' ] ) );
-//			var_dump ($res);die ();
+			//			var_dump ($res[1]['userData']['companyId']);die ();
 			if ( !$res[ 0 ] ) {
 				$this->errDataSupplied ( 'Las credenciales ingresadas son incorrectas' );
 				//				$this->logResponse ( 1 );
@@ -76,6 +76,7 @@
 			$session = session ();
 			$session->set ( 'logged_in', TRUE );
 			$session->set ( 'user', $res[ 1 ][ 'id' ] );
+			$session->set ( 'company', $res[ 1 ][ 'userData' ][ 'companyId' ] );
 			$jwt = getSignedJWTForUser ( $res[ 1 ][ 'userData' ][ 'email' ], $res[ 1 ][ 'userData' ][ 'id' ] );
 			$this->errCode = 200;
 			$this->responseBody = [

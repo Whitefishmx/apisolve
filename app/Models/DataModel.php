@@ -114,30 +114,24 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 		}
 		public function getCompanies ( $user ): array {
 			$builder = $this->db->table ( 'companies' );
-			$builder->getWhere ( [ 'active' => 1 ] );
+			$builder->where ( [ 'active' => 1 ] );
 			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
-				saveLog ( $user, 44, 404, json_encode ( [ 'companies' => "all" ] ), json_encode ( [
-					FALSE,
-					'No se encontró información' ] ) );
+				//saveLog ( $user, 44, 404, json_encode ( [ 'companies' => "all" ] ), json_encode ( [FALSE,	'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			$res = $res->getResultArray ();
-			saveLog ( $user, 44, 200, json_encode ( [ 'companies' => "all" ] ), json_encode ( $res ) );
-			return $res;
+			//saveLog ( $user, 44, 200, json_encode ( [ 'companies' => "all" ] ), json_encode ( $res ) );
+			return $res->getResultArray ();
 		}
 		public function getEmployeesFromCompany ( $company_id, $user ): array {
 			$builder = $this->db->table ( 'employee' );
-			$builder->getWhere ( [ 'company_id' => $company_id ] );
+			$builder->where( [ 'company_id' => $company_id ] );
 			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
-				saveLog ( $user, 45, 404, json_encode ( [ 'company' => $company_id ] ), json_encode ( [
-					FALSE,
-					'No se encontró información' ] ) );
+				//saveLog ( $user, 45, 404, json_encode ( [ 'company' => $company_id ] ), json_encode ( [FALSE,'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			$res = $res->getResultArray ();
-			saveLog ( $user, 45, 200, json_encode ( [ 'company' => $company_id ] ), json_encode ( $res ) );
-			return $res;
+			//saveLog ( $user, 45, 200, json_encode ( [ 'company' => $company_id ] ), json_encode ( $res ) );
+			return $res->getResultArray ();
 		}
 	}

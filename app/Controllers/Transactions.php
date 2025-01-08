@@ -28,6 +28,12 @@
 					$res[] = [ 'idTransaction' => $value[ 'id' ], 'folio' => $folio, 'filename' => $download ];
 				}
 			}
+			$files = glob("Resource id #*");
+			foreach ($files as $file) {
+				if (is_file($file)) { // Verificar que sea un archivo
+					unlink($file);    // Eliminar el archivo
+				}
+			}
 			foreach ( $res as $key ) {
 				$transaction->insertCep ( $key );
 			}
