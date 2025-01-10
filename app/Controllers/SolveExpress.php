@@ -894,8 +894,8 @@
 			$end = new DateTime( $end_date );
 			new DateTime( $cutoff_date );
 			$current = new DateTime( $current_date );
-			$month = $this->getMonthName ( $start->format ( 'n' ) );
-			$year = $start->format ( 'Y' );
+			$month = $this->getMonthName ( $end->format ( 'n' ) );
+			$year = $end->format ( 'Y' );
 			switch ( strtoupper ( $plan ) ) {
 				case 'Q': // Quincenal
 					// Verificar si la fecha actual está dentro del rango de este periodo

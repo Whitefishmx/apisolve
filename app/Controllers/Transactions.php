@@ -7,10 +7,6 @@
 	
 	class Transactions extends PagesStatusCode {
 		public function downloadCep (): ResponseInterface {
-			if ( $this->verifyRules ( 'GET', $this->request, NULL ) ) {
-				$this->logResponse ( 27 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
 			$transaction = new TransactionsModel();
 			$data = $transaction->getDataForCep ();
 			if ( !$data[ 0 ] ) {
@@ -28,10 +24,10 @@
 					$res[] = [ 'idTransaction' => $value[ 'id' ], 'folio' => $folio, 'filename' => $download ];
 				}
 			}
-			$files = glob("Resource id #*");
-			foreach ($files as $file) {
-				if (is_file($file)) { // Verificar que sea un archivo
-					unlink($file);    // Eliminar el archivo
+			$files = glob ( "Resource id #*" );
+			foreach ( $files as $file ) {
+				if ( is_file ( $file ) ) { // Verificar que sea un archivo
+					unlink ( $file );      // Eliminar el archivo
 				}
 			}
 			foreach ( $res as $key ) {

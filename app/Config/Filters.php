@@ -20,13 +20,13 @@
 		 *                                                     or [filter_name => [classname1, classname2, ...]]
 		 */
 		public array $aliases = [
-			'csrf' => CSRF::class,
-			'toolbar' => DebugToolbar::class,
-			'honeypot' => Honeypot::class,
-			'invalidchars' => InvalidChars::class,
+			'csrf'          => CSRF::class,
+			'toolbar'       => DebugToolbar::class,
+			'honeypot'      => Honeypot::class,
+			'invalidchars'  => InvalidChars::class,
 			'secureheaders' => SecureHeaders::class,
-			'auth' => JWTAuthenticationFilter::class,
-			'cors' => CorsFilter::class,
+			'auth'          => JWTAuthenticationFilter::class,
+			'cors'          => CorsFilter::class,
 		];
 		/**
 		 * List of filter aliases that are always
@@ -41,7 +41,7 @@
 				// 'csrf',
 				// 'invalidchars',
 			],
-			'after' => [
+			'after'  => [
 				'toolbar',
 				// 'honeypot',
 				// 'secureheaders',
@@ -69,29 +69,39 @@
 		public array $filters = [
 			'auth' => [
 				'before' => [
-					"uploadCFDIPlus",
-					"chosenConciliation",
-					"chosenForDispersion",
-					"conciliationPlus",
-					"getMagicBalance",
-					"getMagicTransfers",
-					"sExpressReport",
-					"sExpressReportCompany",
 					"sExpressPeriods",
 					"sExpressDashboard",
-					"excelCompany",
+					"sExpressProfile",
+					"sExpressUploadFires",
+					"sExpressEmployees",
+					"sExpressRequest",
 					"sExpressUploadNomina",
-					"sExpressEmployees"
+					"sExpressReport",
+					"excelCompany",
+					"sExpressReportCompany",
+					"sExpressFireOne",
 				],
 			],
-	/*		'cors'=>[
-				'before'=>[
-					"uploadCFDIPlus",
-					"chosenConciliation",
-					"chosenForDispersion",
-					"conciliationPlus",
+	/*		'cors' => [
+				'before' => [
+					"sExpressPeriods",
+					"sExpressDashboard",
+					"sExpressProfile",
+					"sExpressVerifyCurp",
+					"sExpressUploadFires",
+					"sExpressEmployees",
+					"sExpressRequest",
+					"sExpressUploadNomina",
+					"sExpressInitRecovery",
+					"sExpressValidateCode",
+					"sExpressReport",
+					"excelCompany",
+					"sExpressReportCompany",
+					"setUser",
+					"resetPassword",
+					"sExpressFireOne",
 					"toSignIn",
-				]
-			]*/
+				],
+			],*/
 		];
 	}
