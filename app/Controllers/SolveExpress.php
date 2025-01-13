@@ -848,7 +848,9 @@
 				$end_date = new DateTime( $period[ 'end_date' ] );
 				$current = new DateTime( $current_date );
 				//var_dump ($plan,$net_salary,$start_date,$end_date,$current);die();
-				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $plan, $current_date );
+				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ],
+					$plan, $current_date );
+//				var_dump ($period_name);die();
 				$days_worked = $current->diff ( $start_date )->days + 1;
 				$total_requests = $this->express->getSumRequest ( $employee, $period_name );
 				$days_in_month =
@@ -889,9 +891,10 @@
 		/**
 		 * @throws DateMalformedStringException
 		 */
-		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $plan, $current_date ): string {
+		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $payment_date, $plan, $current_date ): string {
 			$start = new DateTime( $start_date );
 			$end = new DateTime( $end_date );
+			$pay  = new DateTime( $payment_date );
 			new DateTime( $cutoff_date );
 			$current = new DateTime( $current_date );
 			$month = $this->getMonthName ( $end->format ( 'n' ) );
@@ -901,7 +904,7 @@
 					// Verificar si la fecha actual está dentro del rango de este periodo
 					if ( $current >= $start && $current <= $end ) {
 						// Determinar si es 1ª o 2ª quincena del mes basándose en el día de inicio
-						if ( (int)$current->format ( 'd' ) <= 15 ) {
+						if ( (int)$pay->format ( 'd' ) <= 15 ) {
 							return "1ª quincena de $month $year";
 						} else {
 							return "2ª quincena de $month $year";

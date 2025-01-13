@@ -158,7 +158,8 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 			                    ->join ( 'advance_payroll t1', 't1.employee_id = e.id ', 'inner' )
 			                    ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'left' )
 			                    ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
-			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' );
+			                    ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
+			                    ->where ( 'u.type', '1' );
 			if ( !empty( $args[ 'employee' ] ) ) {
 				$builder->where ( 'e.external_id', $args[ 'employee' ] );
 			}
@@ -267,7 +268,8 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 			        ->join ( 'transactions t2', 't2.payroll_id = t1.id', 'left' )
 			        ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
 			        ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
-			        ->join ( 'advancePayroll_rules apr', 'apr.company_id = c.id', 'INNER' );
+			        ->join ( 'advancePayroll_rules apr', 'apr.company_id = c.id', 'INNER' )
+				->where ( 'u.type', '1' );
 			if ( !empty( $args[ 'employee' ] ) ) {
 				$builder->where ( 'e.external_id', $args[ 'employee' ] );
 			}
@@ -307,7 +309,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-						//var_dump ($sqlQuery); die();
+			//var_dump ($sqlQuery); die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
