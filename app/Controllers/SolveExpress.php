@@ -317,9 +317,6 @@
 			$this->logResponse ( 15 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
-		/**
-		 * @throws DateMalformedStringException
-		 */
 		public function uploadNomina (): ResponseInterface|array {
 			ini_set ( 'memory_limit', '1024M' );
 			$file = $this->request->getFile ( 'nomina' );
@@ -378,7 +375,7 @@
 						} else if ( $header === "Fecha de alta" ) {
 							$fechaFormateada = DateTime::createFromFormat ( 'd/m/Y', $value );
 							if ( $fechaFormateada ) {
-								$formated = $fechaFormateada->format ( 'Y-m-d' ); // Salida: 2024-04-18
+								$formated = $fechaFormateada->format ( 'Y-m-d' );
 							} else {
 								$formated = date ( 'Y-m-d', strtotime ( 'now' ) );
 							}
@@ -413,7 +410,11 @@
 			$data = $this->checkExists ( $data, $this->input[ 'company' ] );
 			//return $this->getResponse ( $data, 200 );
 			$upsert = $this->upsertNomina ( $data, $this->input[ 'company' ], $this->user );
-			$this->updateAdvancePayrollControl ();
+			try {
+				$this->updateAdvancePayrollControl ( $this->input[ 'company' ] );
+			} catch ( DateMalformedStringException $e ) {
+				return $this->getResponse ( (array)$e, 200 );
+			}
 			return $this->getResponse ( $upsert, 200 );
 		}
 		private function checkExists ( $data, $company ): array {
@@ -850,7 +851,6 @@
 				$plan = $employee[ 'plan' ];
 				$net_salary = $employee[ 'net_salary' ];
 				$start_date = new DateTime( $period[ 'start_date' ] );
-				$end_date = new DateTime( $period[ 'end_date' ] );
 				$current = new DateTime( $current_date );
 				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ], $plan, $current_date );
 				$days_worked = $current->diff ( $start_date )->days + 1;
