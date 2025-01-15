@@ -57,7 +57,7 @@ WHERE t.cep  IS NULL";
 			if ( $rows > 0 ) {
 				if ( $res->getNumRows () === 1 ) {
 					$res = $res->getResultArray ();
-					saveLog ( 2, 28, 200, json_encode ( [] ),  json_encode ( $res ) );
+					saveLog ( 2, 28, 200, json_encode ( [] ), json_encode ( $res ) );
 					return [ TRUE, $res ];
 				}
 				$res = $res->getResultArray ();
@@ -71,8 +71,8 @@ WHERE t.cep  IS NULL";
 		}
 		public function DownloadCEP ( array $args, int $try ) {
 			$tmp_dir = './public/boveda/CEP/tmp/';
-			if (!is_dir($tmp_dir)) {
-				mkdir($tmp_dir, 0755, true);
+			if ( !is_dir ( $tmp_dir ) ) {
+				mkdir ( $tmp_dir, 0755, TRUE );
 			}
 			sleep ( rand ( 5, 10 ) );
 			$data = [
@@ -101,14 +101,14 @@ WHERE t.cep  IS NULL";
 				curl_setopt ( $ch, CURLOPT_SSL_VERIFYPEER, FALSE );
 				curl_setopt ( $ch, CURLOPT_SSL_VERIFYHOST, FALSE );
 				curl_setopt ( $ch, CURLOPT_SSL_VERIFYSTATUS, FALSE );
-				$cookieFile = fopen ( $tmp_dir ."cookie.txt", "w+" );
+				$cookieFile = fopen ( $tmp_dir."cookie.txt", "w+" );
 				curl_setopt ( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				$response = curl_exec ( $ch );
 				//				var_dump ( $response );
 				//				die();
 				if ( $response === FALSE ) {
 					curl_close ( $ch );
-					$this->cleanupTmpFiles($tmp_dir);
+					$this->cleanupTmpFiles ( $tmp_dir );
 					return -1;
 				}
 				curl_setopt_array ( $ch, [
@@ -127,7 +127,7 @@ WHERE t.cep  IS NULL";
 				if ( curl_errno ( $ch ) ) {
 					header ( 'HTTP/1.1 500 Internal Server Error' );
 					echo 'Error al descargar el PDF.';
-					$this->cleanupTmpFiles($tmp_dir);
+					$this->cleanupTmpFiles ( $tmp_dir );
 					exit;
 				}
 				curl_close ( $ch );
@@ -137,26 +137,26 @@ WHERE t.cep  IS NULL";
 				$tipoMIME = mime_content_type ( $ruta_destino );
 				if ( $tipoMIME === 'application/pdf' ) {
 					//				var_dump($filename);
-					$this->cleanupTmpFiles($tmp_dir);
+					$this->cleanupTmpFiles ( $tmp_dir );
 					curl_close ( $ch );
 					return $filename;
 				} else {
-					if ($try <= 3) {
+					if ( $try <= 3 ) {
 						$try++;
 						curl_close ( $ch );
-						$this->DownloadCEP($args, $try);
+						$this->DownloadCEP ( $args, $try );
 					}
-					if (file_exists($ruta_destino)) {
+					if ( file_exists ( $ruta_destino ) ) {
 						curl_close ( $ch );
-						unlink($ruta_destino);
+						unlink ( $ruta_destino );
 					}
-					$this->cleanupTmpFiles($tmp_dir); // Limpiar archivos temporales
+					$this->cleanupTmpFiles ( $tmp_dir ); // Limpiar archivos temporales
 					curl_close ( $ch );
 					return -1;
 				}
 			}
 			curl_close ( $ch );
-			$this->cleanupTmpFiles($tmp_dir);
+			$this->cleanupTmpFiles ( $tmp_dir );
 			return -2;
 		}
 		public function insertCep ( array $data ): array {
@@ -176,17 +176,17 @@ WHERE t.cep  IS NULL";
 			( [ FALSE, 'affected' => $this->db->error () ] ) );
 			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		}
-		private function cleanupTmpFiles(string $tmp_dir): void {
-			$files = glob($tmp_dir . '*'); // Obtener todos los archivos en el directorio tmp
-			foreach ($files as $file) {
-				if (is_file($file)) {
-					unlink($file); // Eliminar el archivo
+		private function cleanupTmpFiles ( string $tmp_dir ): void {
+			$files = glob ( $tmp_dir.'*' ); // Obtener todos los archivos en el directorio tmp
+			foreach ( $files as $file ) {
+				if ( is_file ( $file ) ) {
+					unlink ( $file ); // Eliminar el archivo
 				}
 			}
-			$files = glob("Resource id #*");
-			foreach ($files as $file) {
-				if (is_file($file)) { // Verificar que sea un archivo
-					unlink($file);    // Eliminar el archivo
+			$files = glob ( "Resource id #*" );
+			foreach ( $files as $file ) {
+				if ( is_file ( $file ) ) { // Verificar que sea un archivo
+					unlink ( $file );      // Eliminar el archivo
 				}
 			}
 		}
