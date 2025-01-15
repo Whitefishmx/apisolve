@@ -835,11 +835,16 @@
 		/**
 		 * @throws DateMalformedStringException
 		 */
-		public function updateAdvancePayrollControl ( $company ): ResponseInterface {
+		public function updateAdvancePayrollControl ( $company ): void {
 			$current_date = date ( 'Y-m-d', strtotime ( 'now' ) );
+			echo $current_date.' - ';
 			$dataM = new DataModel();
 			$company_id = $company;
+			echo 'company: '.$company_id.PHP_EOL;
 			$employees = $dataM->getEmployeesFromCompany ( $company_id, $this->user );
+			$actual = 0;
+			$total_employees = count ( $employees );
+			$periodActual = '';
 			foreach ( $employees as $employee ) {
 				$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
 				$plan = $employee[ 'plan' ];
@@ -847,14 +852,10 @@
 				$start_date = new DateTime( $period[ 'start_date' ] );
 				$end_date = new DateTime( $period[ 'end_date' ] );
 				$current = new DateTime( $current_date );
-				//var_dump ($plan,$net_salary,$start_date,$end_date,$current);die();
-				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ],
-					$plan, $current_date );
-//				var_dump ($period_name);die();
+				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ], $plan, $current_date );
 				$days_worked = $current->diff ( $start_date )->days + 1;
 				$total_requests = $this->express->getSumRequest ( $employee, $period_name );
-				$days_in_month =
-					cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
+				$days_in_month = cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
 				$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
 				if ( $current_date === $period[ 'cutoff_date' ] ) {
 					$available = 0;
@@ -867,9 +868,13 @@
 				} else {
 					$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
 				}
+				$periodActual = $period[ 'start_date' ].' - '.$period[ 'end_date' ].' - '.$period_name.' - '.$days_worked;
+				$actual++;
+				echo date ( 'm-d-Y H:i:s' ).' - '.$actual.' empleado(s) de '.$total_employees.PHP_EOL;
 			}
+			echo $periodActual.PHP_EOL;
+			echo '================================================================'.PHP_EOL;
 			$this->express->resetCounters ( $company_id, $current_date );
-			return $this->getResponse ( [ "message" => "OK" ], 200 );
 		}
 		private function getMonthName ( $month ): string {
 			$months = [
@@ -894,7 +899,7 @@
 		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $payment_date, $plan, $current_date ): string {
 			$start = new DateTime( $start_date );
 			$end = new DateTime( $end_date );
-			$pay  = new DateTime( $payment_date );
+			$pay = new DateTime( $payment_date );
 			new DateTime( $cutoff_date );
 			$current = new DateTime( $current_date );
 			$month = $this->getMonthName ( $end->format ( 'n' ) );
