@@ -202,6 +202,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
+			var_dump ( $sqlQuery);die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
