@@ -19,8 +19,8 @@
 	$routes->add ( 'MagicWH', 'Fintech\MagicPay::MagicWH' /**@uses \App\Controllers\Fintech\MagicPay::MagicWH* */ );
 	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
 	//========================|| CRON ||========================
-	$routes->add ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
-	$routes->add ( 'updPayControl', 'SolveExpress::updateAdvancePayrollControl' /**@uses \App\Controllers\SolveExpress::updateAdvancePayrollControl* */ );
+	$routes->cli ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
+	$routes->cli ( 'updPayControl/(:segment)', 'SolveExpress::updateAdvancePayrollControl/$1' /**@uses \App\Controllers\SolveExpress::updateAdvancePayrollControl* */ );
 	//========================|| CRON ||========================
 	$routes->add ( 'layoutDownloader/(:segment)', 'FileController::downloadLayout/$1' /**@uses \App\Controllers\FileController::downloadLayout* */ );
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );

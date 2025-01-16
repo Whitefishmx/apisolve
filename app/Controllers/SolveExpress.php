@@ -145,8 +145,10 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			if ( intval ( $res[ 1 ][ 'curp_validated' ] ) === 1 ) {
+				//				var_dump ($res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint'] ); die();
 				if ( $res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint' ] ) {
 					$this->serverError ( 'Dispositivo no reconocido', 'Ya se iniciado el proceso de validación desde otro dispositivo.' );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
 				}
 				if ( intval ( $res[ 1 ][ 'metamap' ] ) === 1 ) {
 					$this->responseBody = [
@@ -298,7 +300,7 @@
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$order = $this->makeOrder ( $res[ 1 ], $this->input[ 'user' ] );
+			$order = $this->makeOrder ( $res[ 1 ], $this->input[ 'user' ], $res[ 1 ][ 'commission' ] );
 			if ( !$order[ 0 ] ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -316,8 +318,10 @@
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		public function uploadNomina (): ResponseInterface|array {
+			ini_set ( 'memory_limit', '1024M' );
 			$file = $this->request->getFile ( 'nomina' );
 			$this->input = $this->getRequestLogin ( $this->request );
+			$this->user = $this->input[ 'user' ];
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				$this->logResponse ( 41, $this->input, $this->responseBody );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -355,7 +359,7 @@
 					$index = array_search ( $header, $headers );
 					$headerIndices[ $header ] = $index;
 				}
-				$dataToInsert = [];
+				$data = [];
 				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
 					$row = $sheetData[ $i ];
 					$mappedRow = [];
@@ -364,7 +368,21 @@
 					foreach ( $headerIndices as $header => $index ) {
 						$value = $row[ $index ] ?? NULL;
 						if ( $header === "Estatus" || $header === "Confianza" ) {
-							$mappedRow[ $header ] = ( strtoupper ( $value ) === "X" ) ? 1 : 0;
+							$mappedRow[ $header ] = ( strtoupper ( strtoupper ( $value ) ) === "X" ) ? 1 : 0;
+						} else if ( $header === "Cuenta" ) {
+							$clabe = preg_replace ( '/\D/', '', $value );
+							$mappedRow[ $header ] = $clabe;
+						} else if ( $header === "Fecha de alta" ) {
+							$fechaFormateada = DateTime::createFromFormat ( 'd/m/Y', $value );
+							if ( $fechaFormateada ) {
+								$formated = $fechaFormateada->format ( 'Y-m-d' );
+							} else {
+								$formated = date ( 'Y-m-d', strtotime ( 'now' ) );
+							}
+							$mappedRow[ $header ] = $formated;
+						} else if ( $header === "Sueldo Neto" || $header === "Sueldo base" ) {
+							$sueldo = (float)str_replace ( [ '$', ',' ], '', $value );
+							$mappedRow[ $header ] = $sueldo;
 						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
 							/*$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
 							$mappedRow[ $header ] = $encryptedValue;*/
@@ -380,24 +398,54 @@
 						}
 						//						$mappedRow[ 'iv' ] = $iv;
 					}
-					$dataToInsert[] = $mappedRow;
+					$data[ $mappedRow[ 'CURP' ] ] = $mappedRow;
 				}
 			} catch ( Exception $e ) {
 				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
 			}
-			if ( empty( $dataToInsert ) ) {
+			if ( empty( $data ) ) {
 				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
 			}
-			$data = $this->proccesNomina($dataToInsert);
-			return $this->getResponse ( $dataToInsert, 200 );
-		}
-		private function proccesNomina($dataToInsert) {
-			$user = new UserModel();
-			$person = [];
-			foreach ( $dataToInsert as $value){
-				$person[$value['CURP']] = $user->existsBycurp($value['CURP']);
+			//			return $this->getResponse ( $data, 200 );
+			$data = $this->checkExists ( $data, $this->input[ 'company' ] );
+			//return $this->getResponse ( $data, 200 );
+			$upsert = $this->upsertNomina ( $data, $this->input[ 'company' ], $this->user );
+			try {
+				$this->updateAdvancePayrollControl ( $this->input[ 'company' ] );
+			} catch ( DateMalformedStringException $e ) {
+				return $this->getResponse ( (array)$e, 200 );
 			}
-			var_dump ($person);die();
+			return $this->getResponse ( $upsert, 200 );
+		}
+		private function checkExists ( $data, $company ): array {
+			$userData = new UserModel();
+			foreach ( $data as $value ) {
+				$e = $userData->checkExistByCurp ( $value[ 'CURP' ], $company );
+				if ( $e[ 0 ] ) {
+					foreach ( $e[ 1 ] as $i => $v ) {
+						$data[ $value[ 'CURP' ] ][ $i ] = ( $v );
+					}
+				}
+			}
+			return $data;
+		}
+		private function upsertNomina ( $data, $company, $user ): array {
+			$exist = 0;
+			$new = 0;
+			foreach ( $data as $value ) {
+				if ( isset ( $value[ 'personId' ] ) ) {
+					$this->express->updateNomina ( $value, $company, $user );
+					$exist++;
+				} else {
+					$this->express->insertNomina ( $value, $company, $user );
+					$new++;
+				}
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Nomina actualizada',
+				'response'    => [ 'actualizaciones' => $exist, 'altas' => $new ] ];
+			return [ $this->responseBody, $this->errCode ];
 		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
@@ -413,13 +461,12 @@
 			$validation = service ( 'validation' );
 			$validation->setRules (
 				[
-					'curp' => 'required|exact_length[18]|regex_match[^[A-Z]{4}\d{6}[HM][A-Z]{2}[A-Z0-9]{3}[A-Z0-9]\d$]',
+					'email' => 'required|valid_email',
 				],
 				[
-					'curp' => [
-						'required'     => 'El campo CURP es obligatorio',
-						'exact_length' => 'La CURP debe tener exactamente {param} caracteres',
-						'regex_match'  => 'El formato es invalido' ] ] );
+					'email' => [
+						'required'    => 'El campo {field} es obligatorio',
+						'valid_email' => 'Por favor introduzca un correo valido', ] ] );
 			if ( !$validation->run ( $this->input ) ) {
 				$errors = $validation->getErrors ();
 				$this->errDataSupplied ( $errors );
@@ -427,7 +474,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$user = new UserModel();
-			$userData = $user->getUserByCurp ( $this->input[ 'curp' ] );
+			$userData = $user->getUserByMail ( $this->input[ 'email' ] );
 			if ( !$userData[ 0 ] ) {
 				$this->dataNotFound ( 'Usuario no encontrado', 'La CURP que ingreso no esta registrada, contacte a Recursos Humanos.' );
 				$this->logResponse ( 56 );
@@ -444,7 +491,7 @@
 			$name = $userData[ 1 ][ 0 ][ 'lastName' ]." ".$userData[ 1 ][ 0 ][ 'name' ];
 			$emailResponse = $emailController->sendPasswordResetEmail ( $userData[ 1 ][ 0 ][ 'email' ], $code[ 'code' ], $name );
 			if ( $emailResponse[ 'status' ] !== 'success' ) {
-				$this->serverError ( 'No se logro actualizar los registros', 'No se logro generar el codigo de recuperación' );
+				$this->serverError ( 'No se logro actualizar los registros', 'No se logro enviar el codigo de recuperación' );
 				$this->logResponse ( 56 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -610,7 +657,7 @@
 				$writer->save ( 'php://output' );
 				$excelOutput = ob_get_clean ();
 				helper ( 'tools_helper' );
-				$name = month2Mes ( date ( 'm', strtotime ( 'now' ) ) - 1 )."_".date ( 'd_Y__H_i_s' );
+				$name = month2Mes ( date ( 'm', strtotime ( 'now' ) ) )."_".date ( 'd_Y__H_i_s' );
 				return $this->response
 					->setContentType ( 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' )
 					->setHeader ( 'Content-Disposition', 'attachment; filename="'.$name.'.xlsx"' )
@@ -700,8 +747,8 @@
 		/**
 		 * @throws DateMalformedStringException
 		 */
-		public function makeOrder ( $data, $user ): array {
-			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ] );
+		public function makeOrder ( $data, $user, $commission ): array {
+			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ], $commission );
 			//			die(var_dump ($order));
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
@@ -789,51 +836,45 @@
 		/**
 		 * @throws DateMalformedStringException
 		 */
-		public function updateAdvancePayrollControl (): ResponseInterface {
+		public function updateAdvancePayrollControl ( $company ): void {
 			$current_date = date ( 'Y-m-d', strtotime ( 'now' ) );
+			echo $current_date.' - ';
 			$dataM = new DataModel();
-			$companies = $dataM->getCompanies ( $this->user );
-			foreach ( $companies as $company ) {
-				$company_id = $company[ 'id' ];
-				$employees = $dataM->getEmployeesFromCompany ( $company_id, $this->user );
-				foreach ( $employees as $employee ) {
-					$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
-					if ( !$period ) {
-						continue;
-					}
-					$plan = $employee[ 'plan' ];
-					$net_salary = $employee[ 'net_salary' ];
-					$start_date = new DateTime( $period[ 'start_date' ] );
-					$end_date = new DateTime( $period[ 'end_date' ] );
-					$current = new DateTime( $current_date );
-					$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $plan, $current_date );
-					if ( $current < $start_date ) {
-						$days_worked = 0;
-					} else if ( $current > $end_date ) {
-						$days_worked = $end_date->diff ( $start_date )->days + 1;
-					} else {
-						$days_worked = $current->diff ( $start_date )->days + 1;
-					}
-					$total_requests = $this->express->getSumRequest ( $employee, $period_name );
-					$days_in_month =
-						cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
-					$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
-					if ( $current_date === $period[ 'cutoff_date' ] ) {
-						$available = 0;
-					} else {
-						$available = 1;
-					}
-					$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
-					if ( $existing ) {
-						$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
-					} else {
-						$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
-					}
+			$company_id = $company;
+			echo 'company: '.$company_id.PHP_EOL;
+			$employees = $dataM->getEmployeesFromCompany ( $company_id, $this->user );
+			$actual = 0;
+			$total_employees = count ( $employees );
+			$periodActual = '';
+			foreach ( $employees as $employee ) {
+				$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
+				$plan = $employee[ 'plan' ];
+				$net_salary = $employee[ 'net_salary' ];
+				$start_date = new DateTime( $period[ 'start_date' ] );
+				$current = new DateTime( $current_date );
+				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ], $plan, $current_date );
+				$days_worked = $current->diff ( $start_date )->days + 1;
+				$total_requests = $this->express->getSumRequest ( $employee, $period_name );
+				$days_in_month = cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
+				$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
+				if ( $current_date === $period[ 'cutoff_date' ] ) {
+					$available = 0;
+				} else {
+					$available = 1;
 				}
-				$this->express->resetCounters ( $company_id, $current_date );
-				return $this->getResponse ( [ "message" => "OK" ], 200 );
+				$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
+				if ( $existing ) {
+					$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+				} else {
+					$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+				}
+				$periodActual = $period[ 'start_date' ].' - '.$period[ 'end_date' ].' - '.$period_name.' - '.$days_worked;
+				$actual++;
+				echo date ( 'm-d-Y H:i:s' ).' - '.$actual.' empleado(s) de '.$total_employees.PHP_EOL;
 			}
-			return $this->getResponse ( [ "message" => "false" ], 500 );
+			echo $periodActual.PHP_EOL;
+			echo '================================================================'.PHP_EOL;
+			$this->express->resetCounters ( $company_id, $current_date );
 		}
 		private function getMonthName ( $month ): string {
 			$months = [
@@ -855,19 +896,20 @@
 		/**
 		 * @throws DateMalformedStringException
 		 */
-		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $plan, $current_date ): string {
+		private function generatePeriodName ( $start_date, $end_date, $cutoff_date, $payment_date, $plan, $current_date ): string {
 			$start = new DateTime( $start_date );
 			$end = new DateTime( $end_date );
+			$pay = new DateTime( $payment_date );
 			new DateTime( $cutoff_date );
 			$current = new DateTime( $current_date );
-			$month = $this->getMonthName ( $start->format ( 'n' ) );
-			$year = $start->format ( 'Y' );
+			$month = $this->getMonthName ( $end->format ( 'n' ) );
+			$year = $end->format ( 'Y' );
 			switch ( strtoupper ( $plan ) ) {
 				case 'Q': // Quincenal
 					// Verificar si la fecha actual está dentro del rango de este periodo
 					if ( $current >= $start && $current <= $end ) {
 						// Determinar si es 1ª o 2ª quincena del mes basándose en el día de inicio
-						if ( (int)$current->format ( 'd' ) <= 15 ) {
+						if ( (int)$pay->format ( 'd' ) <= 15 ) {
 							return "1ª quincena de $month $year";
 						} else {
 							return "2ª quincena de $month $year";

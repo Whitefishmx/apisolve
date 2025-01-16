@@ -34,11 +34,13 @@
 		 */
 		public function findUserByTokenAccess ( string $mail ): array {
 			//Se declara el ambiente a utilizar
-			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login,
+       t2.id AS 'personId', t3.id AS 'employeId', t3.company_id AS 'companyId'
 FROM users t1
+    INNER JOIN employee_user eu ON t1.id  = eu.user_id
+    INNER JOIN employee t3 ON t3.id = eu.employee_id
     INNER JOIN person_user pu ON t1.id = pu.user_id
     INNER JOIN person t2 ON pu.person_id = t2.id
-    LEFT JOIN employee t3 ON t3.person_id = t2.id
 WHERE (t1.email = '$mail' and t1.active = 1)
    OR (t1.nickname = '$mail' and t1.active = 1)
    OR (t2.rfc = '$mail' AND t1.active = 1)";
@@ -51,19 +53,21 @@ WHERE (t1.email = '$mail' and t1.active = 1)
 			return [ FALSE, 'Error con la conexión a la fuente de información' ];
 		}
 		public function validateAccess ( string $login, string $password, int $platform ): array {
-			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login, t3.company_id, c.short_name
+			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login, t3.company_id, c.short_name,
+       t1.id AS 'userId', t2.id AS 'personId', t3.id AS 'employeId', t3.company_id AS 'companyId'
 FROM users t1
-    INNER JOIN person_user pu ON t1.id = pu.user_id
-    INNER JOIN person t2 ON pu.person_id = t2.id
-    LEFT JOIN employee t3 ON t3.person_id = t2.id
-    INNER JOIN companies c ON c.id = t3.company_id
+INNER JOIN employee_user eu ON t1.id  = eu.user_id
+INNER JOIN employee t3 ON t3.id = eu.employee_id
+INNER JOIN person_user pu ON t1.id = pu.user_id
+INNER JOIN person t2 ON pu.person_id = t2.id
+INNER JOIN companies c ON t3.company_id = c.id
 WHERE (t1.nickname = '$login' AND t1.password = '$password')
    OR (t1.email = '$login' AND t1.password = '$password') ";
 			if ( $platform === 6 ) {
 				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
 			}
 			$query .= "AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
-			//			var_dump ($query);die();
+//						var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
@@ -78,7 +82,7 @@ FROM permissions p
     JOIN users u ON p.user_id = u.id
     JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
 WHERE pa.id_platform = $platform AND u.id  = $userid";
-			//			var_dump ($query);die();
+//						var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
@@ -136,12 +140,13 @@ WHERE u.id = $user";
 		public function getExpressProfile ( $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, p.name, p.last_name, p.sure_name, p.curp, p.phone,
        u.nickname, u.email, c.short_name, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'
-				FROM employee e
-				    INNER JOIN person p ON p.id = e.person_id
-				    INNER JOIN person_user pu ON p.id = pu.person_id
-				    INNER JOIN users u ON u.id = pu.user_id
+				FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON e.id = eu.employee_id
+    INNER JOIN person_user pu ON u.id = pu.user_id
+    INNER JOIN person p ON pu.person_id = p.id
 				    INNER JOIN companies c ON c.id = e.company_id
-				    INNER JOIN bank_accounts ba ON ba.user_id  = u.id OR ba.person_id = p.id 
+				    INNER JOIN bank_accounts ba ON (ba.user_id  = u.id OR ba.person_id = p.id) AND ba.company_id= c.id
 				WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 48, 404, json_encode ( [ 'user' => $user ] ), json_encode ( [ FALSE, 'No se encontró información' ] ) );
@@ -155,14 +160,15 @@ WHERE u.id = $user";
 			saveLog ( $user, 48, 200, json_encode ( [ 'user' => $user ] ), json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
-		public function getUserByCurp ( $curp ): array {
+		public function getUserByMail ( $email ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, CapitalizarTexto(p.name) AS name,
        CapitalizarTexto(p.last_name) AS lastName, CapitalizarTexto(p.sure_name) AS sureName,u.email
-FROM employee e
-    INNER JOIN person p ON p.id = e.person_id
-    INNER JOIN person_user pu ON p.id = pu.person_id
-    INNER JOIN users u ON u.id = pu.user_id AND u.id = p.primary_user_id
-WHERE p.curp = '$curp' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON e.id = eu.employee_id
+    INNER JOIN person_user pu ON u.id = pu.user_id
+    INNER JOIN person p ON pu.person_id = p.id
+WHERE u.email = '$email' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return [ TRUE, $res->getResultArray () ];
@@ -196,14 +202,31 @@ WHERE p.curp = '$curp' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
 		}
 		public function resetPassword ( mixed $user, string $code, string $password ): bool {
 			$query = "UPDATE users SET password = '$password', active = 1, reset_code = NULL, reset_date = NOW() WHERE id = $user AND reset_code = '$code'";
-            if ( $this->db->query ( $query ) ) {
-                $affected = $this->db->affectedRows ();
-                if ( $affected > 0 ) {
-                    return TRUE;
-                }
-                return FALSE;
-            }
-            return FALSE;
+			if ( $this->db->query ( $query ) ) {
+				$affected = $this->db->affectedRows ();
+				if ( $affected > 0 ) {
+					return TRUE;
+				}
+				return FALSE;
+			}
+			return FALSE;
+		}
+		public function checkExistByCurp ( $curp, $company): array {
+			$query = "SELECT p.id AS 'personId', e.id AS 'employeeId', u.id AS 'userId'
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON e.id = eu.employee_id
+    INNER JOIN person_user pu ON u.id = pu.user_id
+    INNER JOIN person p ON pu.person_id = p.id
+WHERE p.curp = '$curp' AND e.company_id = '$company'";
+//			var_dump ($query);die();
+			if ( $res = $this->db->query ( $query ) ) {
+				if ( $res->getNumRows () > 0 ) {
+					return [ TRUE, $res->getResultArray ()[ 0 ] ];
+				}
+				return [ FALSE, [ 'error' => 'No existe' ] ];
+			}
+			return [ FALSE, [ 'error' => 'No con conexión' ] ];
 		}
 		public function existsByCurp ( $curp ): array {
 			$query = "SELECT p.id as 'personId', e.id as 'employeeId', u.id as 'userId'

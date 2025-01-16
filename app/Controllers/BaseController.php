@@ -56,11 +56,11 @@
 			// Preload any models, libraries, etc, here.
 			// E.g.: $this->session = \Config\Services::session();
 		}
-		public function logResponse ( int $function, array $inputData = NULL, array $responseData = NULL ): bool {
+		public function logResponse ( int $function, ?array $inputData = NULL, ?array $responseData = NULL ): bool {
 			return saveLog ( $this->user, $function, $this->errCode, json_encode ( $inputData ?? $this->input,
 				JSON_UNESCAPED_UNICODE ), json_encode ( $responseData ?? $this->responseBody, JSON_UNESCAPED_UNICODE ), $this->env );
 		}
-		public function getResponse ( array $responseBody, int $code = NULL ): ResponseInterface {
+		public function getResponse ( array $responseBody, ?int $code = NULL ): ResponseInterface {
 			$code = $code === NULL ? $this->errCode : $code;
 			return $this->response->setStatusCode ( $code )->setJSON ( $responseBody )
 				//			                      ->setHeader ( 'Access-Control-Allow-Origin', 'http://localhost:8081' )

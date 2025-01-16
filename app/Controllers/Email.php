@@ -8,7 +8,7 @@
 		public function sendPasswordResetEmail ( $toEmail, $code = NULL, $name = NULL ): array {
 			$email = Services::email ();
 			// Configuración del correo
-			$email->setFrom ( 'ayuda@solve.com.mx', 'Equipo Solve' );
+			$email->setFrom ( 'contacto@solve-express.mx', 'Equipo Solve Express' );
 			$email->setTo ( $toEmail );
 			$email->setSubject ( 'Restablecer tu contraseña' );
 			$data = [ 'name' => $name, 'code' => $code ];

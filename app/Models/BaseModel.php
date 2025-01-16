@@ -39,7 +39,7 @@
 		 *
 		 * @return string A serialized string representing the unique folio.
 		 */
-		public function generateFolio ( int $functionId, string $table, int $user = NULL ): string {
+		public function generateFolio ( int $functionId, string $table, ?int $user = NULL ): string {
 			helper ( 'tetraoctal_helper' );
 			$nextId = $this->getNexId ( $table );
 			if ( $user != NULL ) {
@@ -84,10 +84,11 @@
 		 *               - [false, 'No se encontró información'] if no employee is found or an error occurs
 		 */
 		public function getEmployeeByIdUser ( int $user ): array {
-			$query = "SELECT e.id FROM employee e
-    INNER JOIN person p ON e.person_id = p.id
-    INNER JOIN person_user pu ON pu.person_id = p.id
-    INNER JOIN users u ON u.id = pu.user_id WHERE u.id = $user";
+			$query = "SELECT e.id FROM users u
+INNER JOIN employee_user eu ON u.id  = eu.user_id
+INNER JOIN employee e ON e.id = eu.employee_id
+INNER JOIN person_user pu ON u.id = pu.user_id
+INNER JOIN person p ON pu.person_id = p.id WHERE u.id = $user";
 //			var_dump ( $query);die();
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
@@ -103,5 +104,16 @@
 			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ $res->getResultArray ()[ 0 ] ];
+		}
+		public function getBankByClave($clabe){
+			$clabe = substr ($clabe,0,3);
+			$query = "SELECT * FROM cat_bancos WHERE bnk_clave = '$clabe' ";
+//			var_dump ($query);die();
+			if ( $res = $this->db->query ( $query ) ) {
+				if ( $res->getNumRows () > 0 ) {
+					return [ TRUE, $res->getResultArray ()[ 0 ] ];
+				}
+				return [ FALSE, [ 'error' => 'No existe' ] ];
+			}
 		}
 	}
