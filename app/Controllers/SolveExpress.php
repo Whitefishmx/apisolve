@@ -197,7 +197,7 @@
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Pagos Obtenidos',
-				'response'    => $res,
+				'response'    => $res[1],
 			];
 			return $this->getResponse ($this->responseBody, $this->errCode);
 		}
@@ -769,7 +769,6 @@
 		 */
 		public function makeOrder ( $data, $user, $commission ): array {
 			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ], $commission );
-			//			die(var_dump ($order));
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );
@@ -785,7 +784,6 @@
 				$this->logResponse ( 15 );
 				return [ FALSE, 'error' ];
 			}
-			//			die(var_dump ($order));
 			$data = [
 				'description'   => $order [ 'refNumber' ],
 				'account'       => $bank[ 1 ][ 'clabe' ],

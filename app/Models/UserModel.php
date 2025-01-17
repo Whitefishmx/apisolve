@@ -97,17 +97,17 @@ FROM bank_accounts b
     INNER JOIN users u ON b.user_id = u.id
 WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 22, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 22, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}

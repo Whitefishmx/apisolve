@@ -403,17 +403,17 @@ INNER JOIN companies c ON t3.company_id = c.id
     INNER JOIN advancePayroll_rules r ON r.company_id = c.id
     WHERE t1.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 17, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 17, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
@@ -427,17 +427,17 @@ INNER JOIN person p ON pu.person_id = p.id
        INNER JOIN advancePayroll_control c ON c.employee_id = e.id
     WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 18, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 18, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
