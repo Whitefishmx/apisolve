@@ -202,6 +202,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
+			echo ($sqlQuery);die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -309,7 +310,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-			//var_dump ($sqlQuery); die();
+//			var_dump ($sqlQuery); die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -789,5 +790,24 @@ ON DUPLICATE KEY UPDATE
 				"person"   => $personId,
 				"employee" => $employeeId ] ) );
 			$this->db->transComplete ();
+		}
+		public function getPayments ( $company ): array {
+			$query = "SELECT c.id AS 'company_id', po.amount, po.concept, cBenef.short_name, ba.clabe, cb.magicAlias, po.noReference, po.folio, po.status, t.cep, po.death_line
+FROM companies c
+    INNER JOIN companies cBenef ON cBenef.id = 1
+    INNER JOIN bank_accounts ba ON ba.company_id = cBenef.id AND ba.person_id IS NULL
+    INNER JOIN cat_bancos cb ON cb.id = ba.bank_id
+    INNER JOIN payments_order po ON po.company_id = c.id
+    LEFT JOIN transactions t ON t.payments_id = po.id
+WHERE c.id = $company";
+			$res = $this->db->query ( $query )->getResultArray ();
+			if ( !$res ) {
+				/*saveLog ( $user, 46, 404, json_encode ( [ 'args' => [ $company_id, $current_date, $user ] ] ), json_encode ( [
+					FALSE,
+					'No se encontró información',
+				] ) );*/
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [TRUE, $res];
 		}
 	}

@@ -62,6 +62,7 @@
 	$routes->add ( 'sExpressDashboard', 'SolveExpress::dashboard' /**@uses \App\Controllers\SolveExpress::dashboard */ );
 	$routes->add ( 'sExpressProfile', 'SolveExpress::userProfile' /**@uses \App\Controllers\SolveExpress::userProfile */ );
 	$routes->add ( 'sExpressVerifyCurp', 'SolveExpress::verifyCurp' /**@uses \App\Controllers\SolveExpress::verifyCurp */ );
+	$routes->add ( 'sExpressPayments', 'SolveExpress::getPayments' /**@uses \App\Controllers\SolveExpress::getPayments */ );
 	$routes->add ( 'sExpressUploadFires', 'SolveExpress::uploadFires' /**@uses \App\Controllers\SolveExpress::uploadFires */ );
 	$routes->add ( 'sExpressEmployees', 'SolveExpress::getEmployees' /**@uses \App\Controllers\SolveExpress::getEmployees */ );
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance */ );

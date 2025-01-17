@@ -181,6 +181,25 @@
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		public function getPayments (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+//				$this->logResponse ( 50 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$company = $this->input[ 'company' ];
+			$res = $this->express->getPayments ($company);
+			if ( !$res[ 0 ] ) {
+                $this->dataNotFound ();
+                return $this->getResponse ( $this->responseBody, $this->errCode );
+            }
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Pagos Obtenidos',
+				'response'    => $res,
+			];
+			return $this->getResponse ($this->responseBody, $this->errCode);
+		}
 		/**
 		 * @throws Exception
 		 */
