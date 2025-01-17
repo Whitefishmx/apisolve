@@ -24,7 +24,7 @@
 			}
 			$rules = [
 				'user'        => 'required|max_length[7]',
-				'nickName'    => 'required|max_length[10]|is_unique[users.nickname]',
+				'nickName'    => 'required|max_length[30]|is_unique[users.nickname]',
 				'email'       => 'required|valid_email|is_unique[users.email]',
 				'phone'       => 'permit_empty|exact_length[10]|numeric',
 				'contraseña'  => 'required|min_length[8]|max_length[100]',
@@ -33,10 +33,10 @@
 			$errors = [
 				'user'        => [
 					'required'   => 'El campo {field} es obligatorio',
-					'max_length' => 'El campo {field} no puede ser mayo a {param} caracteres' ],
+					'max_length' => 'El campo {field} no puede ser mayor a {param} caracteres' ],
 				'nickName'    => [
 					'required'   => 'El campo {field} es obligatorio',
-					'max_length' => 'El campo {field} no puede ser mayo a {param} caracteres',
+					'max_length' => 'El campo {field} no puede ser mayor a {param} caracteres',
 					'is_unique'  => 'Ya existe un usuario con el mismo alias, pruebe con otro' ],
 				'email'       => [
 					'required'    => 'El campo {field} es obligatorio',

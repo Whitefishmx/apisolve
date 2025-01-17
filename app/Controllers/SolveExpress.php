@@ -145,11 +145,12 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			if ( intval ( $res[ 1 ][ 'curp_validated' ] ) === 1 ) {
-				//				var_dump ($res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint'] ); die();
+//								var_dump ($res[ 1 ][ 'device' ], $this->input[ 'fingerprint' ]); die();
 				if ( $res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint' ] ) {
 					$this->serverError ( 'Dispositivo no reconocido', 'Ya se iniciado el proceso de validación desde otro dispositivo.' );
 					return $this->getResponse ( $this->responseBody, $this->errCode );
 				}
+//				var_dump (intval ( $res[ 1 ][ 'metamap' ] ) === 1); die();
 				if ( intval ( $res[ 1 ][ 'metamap' ] ) === 1 ) {
 					$this->responseBody = [
 						'error'       => $this->errCode = 200,
