@@ -74,10 +74,10 @@
 			$res = $this->sendRequest ( 'speiTransfer', $data, 'POST', 'JSON', NULL );
 			saveLog ( $user, 9, $res[ 'code' ], json_encode ( $data ), json_encode ( $res, JSON_FORCE_OBJECT | JSON_ERROR_NONE ) );
 			if ( !$res[ 0 ] ) {
-				return [FALSE, $res[ 'response' ]];
+				return [ FALSE, $res[ 'response' ] ];
 			}
-			if (!isset(json_decode ( $res[ 'response' ], TRUE )[ 'result' ])){
-				return [FALSE, json_decode ( $res[ 'response' ], TRUE )[ 'error' ]];
+			if ( !isset( json_decode ( $res[ 'response' ], TRUE )[ 'result' ] ) ) {
+				return [ FALSE, json_decode ( $res[ 'response' ], TRUE )[ 'error' ] ];
 			}
 			return [ TRUE, json_decode ( $res[ 'response' ], TRUE )[ 'result' ] ];
 		}
