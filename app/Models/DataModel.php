@@ -104,13 +104,12 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 		public function getLaws ( $platform, $type, $user ): array {
 			$query = "SELECT l.content FROM laws l WHERE l.platform_id = $platform AND l.type = $type";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 40, 404, json_encode ( [ 'platform' => $platform, 'type' => $type ] ),
-					json_encode ( $res->getResultArray (), TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 40, 200, json_encode ( [ 'platform' => $platform, 'type' => $type ] ),
-				json_encode ( TRUE, TRUE ) );
-			return [ TRUE, $res->getResultArray ()[ 0 ] ];
+			if ( $res->getNumRows () > 0 ) {
+				return [ TRUE, $res->getRowArray () ];
+			}
+			return [ FALSE, 'No se encontró información' ];
 		}
 		public function getCompanies ( $user ): array {
 			$builder = $this->db->table ( 'companies' );
@@ -125,7 +124,7 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 		}
 		public function getEmployeesFromCompany ( $company_id, $user ): array {
 			$builder = $this->db->table ( 'employee' );
-			$builder->where( [ 'company_id' => $company_id ] );
+			$builder->where ( [ 'company_id' => $company_id ] );
 			$sqlQuery = $builder->getCompiledSelect ();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				//saveLog ( $user, 45, 404, json_encode ( [ 'company' => $company_id ] ), json_encode ( [FALSE,'No se encontró información' ] ) );

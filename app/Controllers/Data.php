@@ -63,13 +63,13 @@
 			return $this->getResponse ( $res );
 		}
 		public function getLaws () {
-			$this->input = $this->getRequestLogin  ( $this->request );
+			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $this->verifyRules ( 'GET', $this->request, NULL ) ) {
 				$this->logResponse ( 39 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$data = new DataModel();
-			$law= $data->getLaws ($this->input['platform'], $this->input['type'], $this->user);
+			$law = $data->getLaws ( $this->input[ 'platform' ], $this->input[ 'type' ], $this->user );
 			if ( !$law[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -78,9 +78,9 @@
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Laws text found',
-				'response'    => $law[ 1 ],
+				'response'    => $law[ 1 ][ 'content' ],
 			];
-//			$this->logResponse ( 39 );
+			//			$this->logResponse ( 39 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 	}
