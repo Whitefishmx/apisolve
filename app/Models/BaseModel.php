@@ -91,17 +91,17 @@ INNER JOIN person_user pu ON u.id = pu.user_id
 INNER JOIN person p ON pu.person_id = p.id WHERE u.id = $user";
 //			var_dump ( $query);die();
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 20, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ $res->getResultArray ()[ 0 ] ];
 		}

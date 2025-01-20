@@ -182,6 +182,25 @@
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		public function getPayments (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+//				$this->logResponse ( 50 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$company = $this->input[ 'company' ];
+			$res = $this->express->getPayments ($company);
+			if ( !$res[ 0 ] ) {
+                $this->dataNotFound ();
+                return $this->getResponse ( $this->responseBody, $this->errCode );
+            }
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Pagos Obtenidos',
+				'response'    => $res[1],
+			];
+			return $this->getResponse ($this->responseBody, $this->errCode);
+		}
 		/**
 		 * @throws Exception
 		 */
@@ -750,7 +769,6 @@
 		 */
 		public function makeOrder ( $data, $user, $commission ): array {
 			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ], $commission );
-			//			die(var_dump ($order));
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );
@@ -766,7 +784,6 @@
 				$this->logResponse ( 15 );
 				return [ FALSE, 'error' ];
 			}
-			//			die(var_dump ($order));
 			$data = [
 				'description'   => $order [ 'refNumber' ],
 				'account'       => $bank[ 1 ][ 'clabe' ],

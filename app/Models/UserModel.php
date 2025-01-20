@@ -97,17 +97,17 @@ FROM bank_accounts b
     INNER JOIN users u ON b.user_id = u.id
 WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 22, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 22, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 22, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
@@ -227,5 +227,17 @@ WHERE p.curp = '$curp' AND e.company_id = '$company'";
 				return [ FALSE, [ 'error' => 'No existe' ] ];
 			}
 			return [ FALSE, [ 'error' => 'No con conexión' ] ];
+		}
+		public function existsByCurp ( $curp ): array {
+			$query = "SELECT p.id as 'personId', e.id as 'employeeId', u.id as 'userId'
+FROM person p
+INNER JOIN employee e ON e.person_id = p.id
+LEFT JOIN person_user pu ON pu.person_id = p.id
+INNER JOIN users u ON u.id = pu.user_id AND p.primary_user_id = u.id
+WHERE p.curp = '$curp'";
+            if ( $res = $this->db->query ( $query ) ) {
+	            return [ TRUE, $res->getResultArray ()[0] ];
+            }
+            return [FALSE,'No se encontraron resultados'];
 		}
 	}

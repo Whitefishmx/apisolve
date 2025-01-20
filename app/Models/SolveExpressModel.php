@@ -202,7 +202,6 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-			var_dump ( $sqlQuery);die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -310,7 +309,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-			//var_dump ($sqlQuery); die();
+//			var_dump ($sqlQuery); die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -404,17 +403,17 @@ INNER JOIN companies c ON t3.company_id = c.id
     INNER JOIN advancePayroll_rules r ON r.company_id = c.id
     WHERE t1.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 17, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 17, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 17, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
@@ -428,17 +427,17 @@ INNER JOIN person p ON pu.person_id = p.id
        INNER JOIN advancePayroll_control c ON c.employee_id = e.id
     WHERE u.id = $user";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ),
+				saveLog ( $user, 18, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 18, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode (
+			saveLog ( $user, 18, 200, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ), json_encode (
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
@@ -790,5 +789,24 @@ ON DUPLICATE KEY UPDATE
 				"person"   => $personId,
 				"employee" => $employeeId ] ) );
 			$this->db->transComplete ();
+		}
+		public function getPayments ( $company ): array {
+			$query = "SELECT c.id AS 'company_id', po.amount, po.concept, cBenef.short_name, ba.clabe, cb.magicAlias, po.noReference, po.folio, po.status, t.cep, po.death_line
+FROM companies c
+    INNER JOIN companies cBenef ON cBenef.id = 1
+    INNER JOIN bank_accounts ba ON ba.company_id = cBenef.id AND ba.person_id IS NULL
+    INNER JOIN cat_bancos cb ON cb.id = ba.bank_id
+    INNER JOIN payments_order po ON po.company_id = c.id
+    LEFT JOIN transactions t ON t.payments_id = po.id
+WHERE c.id = $company";
+			$res = $this->db->query ( $query )->getResultArray ();
+			if ( !$res ) {
+				/*saveLog ( $user, 46, 404, json_encode ( [ 'args' => [ $company_id, $current_date, $user ] ] ), json_encode ( [
+					FALSE,
+					'No se encontró información',
+				] ) );*/
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [TRUE, $res];
 		}
 	}
