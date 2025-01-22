@@ -718,6 +718,7 @@
 			}
 			$express = new SolveExpressModel();
 			$res = $express->getReportCompany ( $this->input, $this->user );
+//			var_dump (this->input);die();
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -768,7 +769,8 @@
 		 * @throws DateMalformedStringException
 		 */
 		public function makeOrder ( $data, $user, $commission ): array {
-			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'amount_available' ] ), $data[ 'plan' ], $commission );
+			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'net_salary' ] ), $data[ 'plan' ], $commission,
+				$data['actual_period'] );
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );

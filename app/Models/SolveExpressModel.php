@@ -202,7 +202,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-			die($sqlQuery);
+			//			die($sqlQuery);
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -270,7 +270,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 			        ->join ( 'bank_accounts t3', 't3.id = t2.account_destination', 'left' )
 			        ->join ( 'cat_bancos t4', 't4.id = t3.bank_id', 'inner' )
 			        ->join ( 'advancePayroll_rules apr', 'apr.company_id = c.id', 'INNER' )
-				->where ( 'u.type', '1' );
+			        ->where ( 'u.type', '1' );
 			if ( !empty( $args[ 'employee' ] ) ) {
 				$builder->where ( 'e.external_id', $args[ 'employee' ] );
 			}
@@ -310,7 +310,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 				$builder->like ( 'p.name', $args[ 'name' ] );
 			}
 			$sqlQuery = $builder->getCompiledSelect ();
-//			var_dump ($sqlQuery); die();
+			//			var_dump ($sqlQuery); die();
 			if ( !$res = $this->db->query ( $sqlQuery ) ) {
 				saveLog ( $user, 14, 404, json_encode ( [ 'args' => $args ] ), json_encode ( [
 					FALSE,
@@ -362,7 +362,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 		}
 		public function getDashboard ( int $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
-       p.name, p.last_name, p.sure_name, c.short_name, RoundDown(e.net_salary) AS 'net_salary', e.plan, RoundDown(t1.amount_available) AS 'amount_available', t1.worked_days, t1.available,
+       p.name, p.last_name, p.sure_name, c.short_name, RoundDown(e.net_salary) AS 'net_salary', e.plan, RoundDown(t1.amount_available) AS 'amount_available', t1.worked_days, t1.available, t1.actual_period,
        apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as clabe, t1.req_day, t1.req_biweekly, t1.req_month, apr.limit_day, apr.limit_biweekly, apr.limit_month
     FROM users u
         INNER JOIN employee_user eu ON u.id  = eu.user_id
@@ -445,13 +445,20 @@ INNER JOIN person p ON pu.person_id = p.id
 		/**
 		 * @throws DateMalformedStringExceptionAlias
 		 */
-		public function generateOrder ( int $user, float $amount, $preRemaining, $plan, $commission ): array {
+		public function generateOrder ( int $user, float $amount, $net_salary, $plan, $commission, $period ): array {
 			$folio = $this->generateFolio ( 19, 'advance_payroll', $user );
 			$nexID = $this->getNexId ( 'advance_payroll' );
 			$refNumber = $this->NewReferenceNumber ( $nexID );
 			$employee = $this->getEmployeeByIdUser ( $user )[ 0 ][ 'id' ];
-			$remaining = $preRemaining - $amount;
-			$period = $this->getPeriod ( $plan );
+			$sumBefore = $this->getSumByUserPeriod ( $user, $period );
+			$remaining = 0;
+			if ( $plan === 'q' ) {
+				$remaining = ( $net_salary / 2 ) - ( $sumBefore + $amount );
+			} else if ( $plan === 'm' ) {
+				$remaining = $net_salary - ( $sumBefore + $amount );
+			} else if ( $plan === 's' ) {
+				$remaining = ( $net_salary / 4 ) - ( $sumBefore + $amount );
+			}
 			$dataIn = [ $employee, $folio, $refNumber, $amount, $remaining, $period ];
 			$query = "INSERT INTO advance_payroll (employee_id, folio, reference_number, requested_amount, remaining_amount, period)
 VALUES ($employee, '$folio', '$refNumber', $amount, $remaining, '$period')";
@@ -808,6 +815,20 @@ WHERE c.id = $company";
 				] ) );*/
 				return [ FALSE, 'No se encontró información' ];
 			}
-			return [TRUE, $res];
+			return [ TRUE, $res ];
+		}
+		public function getSumByUserPeriod ( $user, $period ) {
+			$query = "SELECT SUM(ap.requested_amount) AS 'total' FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON eu.employee_id = e.id
+    INNER JOIN companies c ON e.company_id = c.id
+    INNER JOIN advance_payroll ap ON ap.employee_id = e.id
+                                WHERE u.id = $user AND ap.period = '$period'
+                                GROUP BY ap.period ";
+			$res = $this->db->query ( $query )->getRowArray ();
+			if ( $res ) {
+				return $res[ 'total' ];
+			}
+			return 0;
 		}
 	}
