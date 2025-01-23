@@ -145,12 +145,12 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			if ( intval ( $res[ 1 ][ 'curp_validated' ] ) === 1 ) {
-//								var_dump ($res[ 1 ][ 'device' ], $this->input[ 'fingerprint' ]); die();
+				//								var_dump ($res[ 1 ][ 'device' ], $this->input[ 'fingerprint' ]); die();
 				if ( $res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint' ] ) {
 					$this->serverError ( 'Dispositivo no reconocido', 'Ya se iniciado el proceso de validación desde otro dispositivo.' );
 					return $this->getResponse ( $this->responseBody, $this->errCode );
 				}
-//				var_dump (intval ( $res[ 1 ][ 'metamap' ] ) === 1); die();
+				//				var_dump (intval ( $res[ 1 ][ 'metamap' ] ) === 1); die();
 				if ( intval ( $res[ 1 ][ 'metamap' ] ) === 1 ) {
 					$this->responseBody = [
 						'error'       => $this->errCode = 200,
@@ -182,24 +182,27 @@
 			$this->logResponse ( 36 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		/**
+		 * @throws Exception
+		 */
 		public function getPayments (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-//				$this->logResponse ( 50 );
+				//				$this->logResponse ( 50 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$company = $this->input[ 'company' ];
-			$res = $this->express->getPayments ($company);
+			$res = $this->express->getPayments ( $company );
 			if ( !$res[ 0 ] ) {
-                $this->dataNotFound ();
-                return $this->getResponse ( $this->responseBody, $this->errCode );
-            }
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Pagos Obtenidos',
-				'response'    => $res[1],
+				'response'    => $res[ 1 ],
 			];
-			return $this->getResponse ($this->responseBody, $this->errCode);
+			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
 		 * @throws Exception
@@ -437,36 +440,6 @@
 			}
 			return $this->getResponse ( $upsert, 200 );
 		}
-		private function checkExists ( $data, $company ): array {
-			$userData = new UserModel();
-			foreach ( $data as $value ) {
-				$e = $userData->checkExistByCurp ( $value[ 'CURP' ], $company );
-				if ( $e[ 0 ] ) {
-					foreach ( $e[ 1 ] as $i => $v ) {
-						$data[ $value[ 'CURP' ] ][ $i ] = ( $v );
-					}
-				}
-			}
-			return $data;
-		}
-		private function upsertNomina ( $data, $company, $user ): array {
-			$exist = 0;
-			$new = 0;
-			foreach ( $data as $value ) {
-				if ( isset ( $value[ 'personId' ] ) ) {
-					$this->express->updateNomina ( $value, $company, $user );
-					$exist++;
-				} else {
-					$this->express->insertNomina ( $value, $company, $user );
-					$new++;
-				}
-			}
-			$this->responseBody = [
-				'error'       => $this->errCode = 200,
-				'description' => 'Nomina actualizada',
-				'response'    => [ 'actualizaciones' => $exist, 'altas' => $new ] ];
-			return [ $this->responseBody, $this->errCode ];
-		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
 		 * @return ResponseInterface
@@ -557,6 +530,26 @@
 				'response'    => $codes[ 'code' ],
 			];
 			$this->logResponse ( 57 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function paymentDetail (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$res = $this->express->reportDetail ( $this->input[ 'company' ], $this->input[ 'period' ] );
+			if ( !$res[ 0 ] ) {
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Reporte generado correctamente',
+				'response'    => $res[ 1 ],
+			];
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
@@ -718,7 +711,7 @@
 			}
 			$express = new SolveExpressModel();
 			$res = $express->getReportCompany ( $this->input, $this->user );
-//			var_dump (this->input);die();
+			//			var_dump (this->input);die();
 			if ( !$res[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();
@@ -770,7 +763,7 @@
 		 */
 		public function makeOrder ( $data, $user, $commission ): array {
 			$order = $this->express->generateOrder ( $user, floatval ( $this->input[ 'amount' ] ), floatval ( $data[ 'net_salary' ] ), $data[ 'plan' ], $commission,
-				$data['actual_period'] );
+				$data[ 'actual_period' ] );
 			if ( !$order[ 0 ] ) {
 				$this->serverError ( 'Error en el servicio', 'Error al generar la petición, por favor intente nuevamente.' );
 				$this->logResponse ( 15 );
@@ -847,12 +840,6 @@
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
 		}
-		private function faceMatch ( $data, $user ): void {
-			$score = intval ( $data[ 'step' ][ 'data' ][ 'score' ] > 60 );
-			$sExpress = new SolveExpressModel();
-			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
-			//SendNotification
-		}
 		/**
 		 * @throws DateMalformedStringException
 		 */
@@ -895,6 +882,12 @@
 			echo $periodActual.PHP_EOL;
 			echo '================================================================'.PHP_EOL;
 			$this->express->resetCounters ( $company_id, $current_date );
+		}
+		private function faceMatch ( $data, $user ): void {
+			$score = intval ( $data[ 'step' ][ 'data' ][ 'score' ] > 60 );
+			$sExpress = new SolveExpressModel();
+			$sExpress->updateMetaValidation ( $data[ 'metadata' ][ 'curp' ], $score, $user );
+			//SendNotification
 		}
 		private function getMonthName ( $month ): string {
 			$months = [
@@ -954,14 +947,34 @@
 					return "Periodo del {$start->format('d')} al {$end->format('d')} de $month $year";
 			}
 		}
-		/*			public function updateOpTransaccionStatus ( array $transaction = NULL, array $operation = NULL ): void {
-				if ( $transaction !== NULL ) {
-					$tModel = new TransactionsModel();
-					$res = $tModel->updateTransactionStatus ( $transaction[ 'folio' ], $transaction[ 'noRef' ], $transaction[ 'status' ], $this->user );
+		private function checkExists ( $data, $company ): array {
+			$userData = new UserModel();
+			foreach ( $data as $value ) {
+				$e = $userData->checkExistByCurp ( $value[ 'CURP' ], $company );
+				if ( $e[ 0 ] ) {
+					foreach ( $e[ 1 ] as $i => $v ) {
+						$data[ $value[ 'CURP' ] ][ $i ] = ( $v );
+					}
 				}
-				if ( $operation !== NULL ) {
-					$opModel = new updateOperationStatus();
-					$res2 = $opModel->updateTransactionStatus ( $operation[ 'folio' ], $operation[ 'noRef' ], $operation[ 'status' ], $this->user );
+			}
+			return $data;
+		}
+		private function upsertNomina ( $data, $company, $user ): array {
+			$exist = 0;
+			$new = 0;
+			foreach ( $data as $value ) {
+				if ( isset ( $value[ 'personId' ] ) ) {
+					$this->express->updateNomina ( $value, $company, $user );
+					$exist++;
+				} else {
+					$this->express->insertNomina ( $value, $company, $user );
+					$new++;
 				}
-			}*/
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Nomina actualizada',
+				'response'    => [ 'actualizaciones' => $exist, 'altas' => $new ] ];
+			return [ $this->responseBody, $this->errCode ];
+		}
 	}

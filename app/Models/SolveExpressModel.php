@@ -9,7 +9,6 @@
 	
 	class SolveExpressModel extends BaseModel {
 		//		private float $commissions = 70;
-		private float $commissions = 1;
 		public function updateFlagCurp ( $employee, $fingerprint ): array {
 			$query = "UPDATE employee set curp_validated = 1, device = '$fingerprint' WHERE id = '$employee'";
 			if ( $this->db->query ( $query ) ) {
@@ -830,5 +829,29 @@ WHERE c.id = $company";
 				return $res[ 'total' ];
 			}
 			return 0;
+		}
+		public function reportDetail ( $company, $period ): array {
+			$query = "SELECT e.external_id, CapitalizarTexto(p.name) AS 'name', CapitalizarTexto(p.last_name) AS 'last_name', CapitalizarTexto(p.sure_name) AS 'sure_name', p.curp,
+       e.net_salary, t1.requested_amount, t2.amount AS 'amount_deposited', (t1.requested_amount-t2.amount) AS 'tax', t1.remaining_amount,t2.cep,
+       t1.period, FORMAT_TIMESTAMP(t1.created_at) AS 'request_date'
+			FROM users u
+           INNER JOIN employee_user eu ON u.id  = eu.user_id
+           INNER JOIN employee e ON eu.employee_id = e.id
+           INNER JOIN person_user pu ON u.id = pu.user_id
+           INNER JOIN person p ON p.id = pu.person_id
+           INNER JOIN companies c ON e.company_id = c.id
+           INNER JOIN advance_payroll t1 ON t1.employee_id = e.id
+           INNER JOIN transactions t2 ON t2.payroll_id = t1.id
+           INNER JOIN bank_accounts t3 ON t3.id = t2.account_destination
+           INNER JOIN cat_bancos t4 ON t4.id = t3.bank_id
+			WHERE u.type = '1' AND c.id = '$company' AND t1.period = '$period'";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [ TRUE, $res->getResultArray ()];
 		}
 	}

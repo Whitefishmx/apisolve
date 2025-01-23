@@ -62,7 +62,7 @@
 			}
 			return $this->getResponse ( $res );
 		}
-		public function getLaws () {
+		public function getLaws (): ResponseInterface {
 			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $this->verifyRules ( 'GET', $this->request, NULL ) ) {
 				$this->logResponse ( 39 );

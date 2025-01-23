@@ -69,6 +69,7 @@
 	$routes->add ( 'sExpressUploadNomina', 'SolveExpress::uploadNomina' /**@uses \App\Controllers\SolveExpress::uploadNomina */ );
 	$routes->add ( 'sExpressInitRecovery', 'SolveExpress::initRecovery' /**@uses \App\Controllers\SolveExpress::initRecovery */ );
 	$routes->add ( 'sExpressValidateCode', 'SolveExpress::validateCode' /**@uses \App\Controllers\SolveExpress::validateCode */ );
+	$routes->add ( 'sExpressPaymentDetail', 'SolveExpress::paymentDetail' /**@uses \App\Controllers\SolveExpress::paymentDetail */ );
 	$routes->add ( 'sExpressReport', 'SolveExpress::payrollAdvanceReport' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReport */ );
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
