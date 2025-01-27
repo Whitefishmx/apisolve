@@ -281,6 +281,26 @@
 		/**
 		 * @throws Exception
 		 */
+		public function getBenefits (){
+			$this->input = $this->getRequestInput ( $this->request );
+            if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+                return $this->getResponse ( $this->responseBody, $this->errCode );
+            }
+            $res = $this->express->getBenefits ($this->user);
+            if ( !$res[ 0 ] ) {
+                $this->dataNotFound ();
+                return $this->getResponse ( $this->responseBody, $this->errCode );
+            }
+			$this->responseBody = [
+                'error'       => $this->errCode = 200,
+                'description' => 'Beneficios obtenidos',
+                'response'    => $res[ 1 ],
+            ];
+			return $this->getResponse ($this->responseBody);
+		}
+		/**
+		 * @throws Exception
+		 */
 		public function requestAdvance (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

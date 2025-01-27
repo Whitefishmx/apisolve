@@ -21,8 +21,11 @@
 	//========================|| CRON ||========================
 	$routes->cli ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
 	$routes->cli ( 'updPayControl/(:segment)', 'SolveExpress::updateAdvancePayrollControl/$1' /**@uses \App\Controllers\SolveExpress::updateAdvancePayrollControl* */ );
-	//========================|| CRON ||========================
+	//========================|| FILES ||========================
 	$routes->add ( 'layoutDownloader/(:segment)', 'FileController::downloadLayout/$1' /**@uses \App\Controllers\FileController::downloadLayout* */ );
+	$routes->add ( 'downloadBenefits/(:segment)', 'FileController::downloadCertBenefits/$1' /**@uses \App\Controllers\FileController::downloadCertBenefits* */ );
+	$routes->add ( 'showBenefits/(:segment)', 'FileController::showCertBenefits/$1' /**@uses \App\Controllers\FileController::showCertBenefits* */ );
+	$routes->add ( 'benefitsIco/(:segment)', 'FileController::benefitsIco/$1' /**@uses \App\Controllers\FileController::benefitsIco* */ );
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
 	//========================|| GET ||========================
 	$routes->add ( '/', 'Home' );
@@ -65,6 +68,7 @@
 	$routes->add ( 'sExpressPayments', 'SolveExpress::getPayments' /**@uses \App\Controllers\SolveExpress::getPayments */ );
 	$routes->add ( 'sExpressUploadFires', 'SolveExpress::uploadFires' /**@uses \App\Controllers\SolveExpress::uploadFires */ );
 	$routes->add ( 'sExpressEmployees', 'SolveExpress::getEmployees' /**@uses \App\Controllers\SolveExpress::getEmployees */ );
+	$routes->add ( 'sExpressGetBenefits', 'SolveExpress::getBenefits' /**@uses \App\Controllers\SolveExpress::getBenefits */ );
 	$routes->add ( 'sExpressRequest', 'SolveExpress::requestAdvance' /**@uses \App\Controllers\SolveExpress::requestAdvance */ );
 	$routes->add ( 'sExpressUploadNomina', 'SolveExpress::uploadNomina' /**@uses \App\Controllers\SolveExpress::uploadNomina */ );
 	$routes->add ( 'sExpressInitRecovery', 'SolveExpress::initRecovery' /**@uses \App\Controllers\SolveExpress::initRecovery */ );

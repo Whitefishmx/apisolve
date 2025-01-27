@@ -854,4 +854,23 @@ WHERE c.id = $company";
 			}
 			return [ TRUE, $res->getResultArray ()];
 		}
+		public function getBenefits($user): array {
+			$query = "SELECT cpb.name, cb.title, bp.cost, bp.events, cb.description, cb.icon, cb.icon_dark
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON eu.employee_id = e.id
+    INNER JOIN employee_benefits eb ON eb.employee_id = e.id
+    INNER JOIN cat_planBenefits cpb ON cpb.id  = eb.id_benefits
+    INNER JOIN benefits_plan bp ON bp.idPlan = cpb.id
+    INNER JOIN cat_benefits cb ON cb.id = bp.idBenefits
+WHERE u.id = $user";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [ TRUE, $res->getResultArray ()];
+		}
 	}
