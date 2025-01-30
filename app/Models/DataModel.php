@@ -101,7 +101,7 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
 		}
-		public function getLaws ( $platform, $type, $user ): array {
+		public function getLaws ( $platform, $type ): array {
 			$query = "SELECT l.content FROM laws l WHERE l.platform_id = $platform AND l.type = $type";
 			if ( !$res = $this->db->query ( $query ) ) {
 				return [ FALSE, 'No se encontró información' ];

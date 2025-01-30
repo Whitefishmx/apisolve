@@ -752,9 +752,9 @@ ON DUPLICATE KEY UPDATE
 				'user_id'     => $userId,
 			] );
 			$this->db->table ( 'employee_benefits' )->insert ( [
-                'employee_id' => $employeeId,
-                'id_benefits'     => $plan,
-            ] );
+				'employee_id' => $employeeId,
+				'id_benefits' => $plan,
+			] );
 			$clabe = preg_replace ( '/\D/', '', $value[ 'Cuenta' ] );
 			$bankId = $this->getBankByClave ( $clabe )[ 1 ][ 'id' ];
 			$bankAccountData = [
@@ -844,9 +844,9 @@ WHERE c.id = $company";
 			if ( $rows === 0 ) {
 				return [ FALSE, 'No se encontró información' ];
 			}
-			return [ TRUE, $res->getResultArray ()];
+			return [ TRUE, $res->getResultArray () ];
 		}
-		public function getBenefits($user): array {
+		public function getBenefits ( $user ): array {
 			$query = "SELECT cpb.name, cb.title, bp.cost, bp.events, cb.description, cb.icon, cb.icon_dark
 FROM users u
     INNER JOIN employee_user eu ON u.id  = eu.user_id
@@ -863,7 +863,7 @@ WHERE u.id = $user";
 			if ( $rows === 0 ) {
 				return [ FALSE, 'No se encontró información' ];
 			}
-			return [ TRUE, $res->getResultArray ()];
+			return [ TRUE, $res->getResultArray () ];
 		}
 		public function getPlanCompany ( $company ): array {
 			$query = "SELECT planBenefit FROM advancePayroll_rules WHERE company_id = '$company'";
@@ -874,6 +874,26 @@ WHERE u.id = $user";
 			if ( $rows === 0 ) {
 				return [ FALSE, 'No se encontró información' ];
 			}
-			return [ TRUE, $res->getRow ()->planBenefit];
+			return [ TRUE, $res->getRow ()->planBenefit ];
+		}
+		public function ValidateBenefits ( $user ): array {
+			$query = "SELECT u.id AS 'userID', p.id AS 'personId', e.id AS 'employeeId',apr.planBenefit, cpb.plan
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON eu.employee_id = e.id
+    INNER JOIN employee_benefits eb ON eb.employee_id = e.id
+    INNER JOIN person p ON p.id = e.person_id
+    INNER JOIN advancePayroll_rules apr ON apr.company_id = e.company_id
+    INNER JOIN cat_planBenefits cpb ON cpb.id = apr.planBenefit
+WHERE u.id = $user AND eb.active = 1";
+			$res = $this->db->query ( $query );
+			if ( !$res ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				return [ FALSE, 'Beneficios desactivados' ];
+			}
+			return [ TRUE, $res->getRowArray ()];
 		}
 	}

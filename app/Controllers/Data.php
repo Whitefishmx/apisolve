@@ -69,7 +69,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$data = new DataModel();
-			$law = $data->getLaws ( $this->input[ 'platform' ], $this->input[ 'type' ], $this->user );
+			$law = $data->getLaws ( $this->input[ 'platform' ], $this->input[ 'type' ] );
 			if ( !$law[ 0 ] ) {
 				$this->errCode = 404;
 				$this->dataNotFound ();

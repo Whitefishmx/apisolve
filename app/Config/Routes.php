@@ -28,7 +28,7 @@
 	$routes->add ( 'showBenefits/(:segment)', 'FileController::showCertBenefits/$1' /**@uses \App\Controllers\FileController::showCertBenefits* */ );
 	$routes->add ( 'benefitsIco/(:segment)', 'FileController::benefitsIco/$1' /**@uses \App\Controllers\FileController::benefitsIco* */ );
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
-	$routes->add ( 'createCertMass', 'FileController::generateCert'  /**@uses \App\Controllers\FileController::generateCert* */ );
+	$routes->add ( 'createCertMass', 'FileController::generateCert' /**@uses \App\Controllers\FileController::generateCert* */ );
 	//========================|| GET ||========================
 	$routes->add ( '/', 'Home' );
 	$routes->add ( 'acuseReune', 'Home::acuseReune' );
@@ -79,6 +79,7 @@
 	$routes->add ( 'sExpressPaymentDetail', 'SolveExpress::paymentDetail' /**@uses \App\Controllers\SolveExpress::paymentDetail */ );
 	$routes->add ( 'sExpressReport', 'SolveExpress::payrollAdvanceReport' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReport */ );
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany */ );
+	$routes->add ( 'sExpressValidateBenefits', 'SolveExpress::ValidateBenefits' /**@uses \App\Controllers\SolveExpress::ValidateBenefits */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================

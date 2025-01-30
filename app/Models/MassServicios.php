@@ -14,7 +14,7 @@
 			helper ( 'crypt_helper' );
 			$verify = passwordEncrypt ( $folio );
 			$data = [
-				"cveafiliado"    => $user[ 'rfc' ].'1',
+				"cveafiliado"    => $user[ 'rfc' ],
 				"poliza"         => "SOLVE_".$folio,
 				"rfc"            => $user[ 'rfc' ],
 				"nombreAfiliado" => [

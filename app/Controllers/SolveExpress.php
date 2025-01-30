@@ -4,7 +4,7 @@
 	
 	use DateTime;
 	use Exception;
-	use App\Models\{DataModel, EmployeeModel, MassServicios, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
+	use App\Models\{DataModel, EmployeeModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -279,7 +279,7 @@
 		/**
 		 * @throws Exception
 		 */
-		public function getBenefits () {
+		public function getBenefits (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -700,6 +700,27 @@
 		}
 		/**
 		 * @throws Exception
+		 */
+		public function ValidateBenefits (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request , NULL) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$benefits = $this->express->ValidateBenefits ( $this->user );
+			if ( !$benefits[ 0 ] ) {
+				$this->dataNotFound ($benefits[1], '');
+				$this->logResponse ( 33 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody=[
+				'error'       => $this->errCode = 200,
+				'description' => 'Beneficios activos',
+				'response'    => 'ok',
+			];
+			return $this->getResponse ($this->responseBody, $this->errCode);
+		}
+		/**
+		 * @throws Exception
 		 * @noinspection DuplicatedCode
 		 */
 		public function payrollAdvanceReportC (): ResponseInterface {
@@ -996,10 +1017,10 @@
 				'response'    => [ 'actualizaciones' => $exist, 'altas' => $new ] ];
 			return [ $this->responseBody, $this->errCode ];
 		}
-		private function createAfiliado () {
-		
-		}
-		public function testfunction () {
+		/**
+		 * @throws Exception
+		 */
+		public function testfunction (): void {
 			$this->input = $this->getRequestInput ( $this->request );
 			$planCompany = $this->express->getPlanCompany ( $this->input[ 'company' ] );
 			var_dump ( $planCompany );
