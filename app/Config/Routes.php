@@ -64,6 +64,7 @@
 	$routes->add ( 'getMagicTransfers', 'Fintech\MagicPay::getTransfers' /**@uses \App\Controllers\Fintech\MagicPay::getTransfers* */ );
 	$routes->add ( 'magicTransfer', 'Fintech\MagicPay::transfer' /**@uses \App\Controllers\Fintech\MagicPay::transfer* */ );
 	//========================|| Solve Express ||========================
+	$routes->add ( 'sExpressGetCerts', 'SolveExpress::getCerts' /**@uses \App\Controllers\SolveExpress::getCerts */ );
 	$routes->add ( 'sExpressPeriods', 'SolveExpress::getPeriods' /**@uses \App\Controllers\SolveExpress::getPeriods */ );
 	$routes->add ( 'sExpressDashboard', 'SolveExpress::dashboard' /**@uses \App\Controllers\SolveExpress::dashboard */ );
 	$routes->add ( 'sExpressProfile', 'SolveExpress::userProfile' /**@uses \App\Controllers\SolveExpress::userProfile */ );
@@ -81,6 +82,7 @@
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany */ );
 	$routes->add ( 'sExpressValidateBenefits', 'SolveExpress::ValidateBenefits' /**@uses \App\Controllers\SolveExpress::ValidateBenefits */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
+	
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================

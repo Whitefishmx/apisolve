@@ -22,6 +22,26 @@
 		/**
 		 * @throws Exception
 		 */
+		public function getCerts () {
+			$this->input = $this->getRequestInput ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$cert = $this->express->getCerts ( $this->user );
+			if ( !$cert[ 0 ] ) {
+				$this->dataNotFound ( $cert[ 1 ], 'No se encontraron certificados para el usuario' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Certificados encontrados',
+				'response'    => $cert[ 1 ],
+			];
+			return $this->getResponse ( $this->responseBody, $this->errCode );
+		}
+		/**
+		 * @throws Exception
+		 */
 		public function fireOne (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'DELETE', $this->request, 'JSON' ) ) {
@@ -703,21 +723,21 @@
 		 */
 		public function ValidateBenefits (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
-			if ( $this->verifyRules ( 'POST', $this->request , NULL) ) {
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$benefits = $this->express->ValidateBenefits ( $this->user );
 			if ( !$benefits[ 0 ] ) {
-				$this->dataNotFound ($benefits[1], '');
+				$this->dataNotFound ( $benefits[ 1 ], '' );
 				$this->logResponse ( 33 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$this->responseBody=[
+			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Beneficios activos',
 				'response'    => 'ok',
 			];
-			return $this->getResponse ($this->responseBody, $this->errCode);
+			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		/**
 		 * @throws Exception

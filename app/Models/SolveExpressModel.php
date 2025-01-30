@@ -894,6 +894,22 @@ WHERE u.id = $user AND eb.active = 1";
 			if ( $rows === 0 ) {
 				return [ FALSE, 'Beneficios desactivados' ];
 			}
-			return [ TRUE, $res->getRowArray ()];
+			return [ TRUE, $res->getRowArray () ];
+		}
+		public function getCerts ( int $user ): array {
+			$query = "SELECT CONCAT('showBenefits/', eb.cert) AS 'show', CONCAT('downloadBenefits/', eb.cert) AS 'download'
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON eu.employee_id = e.id
+    INNER JOIN employee_benefits eb ON eb.employee_id = e.id
+WHERE u.id = $user AND eb.active = 1";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [ TRUE, $res->getRowArray () ];
 		}
 	}
