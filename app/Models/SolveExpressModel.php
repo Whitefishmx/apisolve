@@ -695,8 +695,7 @@ WHERE employee_id = $employeeId";
 			}
 			return FALSE;
 		}
-		public function insertNomina ( $value, $company, $user ): void {
-			
+		public function insertNomina ( $value, $company, $user, $plan ): void {
 			if ( !isset( $value[ 'Nombre' ] ) || !isset( $value[ 'Cuenta' ] ) ||
 			     $value[ 'Nombre' ] === '' || $value[ 'Cuenta' ] === '' ||
 			     $value[ 'Nombre' ] === NULL || $value[ 'Cuenta' ] === NULL ) {
@@ -704,17 +703,14 @@ WHERE employee_id = $employeeId";
 				return;
 			}
 			$this->db->transStart ();
-			// Insertar en la tabla `users`
 			$userData = [
 				'nickname' => 'user_'.uniqid (),
 				'email'    => NULL,
 				'password' => NULL,
 				'active'   => $value[ 'Estatus' ],
 			];
-			//			var_dump ( $userData );
 			$this->db->table ( 'users' )->insert ( $userData );
 			$userId = $this->db->insertID ();
-			// Insertar en la tabla `person`
 			$personData = [
 				'primary_user_id' => $userId,
 				'name'            => strtoupper ( $value[ 'Nombre' ] ),
@@ -735,13 +731,10 @@ ON DUPLICATE KEY UPDATE
                      rfc = VALUES(rfc)";
 			$this->db->query ( $sql, $personData );
 			$personId = $this->db->query ( "SELECT id FROM person WHERE curp = :curp:", [ 'curp' => $personData[ 'curp' ] ] )->getRow ( 'id' );
-			//			var_dump ($personData);
-			// Insertar en `person_user`
 			$this->db->table ( 'person_user' )->insert ( [
 				'person_id' => $personId,
 				'user_id'   => $userId,
 			] );
-			// Insertar en la tabla `employee`
 			$neto = (float)str_replace ( [ '$', ',' ], '', $value[ 'Sueldo Neto' ] );
 			$employeeData = [
 				'company_id'  => $company, // Asigna un ID de empresa válido
@@ -758,8 +751,10 @@ ON DUPLICATE KEY UPDATE
 				'employee_id' => $employeeId,
 				'user_id'     => $userId,
 			] );
-			//			var_dump ($employeeData);
-			// Insertar en la tabla `bank_accounts`
+			$this->db->table ( 'employee_benefits' )->insert ( [
+                'employee_id' => $employeeId,
+                'id_benefits'     => $plan,
+            ] );
 			$clabe = preg_replace ( '/\D/', '', $value[ 'Cuenta' ] );
 			$bankId = $this->getBankByClave ( $clabe )[ 1 ][ 'id' ];
 			$bankAccountData = [
@@ -772,14 +767,11 @@ ON DUPLICATE KEY UPDATE
 				'validated'  => 1,
 			];
 			$this->db->table ( 'bank_accounts' )->insert ( $bankAccountData );
-			//			var_dump ($bankAccountData);
-			// Insertar en `platform_access`
 			$this->db->table ( 'platform_access' )->insert ( [
 				'id_user'     => $userId,
 				'id_platform' => 6,
 				'active'      => 1,
 			] );
-			// Insertar en `permissions`
 			$this->db->table ( 'permissions' )->insert ( [
 				'user_id'  => $userId,
 				'view_id'  => 3,
@@ -872,5 +864,16 @@ WHERE u.id = $user";
 				return [ FALSE, 'No se encontró información' ];
 			}
 			return [ TRUE, $res->getResultArray ()];
+		}
+		public function getPlanCompany ( $company ): array {
+			$query = "SELECT planBenefit FROM advancePayroll_rules WHERE company_id = '$company'";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows === 0 ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			return [ TRUE, $res->getRow ()->planBenefit];
 		}
 	}

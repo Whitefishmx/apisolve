@@ -4,6 +4,7 @@
 	
 	use Exception;
 	use App\Models\UserModel;
+	use App\Models\MassServicios;
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class Users extends PagesStatusCode {
@@ -62,13 +63,18 @@
 			}
 			helper ( 'crypt_helper' );
 			$phone = $this->input[ 'phone' ] ?? NULL;
-			$res = $this->userData->updateProfile ( $this->input[ 'nickName' ], $this->input[ 'email' ], passwordEncrypt ( $this->input[ 'contraseña' ] ),
-				$phone, $this->input[ 'user' ] );
-			if ( !$res[ 0 ] ) {
-				$this->serverError ( 'Error en la transaccion', $res[ 1 ] );
-				$this->logResponse ( 31 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
+//			$res = $this->userData->updateProfile ( $this->input[ 'nickName' ], $this->input[ 'email' ], passwordEncrypt ( $this->input[ 'contraseña' ] ),
+//				$phone, $this->input[ 'user' ] );
+//			if ( !$res[ 0 ] ) {
+//				$this->serverError ( 'Error en la transaccion', $res[ 1 ] );
+//				$this->logResponse ( 31 );
+//				return $this->getResponse ( $this->responseBody, $this->errCode );
+//			}
+			$user = new UserModel();
+			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ]);
+//			var_dump ($this->input[ 'user' ],$userData);die();
+			$mass = new MassServicios;
+			$mass->registroAfiliado ( $userData[1] );
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'       => 200,

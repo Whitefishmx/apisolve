@@ -67,7 +67,7 @@ WHERE (t1.nickname = '$login' AND t1.password = '$password')
 				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
 			}
 			$query .= "AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
-//						var_dump ($query);die();
+			//						var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
@@ -82,7 +82,7 @@ FROM permissions p
     JOIN users u ON p.user_id = u.id
     JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
 WHERE pa.id_platform = $platform AND u.id  = $userid";
-//						var_dump ($query);die();
+			//						var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			if ( $res->getNumRows () === 0 ) {
 				return [ FALSE, $res->getNumRows () ];
@@ -211,7 +211,7 @@ WHERE u.email = '$email' AND e.status = 1 AND p.active = 1 AND u.active = 1 ";
 			}
 			return FALSE;
 		}
-		public function checkExistByCurp ( $curp, $company): array {
+		public function checkExistByCurp ( $curp, $company ): array {
 			$query = "SELECT p.id AS 'personId', e.id AS 'employeeId', u.id AS 'userId'
 FROM users u
     INNER JOIN employee_user eu ON u.id  = eu.user_id
@@ -219,7 +219,7 @@ FROM users u
     INNER JOIN person_user pu ON u.id = pu.user_id
     INNER JOIN person p ON pu.person_id = p.id
 WHERE p.curp = '$curp' AND e.company_id = '$company'";
-//			var_dump ($query);die();
+			//			var_dump ($query);die();
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return [ TRUE, $res->getResultArray ()[ 0 ] ];
@@ -235,9 +235,25 @@ INNER JOIN employee e ON e.person_id = p.id
 LEFT JOIN person_user pu ON pu.person_id = p.id
 INNER JOIN users u ON u.id = pu.user_id AND p.primary_user_id = u.id
 WHERE p.curp = '$curp'";
-            if ( $res = $this->db->query ( $query ) ) {
-	            return [ TRUE, $res->getResultArray ()[0] ];
-            }
-            return [FALSE,'No se encontraron resultados'];
+			if ( $res = $this->db->query ( $query ) ) {
+				return [ TRUE, $res->getResultArray ()[ 0 ] ];
+			}
+			return [ FALSE, 'No se encontraron resultados' ];
+		}
+		public function getDataForAfiliation ( $user ): array {
+			$query = "SELECT u.id AS 'userID', p.id AS 'personId', e.id AS 'employeeId', p.rfc, p.phone, apr.planBenefit, cpb.plan,
+       CapitalizarTexto(p.name) AS 'name', CapitalizarTexto(p.last_name) AS 'last_name', CapitalizarTexto(p.sure_name) AS 'sure_name'
+FROM users u
+    INNER JOIN employee_user eu ON u.id  = eu.user_id
+    INNER JOIN employee e ON eu.employee_id = e.id
+    INNER JOIN employee_benefits eb ON eb.employee_id = e.id
+    INNER JOIN person p ON p.id = e.person_id
+    INNER JOIN advancePayroll_rules apr ON apr.company_id = e.company_id
+    INNER JOIN cat_planBenefits cpb ON cpb.id = apr.planBenefit
+WHERE u.id = $user ";
+			if ( $res = $this->db->query ( $query ) ) {
+				return [ TRUE, $res->getRowArray () ];
+			}
+			return [ FALSE, 'No se encontraron resultados' ];
 		}
 	}

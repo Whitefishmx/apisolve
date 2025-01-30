@@ -4,7 +4,7 @@
 	
 	use DateTime;
 	use Exception;
-	use App\Models\{DataModel, EmployeeModel, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
+	use App\Models\{DataModel, EmployeeModel, MassServicios, UserModel, MagicPayModel, SolveExpressModel, TransactionsModel};
 	use DateMalformedStringException;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -145,12 +145,10 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			if ( intval ( $res[ 1 ][ 'curp_validated' ] ) === 1 ) {
-				//								var_dump ($res[ 1 ][ 'device' ], $this->input[ 'fingerprint' ]); die();
 				if ( $res[ 1 ][ 'device' ] !== $this->input[ 'fingerprint' ] ) {
 					$this->serverError ( 'Dispositivo no reconocido', 'Ya se iniciado el proceso de validación desde otro dispositivo.' );
 					return $this->getResponse ( $this->responseBody, $this->errCode );
 				}
-				//				var_dump (intval ( $res[ 1 ][ 'metamap' ] ) === 1); die();
 				if ( intval ( $res[ 1 ][ 'metamap' ] ) === 1 ) {
 					$this->responseBody = [
 						'error'       => $this->errCode = 200,
@@ -281,22 +279,22 @@
 		/**
 		 * @throws Exception
 		 */
-		public function getBenefits (){
+		public function getBenefits () {
 			$this->input = $this->getRequestInput ( $this->request );
-            if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
-                return $this->getResponse ( $this->responseBody, $this->errCode );
-            }
-            $res = $this->express->getBenefits ($this->user);
-            if ( !$res[ 0 ] ) {
-                $this->dataNotFound ();
-                return $this->getResponse ( $this->responseBody, $this->errCode );
-            }
+			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$res = $this->express->getBenefits ( $this->user );
+			if ( !$res[ 0 ] ) {
+				$this->dataNotFound ();
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
 			$this->responseBody = [
-                'error'       => $this->errCode = 200,
-                'description' => 'Beneficios obtenidos',
-                'response'    => $res[ 1 ],
-            ];
-			return $this->getResponse ($this->responseBody);
+				'error'       => $this->errCode = 200,
+				'description' => 'Beneficios obtenidos',
+				'response'    => $res[ 1 ],
+			];
+			return $this->getResponse ( $this->responseBody );
 		}
 		/**
 		 * @throws Exception
@@ -982,12 +980,13 @@
 		private function upsertNomina ( $data, $company, $user ): array {
 			$exist = 0;
 			$new = 0;
+			$planCompany = $this->express->getPlanCompany ( $company );
 			foreach ( $data as $value ) {
 				if ( isset ( $value[ 'personId' ] ) ) {
 					$this->express->updateNomina ( $value, $company, $user );
 					$exist++;
 				} else {
-					$this->express->insertNomina ( $value, $company, $user );
+					$this->express->insertNomina ( $value, $company, $user, $planCompany );
 					$new++;
 				}
 			}
@@ -996,5 +995,13 @@
 				'description' => 'Nomina actualizada',
 				'response'    => [ 'actualizaciones' => $exist, 'altas' => $new ] ];
 			return [ $this->responseBody, $this->errCode ];
+		}
+		private function createAfiliado () {
+		
+		}
+		public function testfunction () {
+			$this->input = $this->getRequestInput ( $this->request );
+			$planCompany = $this->express->getPlanCompany ( $this->input[ 'company' ] );
+			var_dump ( $planCompany );
 		}
 	}

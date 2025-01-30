@@ -3,6 +3,7 @@
 	namespace CodeIgniter\Commands\Utilities\Routes;
 	
 	use CodeIgniter\Router\RouteCollection;
+	use function Sodium\add;
 	
 	/**
 	 * @var RouteCollection $routes
@@ -27,6 +28,7 @@
 	$routes->add ( 'showBenefits/(:segment)', 'FileController::showCertBenefits/$1' /**@uses \App\Controllers\FileController::showCertBenefits* */ );
 	$routes->add ( 'benefitsIco/(:segment)', 'FileController::benefitsIco/$1' /**@uses \App\Controllers\FileController::benefitsIco* */ );
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
+	$routes->add ( 'createCertMass', 'FileController::generateCert'  /**@uses \App\Controllers\FileController::generateCert* */ );
 	//========================|| GET ||========================
 	$routes->add ( '/', 'Home' );
 	$routes->add ( 'acuseReune', 'Home::acuseReune' );
@@ -41,6 +43,7 @@
 	$routes->add ( 'dispersionPlus', 'Dispersiones::getDispersionPlus' /**@uses \App\Controllers\Dispersiones::getDispersionPlus* */ );
 	$routes->add ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
 	//=========================================================|| POST ||=========================================================
+	$routes->add ( 'test', 'SolveExpress::testfunction' /**@uses \App\Controllers\SolveExpress::testfunction */ );
 	//========================|| Conciliaciones ||========================
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
 	$routes->add ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion' /**@uses \App\Controllers\Dispersiones::chosenForDispersion* */ );
