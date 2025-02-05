@@ -3,10 +3,9 @@
 	namespace App\Controllers;
 	
 	use App\Models\TransactionsModel;
-	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class Transactions extends PagesStatusCode {
-		public function downloadCep () {
+		public function downloadCep (): string {
 			$transaction = new TransactionsModel();
 			$data = $transaction->getDataForCep ();
 			$total = count ($data[1]);
