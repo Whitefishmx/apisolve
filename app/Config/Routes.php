@@ -3,7 +3,6 @@
 	namespace CodeIgniter\Commands\Utilities\Routes;
 	
 	use CodeIgniter\Router\RouteCollection;
-	use function Sodium\add;
 	
 	/**
 	 * @var RouteCollection $routes

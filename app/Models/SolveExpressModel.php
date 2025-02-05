@@ -372,22 +372,22 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
         INNER JOIN companies c ON c.id = e.company_id
     	INNER JOIN advancePayroll_rules apr ON apr.company_id = c.id
         INNER JOIN bank_accounts ba ON ba.user_id  = u.id AND ba.company_id= c.id
-        WHERE u.id = ?";
-			//									var_dump ($query);die();
-			if ( !$res = $this->db->query ( $query, [ $user ] ) ) {
-				saveLog ( $user, 14, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode ( [
+        WHERE (e.status = '1' OR e.status IS NULL) AND u.id = $user";
+//												var_dump ($query);die();
+			if ( !$res = $this->db->query ( $query) ) {
+				saveLog ( $user, 14, 404, json_encode ( [$user, 'dashboard'] ), json_encode ( [
 					FALSE,
 					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 14, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $query ) ] ), json_encode ( [
+				saveLog ( $user, 14, 404, json_encode ( [$user, 'dashboard'] ), json_encode ( [
 					FALSE,
 					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 14, 200, json_encode ( [] ), json_encode (
+			saveLog ( $user, 14, 200, json_encode ( [$user, 'dashboard'] ), json_encode (
 				$res->getResultArray
 				()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
@@ -605,13 +605,12 @@ WHERE employee_id = $employeeId";
 		public function resetCounters ( $company_id, $current_date ): void {
 			$this->db->query ( "UPDATE advancePayroll_control
             SET req_day = 0,
-                req_week = IF(WEEK(?) > WEEK(updated_at), 0, req_week),
-                req_biweekly = IF(WEEK(?) > WEEK(updated_at) + 2, 0, req_biweekly),
-                req_month = IF(MONTH(?) != MONTH(updated_at), 0, req_month)
+               req_day = 0,
+               req_week = IF(DAYOFWEEK(CURRENT_DATE) = 2, 0, req_week),
+               req_biweekly = IF(DAY(CURRENT_DATE) = 16 OR LAST_DAY(CURRENT_DATE) = CURRENT_DATE, 0, req_biweekly),
+               req_month = IF(DAY(CURRENT_DATE) = 1, 0, req_month)
             WHERE employee_id IN (
-                SELECT id FROM employee WHERE company_id = ?
-            )
-        ", [ $current_date, $current_date, $current_date, $company_id ] );
+                SELECT id FROM employee WHERE company_id = ? )", [ $current_date, $current_date, $current_date, $company_id ] );
 		}
 		public function getAdvancePayrollControl ( $employee_id, $user ): array {
 			$query = "SELECT * FROM advancePayroll_control WHERE employee_id = $employee_id";
