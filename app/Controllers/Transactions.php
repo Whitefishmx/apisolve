@@ -6,18 +6,19 @@
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class Transactions extends PagesStatusCode {
-		public function downloadCep (): ResponseInterface {
+		public function downloadCep () {
 			$transaction = new TransactionsModel();
 			$data = $transaction->getDataForCep ();
+			$total = count ($data[1]);
+			echo "Se encontraron: $total CEP para descargar...".PHP_EOL;
 			if ( !$data[ 0 ] ) {
-				$this->dataNotFound ();
-				$this->logResponse ( 27 );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
+				return "Proceso finalizado".PHP_EOL;
 			}
 			$res = [];
-			//			var_dump ($data );
-			//			die();
+			$counter = 0;
 			foreach ( $data[ 1 ] as $value ) {
+				$counter ++;
+				echo "descargando $counter de $total: {$value['noReference']} ".PHP_EOL;
 				$download = $transaction->DownloadCEP ( $value, 0 );
 				if ( $download > 0 ) {
 					$folio = str_replace ( "SSOLVE", "", $value[ 'external_id' ] );
@@ -33,12 +34,6 @@
 			foreach ( $res as $key ) {
 				$transaction->insertCep ( $key );
 			}
-			$this->responseBody = [
-				'error'       => $this->errCode = 200,
-				'description' => 'Proceso ejecutado',
-				'response'    => 'Finalizo el proceso de verificaciones de CEP',
-			];
-			//			$this->logResponse ( 11 );
-			return $this->getResponse ( $this->responseBody, $this->errCode );
+			return "Proceso finalizado".PHP_EOL;
 		}
 	}

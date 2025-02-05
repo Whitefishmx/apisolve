@@ -48,24 +48,15 @@ FROM transactions t
     INNER JOIN cat_bancos cb2 ON cb2.id = b2.bank_id
 WHERE t.cep  IS NULL";
 			if ( !$res = $this->db->query ( $query ) ) {
-				saveLog ( 2, 28, 404, json_encode ( [] ), json_encode ( [
-					FALSE,
-					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 0 ) {
-				if ( $res->getNumRows () === 1 ) {
+				if ( $res->getNumRows () >= 1 ) {
 					$res = $res->getResultArray ();
-					saveLog ( 2, 28, 200, json_encode ( [] ), json_encode ( $res ) );
 					return [ TRUE, $res ];
 				}
-				$res = $res->getResultArray ();
-				saveLog ( 2, 28, 200, json_encode ( [] ), json_encode ( $res ) );
-				return [ TRUE, $res ];
 			} else {
-				saveLog ( 2, 28, 404, json_encode ( [] ), json_encode
-				( [ 'res' => 'No se encontraron resultados' ] ) );
 				return [ FALSE, 'No se encontraron resultados' ];
 			}
 		}
@@ -136,12 +127,13 @@ WHERE t.cep  IS NULL";
 				file_put_contents ( $ruta_destino, $pdf_content );
 				$tipoMIME = mime_content_type ( $ruta_destino );
 				if ( $tipoMIME === 'application/pdf' ) {
-					//				var_dump($filename);
 					$this->cleanupTmpFiles ( $tmp_dir );
 					curl_close ( $ch );
+					echo "Descargado".PHP_EOL;
 					return $filename;
 				} else {
 					if ( $try <= 3 ) {
+						echo "Intento $try de 3".PHP_EOL;
 						$try++;
 						curl_close ( $ch );
 						$this->DownloadCEP ( $args, $try );
@@ -152,11 +144,13 @@ WHERE t.cep  IS NULL";
 					}
 					$this->cleanupTmpFiles ( $tmp_dir ); // Limpiar archivos temporales
 					curl_close ( $ch );
+					echo "Fallo descarga".PHP_EOL;
 					return -1;
 				}
 			}
 			curl_close ( $ch );
 			$this->cleanupTmpFiles ( $tmp_dir );
+			echo "Fallo descarga".PHP_EOL;
 			return -2;
 		}
 		public function insertCep ( array $data ): array {
