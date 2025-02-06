@@ -373,21 +373,21 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
     	INNER JOIN advancePayroll_rules apr ON apr.company_id = c.id
         INNER JOIN bank_accounts ba ON ba.user_id  = u.id AND ba.company_id= c.id
         WHERE (e.status = '1' OR e.status IS NULL) AND u.id = $user";
-//												var_dump ($query);die();
-			if ( !$res = $this->db->query ( $query) ) {
-				saveLog ( $user, 14, 404, json_encode ( [$user, 'dashboard'] ), json_encode ( [
+			//												var_dump ($query);die();
+			if ( !$res = $this->db->query ( $query ) ) {
+				saveLog ( $user, 14, 404, json_encode ( [ $user, 'dashboard' ] ), json_encode ( [
 					FALSE,
 					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 1 || $rows === 0 ) {
-				saveLog ( $user, 14, 404, json_encode ( [$user, 'dashboard'] ), json_encode ( [
+				saveLog ( $user, 14, 404, json_encode ( [ $user, 'dashboard' ] ), json_encode ( [
 					FALSE,
 					'No se encontró información' ] ) );
 				return [ FALSE, 'No se encontró información' ];
 			}
-			saveLog ( $user, 14, 200, json_encode ( [$user, 'dashboard'] ), json_encode (
+			saveLog ( $user, 14, 200, json_encode ( [ $user, 'dashboard' ] ), json_encode (
 				$res->getResultArray
 				()[ 0 ], TRUE ) );
 			return [ TRUE, $res->getResultArray ()[ 0 ] ];
@@ -602,7 +602,7 @@ WHERE employee_id = $employeeId";
 		//			//			( [ FALSE, 'affected' => $this->db->error () ] ) );
 		//			//			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
 		//		}
-		public function resetCounters ( $company_id, $current_date ): void {
+		public function resetCounters ( $company_id ): void {
 			$this->db->query ( "UPDATE advancePayroll_control
             SET req_day = 0,
                req_day = 0,
@@ -610,7 +610,7 @@ WHERE employee_id = $employeeId";
                req_biweekly = IF(DAY(CURRENT_DATE) = 16 OR LAST_DAY(CURRENT_DATE) = CURRENT_DATE, 0, req_biweekly),
                req_month = IF(DAY(CURRENT_DATE) = 1, 0, req_month)
             WHERE employee_id IN (
-                SELECT id FROM employee WHERE company_id = ? )", [ $current_date, $current_date, $current_date, $company_id ] );
+                SELECT id FROM employee WHERE company_id = ? )", $company_id);
 		}
 		public function getAdvancePayrollControl ( $employee_id, $user ): array {
 			$query = "SELECT * FROM advancePayroll_control WHERE employee_id = $employee_id";
@@ -665,7 +665,8 @@ WHERE employee_id = $employeeId";
 		}
 		public function updateNomina ( $value, $company, $user ): bool {
 			saveLog ( $user, 61, 200, json_encode ( [ 'args' => $value ] ), json_encode ( 'ok' ) );
-			$query = "UPDATE person SET name = '{$value['Nombre']}', last_name = '{$value['Apellido paterno']}', sure_name = '{$value['Apellido materno']}', rfc = '{$value['RFC']}', active = '{$value['Estatus']}'
+			$query = "UPDATE person SET name = '{$value['Nombre']}', last_name = '{$value['Apellido paterno']}', sure_name = '{$value['Apellido materno']}',
+                  rfc = '{$value['RFC']}', active = '{$value['Estatus']}', email = '{$value['Correo']}', phone = '{$value['Telefono']}'
               WHERE id = '{$value['personId']}'";
 			if ( $this->db->query ( $query ) ) {
 				$neto = (float)str_replace ( [ '$', ',' ], '', $value[ 'Sueldo Neto' ] );
@@ -718,17 +719,20 @@ WHERE employee_id = $employeeId";
 				'full_name'       => strtoupper ( trim ( $value[ 'Nombre' ].' '.$value[ 'Apellido paterno' ].' '.$value[ 'Apellido materno' ] ) ),
 				'rfc'             => strtoupper ( $value[ 'RFC' ] ),
 				'curp'            => strtoupper ( $value[ 'CURP' ] ),
+				'phone'           => $value[ 'Telefono' ],
+				'email'           => $value[ 'Correo' ],
 				'active'          => $value[ 'Estatus' ],
 			];
-			$sql = "INSERT INTO person (primary_user_id, name, last_name, sure_name, full_name, rfc, curp, active)
-VALUES (:primary_user_id:, :name:, :last_name:, :sure_name:, :full_name:, :rfc:, :curp:, :active:)
+			$this->db->query ( 'INSERT INTO person (primary_user_id, name, last_name, sure_name, full_name, rfc, curp, active, phone, email)
+VALUES (:primary_user_id:, :name:, :last_name:, :sure_name:, :full_name:, :rfc:, :curp:, :active:, :phone:, :email:)
 ON DUPLICATE KEY UPDATE
                      name = VALUES(name),
                      last_name = VALUES(last_name),
                      sure_name = VALUES(sure_name),
                      full_name = VALUES(full_name),
-                     rfc = VALUES(rfc)";
-			$this->db->query ( $sql, $personData );
+                     rfc = VALUES(rfc),
+                     phone = VALUES(phone),
+                     email = VALUES(email)', $personData );
 			$personId = $this->db->query ( "SELECT id FROM person WHERE curp = :curp:", [ 'curp' => $personData[ 'curp' ] ] )->getRow ( 'id' );
 			$this->db->table ( 'person_user' )->insert ( [
 				'person_id' => $personId,

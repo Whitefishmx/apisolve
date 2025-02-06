@@ -61,13 +61,11 @@ INNER JOIN employee t3 ON t3.id = eu.employee_id
 INNER JOIN person_user pu ON t1.id = pu.user_id
 INNER JOIN person t2 ON pu.person_id = t2.id
 INNER JOIN companies c ON t3.company_id = c.id
-WHERE (t1.nickname = '$login' AND t1.password = '$password')
-   OR (t1.email = '$login' AND t1.password = '$password') ";
-			if ( $platform === 6 ) {
-				$query .= "OR (t2.curp = '$login' AND t1.password = '$password') ";
-			}
-			$query .= "AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
-			//						var_dump ($query);die();
+WHERE ((t1.nickname = '$login' AND t1.password = '$password')
+   OR (t1.email = '$login' AND t1.password = '$password')
+   OR (t2.curp = '$login' AND t1.password = '$password'))
+   AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
+//									var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
@@ -117,7 +115,7 @@ WHERE u.id = $user";
 				$affected = $this->db->affectedRows ();
 				if ( $affected > 0 ) {
 					if ( $phone !== NULL ) {
-						$query = "UPDATE person SET phone = '$phone' WHERE id = $user";
+						$query = "UPDATE users SET phone = '$phone' WHERE id = $user";
 						if ( $this->db->query ( $query ) ) {
 							$affected = $this->db->affectedRows ();
 							if ( $affected > 0 ) {
@@ -138,8 +136,8 @@ WHERE u.id = $user";
 			return [ FALSE, 'No se pudo actualizar el perfil' ];
 		}
 		public function getExpressProfile ( $user ): array {
-			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, p.name, p.last_name, p.sure_name, p.curp, p.phone,
-       u.nickname, u.email, c.short_name, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'
+			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId, p.name, p.last_name, p.sure_name, p.curp,
+       u.phone, u.nickname, u.email, c.short_name, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as 'clabe'
 				FROM users u
     INNER JOIN employee_user eu ON u.id  = eu.user_id
     INNER JOIN employee e ON e.id = eu.employee_id

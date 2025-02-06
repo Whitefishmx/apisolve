@@ -22,7 +22,7 @@
 		/**
 		 * @throws Exception
 		 */
-		public function getCerts () {
+		public function getCerts (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -378,8 +378,12 @@
 			$this->logResponse ( 15 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
+		/**
+		 * @throws DateMalformedStringException
+		 */
 		public function uploadNomina (): ResponseInterface|array {
 			ini_set ( 'memory_limit', '1024M' );
+			ini_set ( 'max_execution_time', '300' );
 			$file = $this->request->getFile ( 'nomina' );
 			$this->input = $this->getRequestLogin ( $this->request );
 			$this->user = $this->input[ 'user' ];
@@ -387,16 +391,17 @@
 				$this->logResponse ( 41, $this->input, $this->responseBody );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			/*helper ( 'crypt_helper' );
-			$encryptionKey = getenv ( 'ENCRYPTION_KEY' );
-			$ivSeedSearch = getenv ( 'SEARCH_SEED' );
-			$ivSearch = generateIV ( $ivSeedSearch );*/
 			if ( !$file->isValid () ) {
 				return $this->serverError ( 'No se cargó el archivo', 'No es un archivo válido' );
 			}
 			try {
-				$spreadsheet = IOFactory::load ( $file->getTempName () );
-				$sheetData = $spreadsheet->getActiveSheet ()->toArray ();
+				$reader = IOFactory::createReaderForFile ( $file->getTempName () );
+				$reader->setReadDataOnly ( TRUE );
+				$spreadsheet = $reader->load ( $file->getTempName () );
+				$sheetData = $spreadsheet->getActiveSheet ()->toArray ( NULL, TRUE, TRUE, TRUE );
+				if ( empty( $sheetData ) ) {
+					return $this->serverError ( 'Archivo vacío', 'El archivo no contiene datos.' );
+				}
 				$requiredHeaders = [
 					"Área",
 					"Número de empleado",
@@ -413,70 +418,67 @@
 					"Sueldo Neto",
 					"Banco",
 					"Cuenta",
+					"Telefono",
+					"Correo",
 				];
-				$headers = array_map ( 'trim', $sheetData[ 0 ] );
+				$headers = array_map ( 'trim', $sheetData[ 1 ] );
 				$headerIndices = [];
 				foreach ( $requiredHeaders as $header ) {
 					$index = array_search ( $header, $headers );
+					if ( $index === FALSE ) {
+						$this->serverError ( 'Error en encabezados', "Falta el encabezado requerido: $header" );
+						return $this->getResponse ( $this->responseBody, $this->errCode );
+					}
 					$headerIndices[ $header ] = $index;
 				}
 				$data = [];
-				for ( $i = 1; $i < count ( $sheetData ); $i++ ) {
-					$row = $sheetData[ $i ];
+				foreach ( array_slice ( $sheetData, 1 ) as $row ) {
 					$mappedRow = [];
-					/*$ivSeed = $row[ $headerIndices[ 'Número de empleado' ] ] ?? 'default_seed';
-					$iv = generateIV ( $ivSeed );*/
-					foreach ( $headerIndices as $header => $index ) {
+					foreach ( $requiredHeaders as $header ) {
+						$index = $headerIndices[ $header ];
 						$value = $row[ $index ] ?? NULL;
-						if ( $header === "Estatus" || $header === "Confianza" ) {
-							$mappedRow[ $header ] = ( strtoupper ( strtoupper ( $value ) ) === "X" ) ? 1 : 0;
-						} else if ( $header === "Cuenta" ) {
-							$clabe = preg_replace ( '/\D/', '', $value );
-							$mappedRow[ $header ] = $clabe;
-						} else if ( $header === "Fecha de alta" ) {
-							$fechaFormateada = DateTime::createFromFormat ( 'd/m/Y', $value );
-							if ( $fechaFormateada ) {
-								$formated = $fechaFormateada->format ( 'Y-m-d' );
-							} else {
-								$formated = date ( 'Y-m-d', strtotime ( 'now' ) );
-							}
-							$mappedRow[ $header ] = $formated;
-						} else if ( $header === "Sueldo Neto" || $header === "Sueldo base" ) {
-							$sueldo = (float)str_replace ( [ '$', ',' ], '', $value );
-							$mappedRow[ $header ] = $sueldo;
-						} else if ( $header === "RFC" || $header === "CURP" || $header === "Nombre" || $header === 'Número de empleado' ) {
-							/*$encryptedValue = encryptValue ( $value, $encryptionKey, $ivSearch );
-							$mappedRow[ $header ] = $encryptedValue;*/
-							$mappedRow[ $header ] = $value;
-						} else {
-							if ( $value !== NULL ) {
-								/*$encryptedValue = encryptValue ( $value, $encryptionKey, $iv );
-								$mappedRow[ $header ] = $encryptedValue;*/
-								$mappedRow[ $header ] = $value;
-							} else {
-								$mappedRow[ $header ] = NULL;
-							}
+						switch ( $header ) {
+							case "Estatus":
+							case "Confianza":
+								$mappedRow[ $header ] = ( strtoupper ( trim ( $value ) ) === "X" ) ? 1 : 0;
+								break;
+							case "Cuenta":
+								$mappedRow[ $header ] = preg_replace ( '/\D/', '', $value );
+								break;
+							case "Fecha de alta":
+								$fechaFormateada = DateTime::createFromFormat ( 'd/m/Y', $value );
+								if ( $fechaFormateada ) {
+									$formated = $fechaFormateada->format ( 'Y-m-d' );
+								} else {
+									$formated = date ( 'Y-m-d', strtotime ( 'now' ) );
+								}
+								$mappedRow[ $header ] = $formated;
+								break;
+							case "Sueldo Neto":
+							case "Sueldo base":
+								$mappedRow[ $header ] = (float)str_replace ( [ '$', ',' ], '', $value );
+								break;
+							default:
+								$mappedRow[ $header ] = $value !== NULL ? trim ( $value ) : NULL;
 						}
-						//						$mappedRow[ 'iv' ] = $iv;
 					}
-					$data[ $mappedRow[ 'CURP' ] ] = $mappedRow;
+					$curp = $mappedRow[ 'CURP' ] ?? NULL;
+					if ( $curp ) {
+						$data[ $curp ] = $mappedRow;
+					}
 				}
 			} catch ( Exception $e ) {
-				return $this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+				$this->serverError ( 'Error al procesar el archivo', $e->getMessage () );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			if ( empty( $data ) ) {
-				return $this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+				$this->serverError ( 'Error al procesar el archivo', 'Por favor use la plantilla oficial y no cambie los encabezados' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			//			return $this->getResponse ( $data, 200 );
 			$data = $this->checkExists ( $data, $this->input[ 'company' ] );
-			//return $this->getResponse ( $data, 200 );
 			$upsert = $this->upsertNomina ( $data, $this->input[ 'company' ], $this->user );
-			try {
-				$this->updateAdvancePayrollControl ( $this->input[ 'company' ] );
-			} catch ( DateMalformedStringException $e ) {
-				return $this->getResponse ( (array)$e, 200 );
-			}
-			return $this->getResponse ( $upsert, 200 );
+			$this->updateAdvancePayrollControlUpdN ( $this->input[ 'company' ] );
+			return $this->getResponse ( $upsert[0], 200 );
 		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
@@ -913,34 +915,27 @@
 			$total_employees = count ( $employees );
 			$periodActual = '';
 			foreach ( $employees as $employee ) {
-				$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
-				$plan = $employee[ 'plan' ];
-				$net_salary = $employee[ 'net_salary' ];
-				$start_date = new DateTime( $period[ 'start_date' ] );
-				$current = new DateTime( $current_date );
-				$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ], $plan, $current_date );
-				$days_worked = $current->diff ( $start_date )->days + 1;
-				$total_requests = $this->express->getSumRequest ( $employee, $period_name );
-				$days_in_month = cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
-				$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
-				if ( $current_date === $period[ 'cutoff_date' ] ) {
-					$available = 0;
-				} else {
-					$available = 1;
-				}
-				$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
-				if ( $existing ) {
-					$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
-				} else {
-					$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
-				}
+				[ $period, $period_name, $days_worked ] = $this->updCtrl ( $company_id, $current_date, $employee );
 				$periodActual = $period[ 'start_date' ].' - '.$period[ 'end_date' ].' - '.$period_name.' - '.$days_worked;
 				$actual++;
 				echo date ( 'm-d-Y H:i:s' ).' - '.$actual.' empleado(s) de '.$total_employees.PHP_EOL;
 			}
 			echo $periodActual.PHP_EOL;
 			echo '================================================================'.PHP_EOL;
-			$this->express->resetCounters ( $company_id, $current_date );
+			$this->express->resetCounters ( $company_id );
+		}
+		/**
+		 * @throws DateMalformedStringException
+		 */
+		public function updateAdvancePayrollControlUpdN ( $company ): void {
+			$current_date = date ( 'Y-m-d', strtotime ( 'now' ) );
+			$dataM = new DataModel();
+			$company_id = $company;
+			$employees = $dataM->getEmployeesFromCompany ( $company_id, $this->user );
+			foreach ( $employees as $employee ) {
+				$this->updCtrl ( $company_id, $current_date, $employee );
+			}
+			$this->express->resetCounters ( $company_id );
 		}
 		private function faceMatch ( $data, $user ): void {
 			$score = intval ( $data[ 'step' ][ 'data' ][ 'score' ] > 60 );
@@ -1044,5 +1039,37 @@
 			$this->input = $this->getRequestInput ( $this->request );
 			$planCompany = $this->express->getPlanCompany ( $this->input[ 'company' ] );
 			var_dump ( $planCompany );
+		}
+		/**
+		 * @param            $company_id
+		 * @param mixed      $current_date
+		 * @param mixed      $employee
+		 *
+		 * @return array
+		 * @throws DateMalformedStringException
+		 */
+		public function updCtrl ( $company_id, mixed $current_date, mixed $employee ): array {
+			$period = $this->express->getPeriodsCompany ( $company_id, $current_date, $this->user );
+			$plan = $employee[ 'plan' ];
+			$net_salary = $employee[ 'net_salary' ];
+			$start_date = new DateTime( $period[ 'start_date' ] );
+			$current = new DateTime( $current_date );
+			$period_name = $this->generatePeriodName ( $period[ 'start_date' ], $period[ 'end_date' ], $period[ 'cutoff_date' ], $period[ 'payment_date' ], $plan, $current_date );
+			$days_worked = $current->diff ( $start_date )->days + 1;
+			$total_requests = $this->express->getSumRequest ( $employee, $period_name );
+			$days_in_month = cal_days_in_month ( CAL_GREGORIAN, date ( 'm', strtotime ( $current_date ) ), date ( 'Y', strtotime ( $current_date ) ) );
+			$amount_available = ( ( ( $net_salary / $days_in_month ) * $days_worked ) * 0.8 ) - $total_requests;
+			if ( $current_date === $period[ 'cutoff_date' ] ) {
+				$available = 0;
+			} else {
+				$available = 1;
+			}
+			$existing = $this->express->getAdvancePayrollControl ( $employee[ 'id' ], $this->user )[ 0 ];
+			if ( $existing ) {
+				$this->express->updateAdvancePayrollControl ( $existing[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+			} else {
+				$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
+			}
+			return [ $period, $period_name, $days_worked ];
 		}
 	}
