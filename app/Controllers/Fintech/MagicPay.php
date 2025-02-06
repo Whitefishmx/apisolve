@@ -27,6 +27,25 @@
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
 		}
+		public function MagicPayments (): ResponseInterface|bool|array {
+			$this->user = 14;
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				$this->logResponse ( 64, $this->input, $this->responseBody );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->errCode = 200;
+			$this->input = $this->getRequestLogin ( $this->request );
+			$out = [
+				'error'       => $this->errCode,
+				'description' => 'Información recibida.',
+				'reason'      => 'Los datos se recibieron y procesaron con éxito.' ];
+			if ( !$this->logResponse ( 64, $this->input, $out ) ) {
+				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$this->responseBody = $out;
+			return $this->getResponse ( $this->responseBody );
+		}
 		public function getBalance (): ResponseInterface {
 			if ( $this->verifyRules ( 'GET', $this->request, NULL ) ) {
 				$this->logResponse ( 5 );
