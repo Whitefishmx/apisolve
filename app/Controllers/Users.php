@@ -5,6 +5,8 @@
 	use Exception;
 	use App\Models\UserModel;
 	use App\Models\MassServicios;
+	use App\Models\MagicPayModel;
+	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	
 	class Users extends PagesStatusCode {
@@ -71,10 +73,10 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$user = new UserModel();
-			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ]);
-//			var_dump ($this->input[ 'user' ],$userData);die();
+			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ] );
+			//			var_dump ($this->input[ 'user' ],$userData);die();
 			$mass = new MassServicios;
-			$mass->registroAfiliado ( $userData[1] );
+			$mass->registroAfiliado ( $userData[ 1 ] );
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'       => 200,
@@ -134,5 +136,41 @@
 			$emailController = new Email();
 			$emailResponse = $emailController->sendPasswordResetEmail ( $email );
 			return $this->response->setJSON ( $emailResponse );
+		}
+		public function testFunction (): void {
+			$user = new UserModel();
+			$userData = $user->getDataForAfiliation ( 39 );
+			$mass = new MassServicios;
+			$mass->registroAfiliado ( $userData[ 1 ] );
+			var_dump ( $mass );
+			die();
+		}
+		public function validateClabe ( $data ) {
+			$user = new UserModel();
+			$bankData = $user->getClabeByUsrCompany ( $data[ 'userID' ], $data[ 'company_id' ] );
+			helper ( [ 'tools_helper', 'tetraoctal_helper' ] );
+			$referenceNum = MakeOperationNumber ( $user->getNexId ( 'logs' ) );
+			$folio = $user->generateFolio ( 65, 'transactions', $data[ 'userID' ] );
+			$dataTransfer = [
+				'description'   => $referenceNum,
+				'account'       => $bankData[ 1 ][ 'clabe' ],
+				'amount'        => '0.01',
+				'bank'          => $bankData[ 1 ][ 'magicAlias' ],
+				'owner'         => strtoupper ( "{$data['name']} {$data['last_name']} {$data['sure_name']}" ),
+				'validateOwner' => TRUE ];
+			$magic = new MagicPayModel();
+			$transfer = $magic->createTransfer ( $dataTransfer, $referenceNum, $folio, $data[ 'userID' ] );
+			$bankO = $user->getBankAccountsByUser ( 1 );
+			$transferData = [
+				'opId'          => 1,
+				'transactionId' => $transfer[ 1 ][ 'speiId' ],
+				'description'   => $referenceNum,
+				'noReference'   => $referenceNum,
+				'amount'        => $dataTransfer[ 'amount' ],
+				'destination'   => $bankData[ 1 ][ 'id' ],
+				'origin'        => $bankO[ 1 ][ 'id' ], ];
+			$transaction = new TransactionsModel();
+			$save = $transaction->insertTransaction ( 'op_type', $transferData, $this->user );
+			return $transfer;
 		}
 	}
