@@ -5,10 +5,11 @@
 	use OpenSSLAsymmetricKey;
 	
 	class StpModel extends BaseModel {
-		private string $privateKey = './crypt/llavePrivada.pem';
+		//		private string $privateKey = './crypt/llavePrivada.pem';
+		private string $privateKey = 'C:\web\apps\apisolve\public\crypt/llavePrivada.pem';
 		private string $passphrase = '12345678';
 		private string $stpSandbox = 'https://demo.stpmex.com:7024/speiws/rest/';
-		private string $stpLive = 'https://demo.stpmex.com:7024/speiws/rest/';
+		private string $stpLive    = 'https://demo.stpmex.com:7024/speiws/rest/';
 		/**
 		 * Genera un dispersion de dinero a través de STP
 		 *
@@ -16,92 +17,81 @@
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function sendDispersion ( array $arg, string $env = NULL ): bool|string {
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$url = ( $env == 'SANDBOX' ) ? $this->stpSandbox . 'ordenPago/registra' : $this->stpLive . 'ordenPago/registra';
-			$bancoBeneficiario = $this->getBankByClave ( $arg[ 'beneficiario' ][ 'clabe' ], $env );
-			$bancoOrdenante = $this->getBankByClave ( $arg[ 'ordenante' ][ 'clabe' ], $env );
+		public function sendDispersion ( array $args, ?string $referenceNum = NULL, ?string $folio = NULL, ?int $user = NULL ): bool|string {
+			$url = $this->stpSandbox.'ordenPago/registra';
+			if ( $referenceNum === NULL ) {
+				helper ( 'tools_helper' );
+				$referenceNum = MakeOperationNumber ( $this->getNexId ( 'logs' ) );
+			}
+			if ( $folio === NULL ) {
+				helper ( 'tetraoctal_helper' );
+				$folio = $this->generateFolio ( 10, 'logs', 2 );
+			}
+			$bancoBeneficiario = $this->getBankByClave ( $args[ 'beneficiario' ][ 'clabe' ] )[ 1 ];
+			$bancoOrdenante = $this->getBankByClave ( $args[ 'beneficiario' ][ 'clabe' ] )[ 1 ];
 			helper ( 'tools_helper' );
 			$data = [
-				'bancoReceptor' => $bancoBeneficiario[ 'bnk_code' ],
-				'empresa' => 'WHITEFISH',
-				'fechaOperacion' => '',
-				'folioOrigen' => '',
-				'claveRastreo' => $arg[ 'folio' ],
-				'bancoOrigen' => $bancoOrdenante[ 'bnk_code' ],
-				'monto' => number_format ( strval ( $arg[ 'beneficiario' ][ 'monto' ] ), 2 ),
-				'tipoPago' => 1,
-				'tipoCuentaOrigen' => 40,
-				'nombreOrigen' => $arg[ 'ordenante' ][ 'nombre' ],
-				'cuentaOrigen' => $arg[ 'ordenante' ][ 'clabe' ],
-				'rfcOrigen' => 'ND',
+				'bancoReceptor'     => $bancoBeneficiario[ 'bnk_code' ],
+				'empresa'           => 'WHITEFISH',
+				'fechaOperacion'    => '',
+				'folioOrigen'       => '',
+				'claveRastreo'      => $folio,
+				'bancoOrigen'       => $bancoOrdenante[ 'bnk_code' ],
+				'monto'             => number_format ( strval ( $args[ 'beneficiario' ][ 'monto' ] ), 2 ),
+				'tipoPago'          => 1,
+				'tipoCuentaOrigen'  => 40,
+				'nombreOrigen'      => $args[ 'ordenante' ][ 'nombre' ],
+				'cuentaOrigen'      => $args[ 'ordenante' ][ 'clabe' ],
+				'rfcOrigen'         => 'ND',
 				'tipoCuentaDestino' => 40,
-				'nombreDestino' => $arg[ 'beneficiario' ][ 'nombre' ],
-				'cuentaDestino' => $arg[ 'beneficiario' ][ 'clabe' ],
-				'rfcDestino' => 'ND',
-				'emailBenef' => '',
-				'tipoCuentaBenef2' => '',
-				'nombreBenef2' => '',
-				'cuentaBenef2' => '',
-				'rfcBenef2' => '',
-				'concepto' => $arg[ 'beneficiario' ][ 'concepto' ],
-				'concepto2' => '',
-				'claveCat1' => '',
-				'claveCat2' => '',
-				'clavePAgo' => '',
-				'refCobranza' => '',
-				'refNumeric' => $arg[ 'refNumeric' ],
-				'tipoOperacion' => '',
-				'topological' => '',
-				'usuario' => '',
-				'medioEntrega' => '',
-				'prioridad' => '',
-				'iva' => '',
+				'nombreDestino'     => $args[ 'beneficiario' ][ 'nombre' ],
+				'cuentaDestino'     => $args[ 'beneficiario' ][ 'clabe' ],
+				'rfcDestino'        => 'ND',
+				'emailBenef'        => '',
+				'tipoCuentaBenef2'  => '',
+				'nombreBenef2'      => '',
+				'cuentaBenef2'      => '',
+				'rfcBenef2'         => '',
+				'concepto'          => $args[ 'beneficiario' ][ 'concepto' ],
+				'concepto2'         => '',
+				'claveCat1'         => '',
+				'claveCat2'         => '',
+				'clavePAgo'         => '',
+				'refCobranza'       => '',
+				'refNumeric'        => $referenceNum,
+				'tipoOperacion'     => '',
+				'topological'       => '',
+				'usuario'           => '',
+				'medioEntrega'      => '',
+				'prioridad'         => '',
+				'iva'               => '',
 			];
 			$cadenaOriginal = implode ( '|', $data );
-			$cadenaOriginal = '||' . $cadenaOriginal . '||';
-			saveLog ( 1, 1, 1, 200, json_encode ( [ 'cadenaOriginal' => $data ] ), NULL, $env );
+			$cadenaOriginal = '||'.$cadenaOriginal.'||';
+			saveLog ( 2, 1, 1, 200, json_encode ( [ 'cadenaOriginal' => $data ] ) );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
 			$body = [
-				"claveRastreo" => $data[ 'claveRastreo' ],
-				"conceptoPago" => $data[ 'concepto' ],
-				"cuentaOrdenante" => $data[ 'cuentaOrigen' ],
-				"cuentaBeneficiario" => $data[ 'cuentaDestino' ],
-				"empresa" => $data[ 'empresa' ],
+				"claveRastreo"           => $data[ 'claveRastreo' ],
+				"conceptoPago"           => $data[ 'concepto' ],
+				"cuentaOrdenante"        => $data[ 'cuentaOrigen' ],
+				"cuentaBeneficiario"     => $data[ 'cuentaDestino' ],
+				"empresa"                => $data[ 'empresa' ],
 				"institucionContraparte" => $data[ 'bancoReceptor' ],
-				"institucionOperante" => $data[ 'bancoOrigen' ],
-				"monto" => $data[ 'monto' ],
-				"nombreBeneficiario" => $data[ 'nombreDestino' ],
-				"nombreOrdenante" => $data[ 'nombreOrigen' ],
-				"referenciaNumerica" => $data[ 'refNumeric' ],
-				"rfcCurpBeneficiario" => $data[ 'rfcDestino' ],
-				"rfcCurpOrdenante" => $data[ 'rfcOrigen' ],
+				"institucionOperante"    => $data[ 'bancoOrigen' ],
+				"monto"                  => $data[ 'monto' ],
+				"nombreBeneficiario"     => $data[ 'nombreDestino' ],
+				"nombreOrdenante"        => $data[ 'nombreOrigen' ],
+				"referenciaNumerica"     => $data[ 'refNumeric' ],
+				"rfcCurpBeneficiario"    => $data[ 'rfcDestino' ],
+				"rfcCurpOrdenante"       => $data[ 'rfcOrigen' ],
 				"tipoCuentaBeneficiario" => "{$data[ 'tipoCuentaDestino' ]}",
-				"tipoCuentaOrdenante" => "{$data[ 'tipoCuentaOrigen' ]}",
-				"tipoPago" => "{$data[ 'tipoPago' ]}",
-				"firma" => "$cadenaOriginal",
+				"tipoCuentaOrdenante"    => "{$data[ 'tipoCuentaOrigen' ]}",
+				"tipoPago"               => "{$data[ 'tipoPago' ]}",
+				"firma"                  => "$cadenaOriginal",
 			];
 			$res = $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
-			saveLog ( 1, 1, 1, 200, json_encode ( $body ), $res, $env );
+			saveLog ( 2, 1, 1, json_encode ( $body ), json_encode ( $res ) );
 			return $res;
-		}
-		/**
-		 * Obtener los datos del banco según clabe bancaria
-		 *
-		 * @param string      $clabe
-		 * @param string|NULL $env
-		 *
-		 * @return array
-		 */
-		public function getBankByClave ( string $clabe, string $env = NULL ): array {
-			$this->environment = $env === NULL ? $this->environment : $env;
-			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
-			$clabe = substr ( $clabe, 0, 3 );
-			$query = "SELECT bnk_alias, bnk_code, bnk_nombre FROM $this->base.cat_bancos WHERE bnk_clave = '$clabe'";
-			if ( !$res = $this->db->query ( $query ) ) {
-				return [ 'error' => 500, 'descripcion' => 'No se logro obtener la información', 'reason' => 'No se logro obtener la información de los bancos' ];
-			}
-			return $res->getResultArray ()[ 0 ];
 		}
 		/**
 		 * Obtiene los movimientos de la cuenta
@@ -112,24 +102,24 @@
 		 *
 		 * @return bool|string
 		 */
-		public function sendConsulta ( string $date = NULL, string $tipoOrden = 'E', string $env = NULL ): bool|string {
+		public function sendConsulta ( ?string $date = NULL, ?string $tipoOrden = 'E', ?string $env = NULL ): bool|string {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$url = 'https://efws-dev.stpmex.com/efws/API/V2/conciliacion';
 			$date = date ( 'Ymd', $date );
 			$data = [
-				'empresa' => 'WHITEFISH',
+				'empresa'   => 'WHITEFISH',
 				'tipoOrden' => $tipoOrden,
-				'date' => $date,
+				'date'      => $date,
 			];
 			$cadenaOriginal = implode ( '|', $data );
-			$cadenaOriginal = '||' . $cadenaOriginal . '||';
+			$cadenaOriginal = '||'.$cadenaOriginal.'||';
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
 			$body = [
-				"empresa" => $data[ 'empresa' ],
-				"firma" => $cadenaOriginal,
-				"page" => 0,
-				"tipoOrden" => $tipoOrden,
+				"empresa"        => $data[ 'empresa' ],
+				"firma"          => $cadenaOriginal,
+				"page"           => 0,
+				"tipoOrden"      => $tipoOrden,
 				"fechaOperacion" => $date,
 			];
 			return $this->sendRequest ( $url, $body, 'POST', 'JSON' );
@@ -159,12 +149,13 @@
 		}
 		/**
 		 * Obtiene el ID de una compañía por su clabe bancaria
+		 *
 		 * @param string $clabe Clabe bancaria a buscar
-		 * @param string $env Ambiente en el que se va a trabajar
+		 * @param string $env   Ambiente en el que se va a trabajar
 		 *
 		 * @return array Resultados
 		 */
-		public function validateClabe ( string $clabe, string $env = 'SANDBOX' ): array {
+		public function validateClabe ( string $clabe, ?string $env = 'SANDBOX' ): array {
 			$this->environment = $env === NULL ? $this->environment : $env;
 			$this->base = strtoupper ( $this->environment ) === 'SANDBOX' ? $this->APISandbox : $this->APILive;
 			$query = "SELECT companie_id FROM apisandbox_sandbox.fintech_clabes WHERE fintech_clabe = '$clabe'";
@@ -191,6 +182,7 @@
 			if ( strtoupper ( $dataType ) === 'JSON' ) {
 				$headers[] = 'Content-Type: application/json; charset=utf-8';
 			}
+			$responseHeaders = [];
 			if ( ( $ch = curl_init () ) ) {
 				curl_setopt ( $ch, CURLOPT_URL, $url );
 				curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, TRUE );

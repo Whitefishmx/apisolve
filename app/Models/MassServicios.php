@@ -35,9 +35,10 @@
 				"verificador"    => $verify,
 				"vin"            => "s",
 			];
+//			die(var_dump ($data));
 			$res = json_decode ( $this->SendRequest ( $url, 'POST', $data, 'JSON', $token ), TRUE );
 			saveLog ( $user[ 'userID' ], 63, 500, json_encode ( $data ), json_encode ( $res ) );
-//			var_dump ( $res ); die();
+			var_dump ( $res );
 			if ( isset( $res[ 'data' ][ 'cveafiliado' ] ) ) {
 				return $this->createCertBenefit ( $user, $res[ 'data' ][ 'cveafiliado' ], $inicio, $fin );
 			}

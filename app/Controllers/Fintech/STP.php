@@ -2,6 +2,7 @@
 	
 	namespace App\Controllers\Fintech;
 	
+	use Exception;
 	use App\Models\ConciliacionModel;
 	use App\Models\OperationModel;
 	use CodeIgniter\HTTP\ResponseInterface;
@@ -15,28 +16,26 @@
 			helper ( 'tools_helper' );
 			helper ( 'tetraoctal_helper' );
 		}
+		/**
+		 * @throws Exception
+		 */
 		public function testCobro (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				return ( $data );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$input = $this->getRequestInput ( $this->request );
-			$this->environment ( $input );
 			$stp = new StpModel();
-			$beneficiarios = $input[ 'beneficiario' ];
+			$beneficiarios = $this->input[ 'beneficiario' ];
 			$responses = [];
 			for ( $i = 0; $i < count ( $beneficiarios ); $i++ ) {
-				$args[ 'folio' ] = serialize32 ( [ rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 9 ), rand ( 1, 31221 ) ] );
-				$args[ 'refNumeric' ] = MakeOperationNumber ( rand ( 1, 250 ) );
 				$args[ 'beneficiario' ] = $beneficiarios[ $i ];
 				$args[ 'ordenante' ] = [
-					'clabe' => '646180546900000003',
+					'clabe'  => '646180546900000003',
 					'nombre' => 'WHITEFISH',
 				];
-				//				echo json_encode ($args);
-				//				$responses[]= $args;
-				$responses[] = json_decode ( $stp->sendDispersion ( $args, 'SANDBOX' ), TRUE );
+				$responses[] = json_decode ( $stp->sendDispersion ($args,null,  NULL, $this->user ), TRUE );
 			}
-			saveLog ( 1, 1, 2, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $responses ) ), $this->env );
+			$this->logResponse ( 1 );
 			return $this->getResponse ( $responses );
 		}
 		public function testConsulta (): ResponseInterface {
@@ -65,7 +64,7 @@
 			}
 			return $this->getResponse ( $res );
 		}
-		public function AddMovement ( array $args, string $env = NULL ): array {
+		public function AddMovement ( array $args, ?string $env = NULL ): array {
 			$op = new OperationModel ();
 			$res = $op->AddMovement ( $args, $env );
 			if ( isset( $operation[ 0 ] ) ) {
@@ -77,16 +76,16 @@
 			$args = [
 				'operationNumber' => $input[ 'reference_number' ],
 				'transactionDate' => $input[ 'transactionDate' ],
-				'trackingKey' => $input[ 'tracking_key' ],
-				'descriptor' => $input[ 'descriptor' ],
-				'opId' => $input[ 'speid_id' ],
-				'amount' => $input[ 'amount' ],
-				'sourceName' => $input[ 'sourceName' ] ?? 'Desconocido',
-				'sourceRfc' => $input[ 'sourceRfc' ] ?? 'XAXX010101000',
-				'sourceBank' => $input[ 'sourceBank' ],
-				'receiverName' => $input[ 'receiverName' ] ?? 'Desconocido',
-				'receiverRfc' => $input[ 'receiverRfc' ] ?? 'XAXX010101000',
-				'receiverBank' => $input[ 'receiverBank' ],
+				'trackingKey'     => $input[ 'tracking_key' ],
+				'descriptor'      => $input[ 'descriptor' ],
+				'opId'            => $input[ 'speid_id' ],
+				'amount'          => $input[ 'amount' ],
+				'sourceName'      => $input[ 'sourceName' ] ?? 'Desconocido',
+				'sourceRfc'       => $input[ 'sourceRfc' ] ?? 'XAXX010101000',
+				'sourceBank'      => $input[ 'sourceBank' ],
+				'receiverName'    => $input[ 'receiverName' ] ?? 'Desconocido',
+				'receiverRfc'     => $input[ 'receiverRfc' ] ?? 'XAXX010101000',
+				'receiverBank'    => $input[ 'receiverBank' ],
 			];
 			$mov = $this->AddMovement ( $args, $env );
 			if ( isset( $mov[ 0 ] ) ) {
@@ -94,19 +93,19 @@
 			}
 			$stp = new StpModel();
 			$data = [
-				'folio' => serialize32 ( [ 5, $mov[ 'id' ], 0, 0, strtotime ( 'now' ) ] ),
-				'concepto' => 'devolución de ' . $args[ 'trackingKey' ],
-				'refNumeric' => MakeOperationNumber ( $mov[ 'id' ] ),
-				'monto' => $args[ 'amount' ],
-				'empresa' => 'WHITEFISH',
-				'ordenante' => [
-					'clabe' => $args[ 'receiverBank' ],
-					'rfc' => $args[ 'receiverRfc' ],
+				'folio'        => serialize32 ( [ 5, $mov[ 'id' ], 0, 0, strtotime ( 'now' ) ] ),
+				'concepto'     => 'devolución de '.$args[ 'trackingKey' ],
+				'refNumeric'   => MakeOperationNumber ( $mov[ 'id' ] ),
+				'monto'        => $args[ 'amount' ],
+				'empresa'      => 'WHITEFISH',
+				'ordenante'    => [
+					'clabe'  => $args[ 'receiverBank' ],
+					'rfc'    => $args[ 'receiverRfc' ],
 					'nombre' => $args[ 'receiverName' ],
 				],
 				'beneficiario' => [
-					'clabe' => $args[ 'sourceBank' ],
-					'rfc' => $args[ 'sourceRfc' ],
+					'clabe'  => $args[ 'sourceBank' ],
+					'rfc'    => $args[ 'sourceRfc' ],
 					'nombre' => $args[ 'sourceName' ],
 				],
 			];
@@ -117,16 +116,16 @@
 			$args = [
 				'operationNumber' => $data[ 'refNumeric' ],
 				'transactionDate' => date ( 'Y-m-d', strtotime ( 'now' ) ),
-				'trackingKey' => $data[ 'folio' ],
-				'descriptor' => $data[ 'concepto' ],
-				'opId' => $rollback[ 'resultado' ][ 'id' ],
-				'amount' => $data[ 'monto' ],
-				'sourceName' => $data[ 'ordenante' ][ 'nombre' ],
-				'sourceRfc' => $data[ 'ordenante' ] [ 'rfc' ],
-				'sourceBank' => $data[ 'ordenante' ][ 'clabe' ],
-				'receiverName' => $data[ 'beneficiario' ] [ 'nombre' ],
-				'receiverRfc' => $data[ 'beneficiario' ][ 'rfc' ],
-				'receiverBank' => $data[ 'beneficiario' ][ 'clabe' ],
+				'trackingKey'     => $data[ 'folio' ],
+				'descriptor'      => $data[ 'concepto' ],
+				'opId'            => $rollback[ 'resultado' ][ 'id' ],
+				'amount'          => $data[ 'monto' ],
+				'sourceName'      => $data[ 'ordenante' ][ 'nombre' ],
+				'sourceRfc'       => $data[ 'ordenante' ] [ 'rfc' ],
+				'sourceBank'      => $data[ 'ordenante' ][ 'clabe' ],
+				'receiverName'    => $data[ 'beneficiario' ] [ 'nombre' ],
+				'receiverRfc'     => $data[ 'beneficiario' ][ 'rfc' ],
+				'receiverBank'    => $data[ 'beneficiario' ][ 'clabe' ],
 			];
 			$mov2 = $this->AddMovement ( $args, $env );
 			if ( isset( $mov2[ 0 ] ) ) {
@@ -154,29 +153,28 @@
 				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 			}
 			return $this->getResponse ( $res, $code );
-//			die();
+			//			die();
 			if ( !function_exists ( 'pcntl' ) ) {
 				return $this->serverError ( 'Proceso incompleto', 'La extensión PCNTL no está disponible en este sistema' );
 			}
 			$pid = pcntl_fork ();
 			if ( $pid == -1 ) {
 				// Error al crear el proceso hijo
-				return $this->serverError ('Proceso incompleto', 'No se pudo crear el proceso hijo');
+				return $this->serverError ( 'Proceso incompleto', 'No se pudo crear el proceso hijo' );
 			} else if ( $pid ) {
 				// Este es el proceso padre
-//				echo "Este es el proceso padre, PID del hijo: $pid\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Este es el proceso padre, PID del hijo: '.$pid] ) ), NULL, $this->env );
+				//				echo "Este es el proceso padre, PID del hijo: $pid\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Este es el proceso padre, PID del hijo: '.$pid ] ) ), NULL, $this->env );
 			} else {
 				// Este es el proceso hijo
-//				echo "Este es el proceso hijo\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Este es el proceso hijo'] ) ), NULL, $this->env );
+				//				echo "Este es el proceso hijo\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Este es el proceso hijo' ] ) ), NULL, $this->env );
 				// Aquí puedes poner el código que quieres que el hijo ejecute
 				sleep ( 10 ); // Simula una tarea que toma tiempo
-//				echo "Proceso hijo terminado\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( ['message'=> 'Proceso hijo terminado'] ) ), NULL, $this->env );
+				//				echo "Proceso hijo terminado\n";
+				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Proceso hijo terminado' ] ) ), NULL, $this->env );
 				exit( 0 );
 			}
-			
 			//validar que se tenga la descripcion o referencia numerica para poder validar
 			$descriptor = $input[ 'descriptor' ] ?? NULL;
 			$refNumber = $input[ 'reference_number' ] ?? NULL;
@@ -228,7 +226,7 @@
 		public function doConciliationPlus ( array $operation, string $env ) {
 			$conc = new ConciliacionModel();
 		}
-		public function makeConciliation ( array $operation, array $input, string $env = NULL ) {
+		public function makeConciliation ( array $operation, array $input, ?string $env = NULL ) {
 		}
 		public function makeConciliationPlus ( array $operation, array $input, string $env ) {
 		}
