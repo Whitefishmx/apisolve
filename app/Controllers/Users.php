@@ -7,6 +7,7 @@
 	use App\Models\MassServicios;
 	use App\Models\MagicPayModel;
 	use GuzzleHttp\Promise\Promise;
+	use JetBrains\PhpStorm\NoReturn;
 	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use GuzzleHttp\Promise as PromiseAlias;
@@ -151,7 +152,7 @@
 			$emailResponse = $emailController->sendPasswordResetEmail ( $email );
 			return $this->response->setJSON ( $emailResponse );
 		}
-		public function testFunction (): ResponseInterface {
+		#[NoReturn] public function testFunction (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			$user = new UserModel();
 			$userData = $user->getDataForAfiliation ( 25 );
@@ -161,7 +162,7 @@
 		}
 		public function validateClabe ( $data ): bool|array {
 			$user = new UserModel();
-			$bankData = $user->getClabeByUsrCompany ( $data[ 'userID' ], $data[ 'company_id' ] );
+			$bankData = $user->getClabeByUsrCompany ( $data[ 'userID' ] );
 			helper ( [ 'tools_helper', 'tetraoctal_helper' ] );
 			$referenceNum = MakeOperationNumber ( $user->getNexId ( 'logs' ) );
 			$folio = $user->generateFolio ( 65, 'transactions', $data[ 'userID' ] );
