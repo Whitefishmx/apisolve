@@ -98,7 +98,7 @@ ON DUPLICATE KEY UPDATE expiration = '$date', token = '{$resToken['data']['acces
 				(int)$user[ 'planBenefit' ] );
 			saveLog ( $user[ 'userID' ], 63, 500, json_encode ( $user ), json_encode ( $image ) );
 			if ( $image ) {
-				$query = "UPDATE employee_benefits SET cert = '$image', since = '$inicio', `to` = '$fin' WHERE employee_id = '{$user['employeeId']}' and active = 1";
+				$query = "UPDATE employee_benefits SET cert = '$image', since = '$inicio', `to` = '$fin', active = 1 WHERE employee_id = '{$user['employeeId']}'";
 				$this->db->query ( $query );
 				return TRUE;
 			}

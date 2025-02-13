@@ -2,7 +2,6 @@
 	
 	namespace App\Controllers;
 	
-	use Exception;
 	use App\Models\UserModel;
 	use App\Models\MassServicios;
 	use App\Models\MagicPayModel;
@@ -11,6 +10,7 @@
 	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use GuzzleHttp\Promise as PromiseAlias;
+	
 	class Users extends PagesStatusCode {
 		protected string|UserModel $userData = '';
 		public function __construct () {
@@ -18,9 +18,6 @@
 			helper ( 'crypt_helper' );
 			$this->userData = new UserModel ();
 		}
-		/**
-		 * @throws Exception
-		 */
 		public function setUser (): ResponseInterface|bool|array {
 			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $data = $this->verifyRules ( 'PATCH', $this->request, 'JSON' ) ) {
@@ -76,22 +73,22 @@
 			}
 			$user = new UserModel();
 			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ] );
-			$promise1 = new Promise(function () use (&$promise1, $userData) {
-				$this->validateClabe($userData[1]);
-				$promise1->resolve("CLABE Validada");
-			});
-			$promise2 = new Promise(function () use (&$promise2, $userData) {
+			$promise1 = new Promise( function () use ( &$promise1, $userData ) {
+				$this->validateClabe ( $userData[ 1 ] );
+				$promise1->resolve ( "CLABE Validada" );
+			} );
+			$promise2 = new Promise( function () use ( &$promise2, $userData ) {
 				$mass = new MassServicios;
 				$mass->registroAfiliado ( $userData[ 1 ] );
-				$promise2->resolve("CLABE Validada");
-			});
-			$promise1->then(function () {
+				$promise2->resolve ( "CLABE Validada" );
+			} );
+			$promise1->then ( function () {
 				echo "Validación de CLABE terminada";
-			});
-			$promise2->then(function () {
+			} );
+			$promise2->then ( function () {
 				echo "Usuario afiliado";
-			});
-			PromiseAlias\Utils::settle([$promise1, $promise2])->wait();
+			} );
+			PromiseAlias\Utils::settle ( [ $promise1, $promise2 ] )->wait ();
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'       => 200,
@@ -155,9 +152,9 @@
 		#[NoReturn] public function testFunction (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			$user = new UserModel();
-			$userData = $user->getDataForAfiliation ( 25 );
-			//			var_dump ($userData);die();
-			var_dump ( $this->validateClabe ( $userData[ 1 ] ) );
+			$userData = $user->getDataForAfiliation ( 35 );
+			$mass = new MassServicios;
+			var_dump ( $mass->registroAfiliado ( $userData[ 1 ] ) );
 			die();
 		}
 		public function validateClabe ( $data ): bool|array {
