@@ -21,18 +21,26 @@
 		public function before ( RequestInterface $request, $arguments = NULL ) {
 			$authenticationHeader = $request->getServer ( 'HTTP_AUTHORIZATION' );
 			helper ( 'jwt' );
-//			$encodedToken = getJWTFromRequest ( $authenticationHeader );
-//			var_dump (  validateJWTFromRequest ( $encodedToken ) );
-//			die();
+			//			$encodedToken = getJWTFromRequest ( $authenticationHeader );
+			//			var_dump (  validateJWTFromRequest ( $encodedToken ) );
+			//			die();
 			try {
 				$encodedToken = getJWTFromRequest ( $authenticationHeader );
+				if ( !$encodedToken ) {
+					return Services::response ()
+					               ->setJSON ( [
+						               'error'       => 401,
+						               'description' => 'Error de autenticación',
+						               'reason'      => 'Token no encontrado o invalido' ] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
+				}
 				validateJWTFromRequest ( $encodedToken );
 				return $request;
 			} catch ( \Exception $e ) {
 				return Services::response ()
 				               ->setJSON ( [
-					               'error' => $e->getMessage (),
-				               ] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
+					               'error'       => 401,
+					               'description' => 'Error de autenticación',
+					               'reason'      => 'Token no encontrado o invalido' ] )->setStatusCode ( ResponseInterface::HTTP_UNAUTHORIZED );
 			}
 		}
 		/**

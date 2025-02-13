@@ -5,8 +5,11 @@
 	use Exception;
 	use App\Models\UserModel;
 	use App\Models\MassServicios;
+	use App\Models\MagicPayModel;
+	use GuzzleHttp\Promise\Promise;
+	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
-	
+	use GuzzleHttp\Promise as PromiseAlias;
 	class Users extends PagesStatusCode {
 		protected string|UserModel $userData = '';
 		public function __construct () {
@@ -71,10 +74,23 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$user = new UserModel();
-			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ]);
-//			var_dump ($this->input[ 'user' ],$userData);die();
-			$mass = new MassServicios;
-			$mass->registroAfiliado ( $userData[1] );
+			$userData = $user->getDataForAfiliation ( $this->input[ 'user' ] );
+			$promise1 = new Promise(function () use (&$promise1, $userData) {
+				$this->validateClabe($userData[1]);
+				$promise1->resolve("CLABE Validada");
+			});
+			$promise2 = new Promise(function () use (&$promise2, $userData) {
+				$mass = new MassServicios;
+				$mass->registroAfiliado ( $userData[ 1 ] );
+				$promise2->resolve("CLABE Validada");
+			});
+			$promise1->then(function () {
+				echo "Validación de CLABE terminada";
+			});
+			$promise2->then(function () {
+				echo "Usuario afiliado";
+			});
+			PromiseAlias\Utils::settle([$promise1, $promise2])->wait();
 			$this->errCode = 200;
 			$this->responseBody = [
 				'error'       => 200,
@@ -134,5 +150,41 @@
 			$emailController = new Email();
 			$emailResponse = $emailController->sendPasswordResetEmail ( $email );
 			return $this->response->setJSON ( $emailResponse );
+		}
+		public function testFunction (): ResponseInterface {
+			$this->input = $this->getRequestInput ( $this->request );
+			$user = new UserModel();
+			$userData = $user->getDataForAfiliation ( 25 );
+			//			var_dump ($userData);die();
+			var_dump ( $this->validateClabe ( $userData[ 1 ] ) );
+			die();
+		}
+		public function validateClabe ( $data ): bool|array {
+			$user = new UserModel();
+			$bankData = $user->getClabeByUsrCompany ( $data[ 'userID' ], $data[ 'company_id' ] );
+			helper ( [ 'tools_helper', 'tetraoctal_helper' ] );
+			$referenceNum = MakeOperationNumber ( $user->getNexId ( 'logs' ) );
+			$folio = $user->generateFolio ( 65, 'transactions', $data[ 'userID' ] );
+			$dataTransfer = [
+				'description'   => 'Validar cuenta clabe',
+				'account'       => $bankData[ 1 ][ 'clabe' ],
+				'amount'        => '0.01',
+				'bank'          => $bankData[ 1 ][ 'magicAlias' ],
+				'owner'         => strtoupper ( "{$data['name']} {$data['last_name']} {$data['sure_name']}" ),
+				'validateOwner' => TRUE ];
+			$magic = new MagicPayModel();
+			$transfer = $magic->createTransfer ( $dataTransfer, $referenceNum, $folio, $data[ 'userID' ] );
+			$bankO = $user->getBankAccountsByUser ( 1 );
+			$transferData = [
+				'opId'          => 1,
+				'transactionId' => $transfer[ 1 ][ 'speiId' ],
+				'description'   => 'Validar cuenta clabe',
+				'noReference'   => $referenceNum,
+				'amount'        => $dataTransfer[ 'amount' ],
+				'destination'   => $bankData[ 1 ][ 'id' ],
+				'origin'        => $bankO[ 1 ][ 'id' ], ];
+			$transaction = new TransactionsModel();
+			$transaction->insertTransaction ( 'op_type', $transferData, $this->user );
+			return $transfer;
 		}
 	}

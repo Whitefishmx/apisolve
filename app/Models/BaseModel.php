@@ -5,11 +5,18 @@
 	use Config\Database;
 	use CodeIgniter\Model;
 	use AllowDynamicProperties;
+	use JetBrains\PhpStorm\NoReturn;
 	
 	#[AllowDynamicProperties] class BaseModel extends Model {
 		public function __construct () {
 			parent::__construct ();
 			$this->db = Database::connect ( 'default' );
+		}
+		public function resultsNotFound ( int $error, string $description, string $reason ): void {
+			$this->responseBody = [ 'error' => $this->errCode = $error, 'description' => $description, 'reason' => $reason ];
+			echo json_encode ( $this->responseBody );
+			http_response_code ( $error );
+			exit;
 		}
 		/**
 		 * Obtiene el siguiente ID que será insertado
@@ -89,7 +96,7 @@ INNER JOIN employee_user eu ON u.id  = eu.user_id
 INNER JOIN employee e ON e.id = eu.employee_id
 INNER JOIN person_user pu ON u.id = pu.user_id
 INNER JOIN person p ON pu.person_id = p.id WHERE u.id = $user";
-//			var_dump ( $query);die();
+			//			var_dump ( $query);die();
 			if ( !$res = $this->db->query ( $query ) ) {
 				saveLog ( $user, 20, 404, json_encode ( [ 'query' => str_replace ( "\n", " ", $user ) ] ),
 					json_encode ( $res->getResultArray ()[ 0 ], TRUE ) );
@@ -105,10 +112,10 @@ INNER JOIN person p ON pu.person_id = p.id WHERE u.id = $user";
 				$res->getResultArray ()[ 0 ], TRUE ) );
 			return [ $res->getResultArray ()[ 0 ] ];
 		}
-		public function getBankByClave($clabe){
-			$clabe = substr ($clabe,0,3);
+		public function getBankByClave ( $clabe ) {
+			$clabe = substr ( $clabe, 0, 3 );
 			$query = "SELECT * FROM cat_bancos WHERE bnk_clave = '$clabe' ";
-//			var_dump ($query);die();
+			//			var_dump ($query);die();
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
 					return [ TRUE, $res->getResultArray ()[ 0 ] ];

@@ -75,6 +75,11 @@
 			$this->responseBody = [ 'error' => $this->errCode, 'description' => $description, 'reason' => $reason ];
 			return $this->responseBody;
 		}
+		public function unauthorized ( $description, $reason ): array {
+			$this->errCode = 401;
+			$this->responseBody = [ 'error' => $this->errCode, 'description' => $description, 'reason' => $reason ];
+			return $this->responseBody;
+		}
 		public function dataTypeNotAllowed ( $dataType ): array {
 			$this->errCode = 400;
 			$this->responseBody = [
@@ -111,7 +116,7 @@
 			$this->responseBody = [
 				'error'       => $this->errCode,
 				'description' => $description !== NULL ? $description : 'Recurso no encontrada',
-				'reason'      => $reason !== NULL ? $reason :'No se encontró información con los datos ingresados' ];
+				'reason'      => $reason !== NULL ? $reason : 'No se encontró información con los datos ingresados' ];
 			return $this->responseBody;
 		}
 		public function redirectLogIn (): array {

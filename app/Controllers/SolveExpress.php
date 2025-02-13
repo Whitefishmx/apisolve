@@ -20,7 +20,15 @@
 			$this->express = new SolveExpressModel();
 		}
 		/**
-		 * @throws Exception
+		 * Retrieves certificates for the current user.
+		 *
+		 * This function processes a POST request to fetch certificates associated with the authenticated user.
+		 * It performs input validation, retrieves certificates, and prepares the response.
+		 *
+		 * @return ResponseInterface The HTTP response containing either the found certificates or an error message.
+		 *                           If certificates are found, the response will have a 200 status code and include the certificates.
+		 *                           If no certificates are found or an error occurs, an appropriate error response will be returned.
+		 * @throws Exception If an error occurs during the certificate retrieval process.
 		 */
 		public function getCerts (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
@@ -317,10 +325,11 @@
 			return $this->getResponse ( $this->responseBody );
 		}
 		/**
-		 * @throws Exception
+		 * @throws DateMalformedStringException
 		 */
 		public function requestAdvance (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
+			
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
@@ -351,6 +360,13 @@
 			}
 			if ( intval ( $res[ 1 ][ 'available' ] ) != 1 ) {
 				$this->serverError ( 'Error en el servicio', "No cuenta con mas adelantos de nomina" );
+				$this->logResponse ( 15 );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			//			var_dump (intval ( $res[ 1 ][ 'bankValidated']);
+			//			var_dump (intval ( $res[ 1 ][ 'bankValidated']) !== 1); die();
+			if ( intval ( $res[ 1 ][ 'bankValidated' ] ) !== 1 ) {
+				$this->serverError ( 'Error en el servicio', "Su cuenta clabe no es valida, verifique con Recursos Humanos" );
 				$this->logResponse ( 15 );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -478,7 +494,7 @@
 			$data = $this->checkExists ( $data, $this->input[ 'company' ] );
 			$upsert = $this->upsertNomina ( $data, $this->input[ 'company' ], $this->user );
 			$this->updateAdvancePayrollControlUpdN ( $this->input[ 'company' ] );
-			return $this->getResponse ( $upsert[0], 200 );
+			return $this->getResponse ( $upsert[ 0 ], 200 );
 		}
 		/**
 		 * Permite generar un reporte y filtrar los resultados
@@ -1033,14 +1049,6 @@
 			return [ $this->responseBody, $this->errCode ];
 		}
 		/**
-		 * @throws Exception
-		 */
-		public function testfunction (): void {
-			$this->input = $this->getRequestInput ( $this->request );
-			$planCompany = $this->express->getPlanCompany ( $this->input[ 'company' ] );
-			var_dump ( $planCompany );
-		}
-		/**
 		 * @param            $company_id
 		 * @param mixed      $current_date
 		 * @param mixed      $employee
@@ -1071,5 +1079,13 @@
 				$this->express->insertAdvancePayrollControl ( $employee[ 'id' ], $period_name, $days_worked, $amount_available, $available, $this->user );
 			}
 			return [ $period, $period_name, $days_worked ];
+		}
+		/**
+		 * @throws Exception
+		 */
+		public function testfunction (): void {
+			$this->input = $this->getRequestInput ( $this->request );
+			$planCompany = $this->express->getPlanCompany ( $this->input[ 'company' ] );
+			var_dump ( $planCompany );
 		}
 	}

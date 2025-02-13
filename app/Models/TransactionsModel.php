@@ -20,23 +20,6 @@ VALUES ('{$args['opId']}', '{$args['transactionId']}', '{$args['description']}',
 				return [ FALSE, 'No se pudo generar el pedido' ];
 			}
 		}
-		public function updateTransactionStatus ( $folio, $noRef, $status, $user ): array {
-			$query = "UPDATE transactions SET status = '$status' WHERE external_id like '%$folio%' AND noReference = '$noRef'";
-			if ( $this->db->query ( $query ) ) {
-				$affected = $this->db->affectedRows ();
-				if ( $affected > 0 ) {
-					saveLog ( $user, 26, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
-					( [ 'affected' => $affected ] ) );
-					return [ TRUE, 'Se actualizó el estado de las transacciones' ];
-				}
-				saveLog ( $user, 26, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
-				( [ FALSE, 'affected' => $affected ] ) );
-				return [ FALSE, 'No se encontró registro a actualizar' ];
-			}
-			saveLog ( $user, 26, 200, json_encode ( [ 'folio' => $folio, 'noReference' => $noRef, 'status' => $status ] ), json_encode
-			( [ FALSE, 'affected' => $this->db->error () ] ) );
-			return [ FALSE, 'No se pudo actualizar el estado de las transacciones' ];
-		}
 		public function getDataForCep (): array {
 			$query = "SELECT t.id, t.external_id, t.description, t.noReference, t.amount, t.created_at as 'transaction_date',
        b1.clabe as 'clabe_origin', cb1.bnk_code as 'codigo_origen', cb1.bnk_alias as 'alias_origen',
@@ -56,9 +39,8 @@ WHERE t.cep  IS NULL";
 					$res = $res->getResultArray ();
 					return [ TRUE, $res ];
 				}
-			} else {
-				return [ FALSE, 'No se encontraron resultados' ];
 			}
+			return [ FALSE, 'No se encontraron resultados' ];
 		}
 		public function DownloadCEP ( array $args, int $try ) {
 			$tmp_dir = './public/boveda/CEP/tmp/';
@@ -183,5 +165,18 @@ WHERE t.cep  IS NULL";
 					unlink ( $file );      // Eliminar el archivo
 				}
 			}
+		}
+		public function verifyMagicTransactions ( mixed $input ): bool {
+			if ( !$data = $this->db->query ( "SELECT * FROM transactions t WHERE t.external_id LIKE '%{$input['transferId']}%'" ) ) {
+				return FALSE;
+			}
+			$data = $data->getRowArray ();
+			if ( intval ( $data[ 'op_type' ] ) === 1 && $input[ 'status' ] === 'paid' ) {
+				$res = $this->db->query ( "UPDATE bank_accounts ba SET ba.validated = 1, ba.active = 1 WHERE id = '{$data['account_destination']}'" );
+			}
+			if ( !$this->db->query ( "UPDATE transactions t SET t.status = '{$input[ 'status' ]}' WHERE id = '{$data['id']}'" ) ) {
+				return FALSE;
+			}
+			return TRUE;
 		}
 	}

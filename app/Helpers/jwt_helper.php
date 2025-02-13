@@ -9,11 +9,10 @@
 	 * @param $authenticationHeader
 	 *
 	 * @return string
-	 * @throws Exception
 	 */
 	function getJWTFromRequest ( $authenticationHeader ): string {
 		if ( is_null ( $authenticationHeader ) ) {
-			throw new Exception( 'Token faltante o invalido en la petición' );
+			return FALSE;
 		}
 		return explode ( ' ', $authenticationHeader )[ 1 ];
 	}
@@ -22,11 +21,16 @@
 	 * @param string $encodedToken
 	 *
 	 * @return array
-	 * @throws Exception
 	 */
 	function validateJWTFromRequest ( string $encodedToken ): array {
 		$key = Services::getSecretKey ();
-		$decodedToken = JWT::decode ( $encodedToken, new Key( $key, 'HS256' ) );
+		try {
+			$decodedToken = JWT::decode ( $encodedToken, new Key( $key, 'HS256' ) );
+		}catch ( Exception $e ) {
+			echo json_encode ( [ 'error' => 303 , 'description' => "Error de autenticación", 'reason' => "Token invalido o expirado" ] );
+			http_response_code ( 303 );
+			exit;
+		}
 		$userModel = new UserModel();
 		return $userModel->findUserByTokenAccess ( $decodedToken->email );
 	}

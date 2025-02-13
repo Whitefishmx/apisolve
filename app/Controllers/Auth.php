@@ -16,7 +16,6 @@
 				return ( $data );
 			}
 			$input = $this->getGetRequestInput ( $this->request );
-			$this->environment ( $input );
 			$rules = [
 				'usuario'    => 'required|min_length[4]|max_length[50]',
 				'contraseña' => 'required|min_length[8]|max_length[255]|validateUser[usuario, contraseña, environment]',
@@ -98,16 +97,23 @@
 			$authenticationHeader = $this->request->getServer ( 'HTTP_AUTHORIZATION' );
 			try {
 				$encodedToken = getJWTFromRequest ( $authenticationHeader );
+				if ( !$encodedToken ) {
+					$this->unauthorized ( 'Error de seguridad', 'Falta el token en la petición,' );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
 				$jwt = validateJWTFromRequest ( $encodedToken );
 				if ( $jwt[ 0 ] === FALSE ) {
 					$this->serverError ( 'Error con el token', $jwt[ 1 ] );
 					return $this->getResponse ( $this->responseBody, $this->errCode );
 				}
 				$newJwt = getSignedJWTForUser ( $jwt[ 1 ][ 'email' ], $jwt[ 1 ][ 'id' ] );
+				$user = new UserModel();
+				$res = $user->getPermissions ( 6, $jwt[ 1 ][ 'id' ] );
 				$this->responseBody = [
 					'error'        => 0,
 					'user'         => [
-						'data' => $jwt[ 1 ] ],
+						'permissions' => $res[ 1 ],
+						'data'        => $jwt[ 1 ] ],
 					'access_token' => $newJwt,
 					'logged_in'    => TRUE ];
 				return $this->getResponse ( $this->responseBody, $this->errCode );

@@ -1,9 +1,6 @@
 <?php
 	
 	namespace App\Models;
-	
-	use Exception;
-	
 	class UserModel extends BaseModel {
 		/**
 		 * Función para obtener la información de un usuario con acceso a token para validar el inicio de sesión.
@@ -11,18 +8,16 @@
 		 * @param string $user Username a buscar
 		 *
 		 * @return array|mixed error o datos de usuario
-		 * @throws Exception
 		 */
 		public function authenticateToken ( string $user ): mixed {
 			$query = "SELECT * FROM users WHERE nickname = '$user' and token = '1' and active = '1'";
-			if ( $res = $this->db->query ( $query ) ) {
-				if ( $res->getNumRows () > 0 ) {
-					return $res->getResultArray ()[ 0 ];
-				} else {
-					throw new Exception( 'Credenciales incorrectas' );
-				}
+			if ( !$res = $this->db->query ( $query ) ) {
+				$this->resultsNotFound ( 401, 'Error en la autenticación', 'Credenciales incorrectas' );
 			}
-			throw new Exception( 'Credenciales incorrectas' );
+			if ( $res->getNumRows () < 1 ) {
+				$this->resultsNotFound ( 401, 'Error en la autenticación', 'Credenciales incorrectas' );
+			}
+			return $res->getResultArray ()[ 0 ];
 		}
 		/**
 		 * Función para obtener la información de un usuario proporcionando por un token
@@ -30,10 +25,8 @@
 		 * @param string $mail correo electrónico asociado a unn usuario
 		 *
 		 * @return array error o datos de usuario
-		 * @throws Exception
 		 */
 		public function findUserByTokenAccess ( string $mail ): array {
-			//Se declara el ambiente a utilizar
 			$query = "SELECT t1.id, t1.email, t2.name, t2.last_name, t2.sure_name, t2.rfc, t2.curp, t3.net_salary, t3.plan, t1.first_login,
        t2.id AS 'personId', t3.id AS 'employeId', t3.company_id AS 'companyId'
 FROM users t1
@@ -65,7 +58,7 @@ WHERE ((t1.nickname = '$login' AND t1.password = '$password')
    OR (t1.email = '$login' AND t1.password = '$password')
    OR (t2.curp = '$login' AND t1.password = '$password'))
    AND t1.active = 1 AND t3.status = 1 AND t2.active = 1";
-//									var_dump ($query);die();
+			//									var_dump ($query);die();
 			$res = $this->db->query ( $query );
 			//			var_dump($res->getNumRows ());die();
 			if ( $res->getNumRows () === 0 ) {
@@ -74,18 +67,11 @@ WHERE ((t1.nickname = '$login' AND t1.password = '$password')
 			$res = $res->getResultArray ();
 			$userid = $res[ 0 ][ 'id' ];
 			$user = $res[ 0 ];
-			$query = "SELECT v.name, v.session, v.route, p.writable
-FROM permissions p
-    JOIN views v ON p.view_id = v.id
-    JOIN users u ON p.user_id = u.id
-    JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
-WHERE pa.id_platform = $platform AND u.id  = $userid";
-			//						var_dump ($query);die();
-			$res = $this->db->query ( $query );
-			if ( $res->getNumRows () === 0 ) {
-				return [ FALSE, $res->getNumRows () ];
+			$res = $this->getPermissions ( $platform, $userid );
+			if ( $res[ 0 ] === FALSE ) {
+				return [ FALSE, $res[ 1 ] ];
 			}
-			$data = [ 'id' => $userid, 'permissions' => $res->getResultArray (), 'userData' => $user ];
+			$data = [ 'id' => $userid, 'permissions' => $res[ 1 ], 'userData' => $user ];
 			return [ TRUE, $data ];
 		}
 		public function getBankAccountsByUser ( int $user ): array {
@@ -239,7 +225,7 @@ WHERE p.curp = '$curp'";
 			return [ FALSE, 'No se encontraron resultados' ];
 		}
 		public function getDataForAfiliation ( $user ): array {
-			$query = "SELECT u.id AS 'userID', p.id AS 'personId', e.id AS 'employeeId', p.rfc, p.phone, apr.planBenefit, cpb.plan,
+			$query = "SELECT u.id AS 'userID', p.id AS 'personId', e.id AS 'employeeId', e.company_id, p.rfc, p.phone, apr.planBenefit, cpb.plan,
        CapitalizarTexto(p.name) AS 'name', CapitalizarTexto(p.last_name) AS 'last_name', CapitalizarTexto(p.sure_name) AS 'sure_name'
 FROM users u
     INNER JOIN employee_user eu ON u.id  = eu.user_id
@@ -253,5 +239,40 @@ WHERE u.id = $user ";
 				return [ TRUE, $res->getRowArray () ];
 			}
 			return [ FALSE, 'No se encontraron resultados' ];
+		}
+		public function getClabeByUsrCompany ( int $user ): array {
+			$query = "SELECT b.id, b.clabe, c.bnk_alias, c.bnk_nombre, c.magicAlias
+FROM bank_accounts b
+    INNER JOIN cat_bancos c ON c.id = b.bank_id
+    INNER JOIN users u ON b.user_id = u.id
+WHERE u.id = $user";
+			if ( !$res = $this->db->query ( $query ) ) {
+				return [ FALSE, 'No se encontró información' ];
+			}
+			$rows = $res->getNumRows ();
+			if ( $rows >= 1 ) {
+				return [ TRUE, $res->getRowArray () ];
+			}
+			return [ FALSE, 'No se encontró información' ];
+			
+		}
+		/**
+		 * @param int   $platform
+		 * @param mixed $userid
+		 *
+		 * @return array
+		 */
+		public function getPermissions ( int $platform, mixed $userid ): array {
+			$query = "SELECT v.name, v.session, v.route, p.writable
+FROM permissions p
+    JOIN views v ON p.view_id = v.id
+    JOIN users u ON p.user_id = u.id
+    JOIN platform_access pa ON pa.id_user = u.id AND pa.id_platform = v.platform_id
+WHERE pa.id_platform = $platform AND u.id  = $userid";
+			$res = $this->db->query ( $query );
+			if ( $res->getNumRows () === 0 ) {
+				return [ FALSE, $res->getNumRows () ];
+			}
+			return [ TRUE, $res->getResultArray () ];
 		}
 	}

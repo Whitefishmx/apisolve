@@ -43,7 +43,7 @@
 	$routes->add ( 'dispersionPlus', 'Dispersiones::getDispersionPlus' /**@uses \App\Controllers\Dispersiones::getDispersionPlus* */ );
 	$routes->add ( 'conciliationPlus', 'Conciliaciones::getConciliationPlus' /**@uses \App\Controllers\Conciliaciones::getConciliationPlus* */ );
 	//=========================================================|| POST ||=========================================================
-	$routes->add ( 'test', 'SolveExpress::testfunction' /**@uses \App\Controllers\SolveExpress::testfunction */ );
+	$routes->add ( 'test', 'Users::testFunction' /**@uses \App\Controllers\Users::testFunction */ );
 	//========================|| Conciliaciones ||========================
 	$routes->add ( 'chosenConciliation', 'Conciliaciones::chosenConciliation' /**@uses \App\Controllers\Conciliaciones::chosenConciliation* */ );
 	$routes->add ( 'chosenForDispersion', 'Dispersiones::chosenForDispersion' /**@uses \App\Controllers\Dispersiones::chosenForDispersion* */ );
@@ -92,4 +92,3 @@
 	//========================|| DELETE ||========================
 	$routes->add ( 'sExpressFireOne', 'SolveExpress::fireOne' /**@uses \App\Controllers\SolveExpress::fireOne */ );
 	//========================|| END ||========================
-	

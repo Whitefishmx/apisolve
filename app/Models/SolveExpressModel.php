@@ -127,10 +127,6 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 			}
 			$rows = $res->getNumRows ();
 			if ( $rows > 0 ) {
-				if ( $res->getNumRows () === 1 ) {
-					saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res->getResult ()[ 0 ] ) );
-					return [ TRUE, $res->getResult ()[ 0 ] ];
-				}
 				$res = $res->getResultArray ();
 				saveLog ( $user, 12, 200, json_encode ( [ 'args' => $args ] ), json_encode ( $res ) );
 				return [ TRUE, $res ];
@@ -148,7 +144,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 			                    CASE WHEN e.plan = 'q' THEN (e.net_salary/2)-(t1.requested_amount)
 			                    WHEN e.plan = 'm' THEN (e.net_salary)-(t1.requested_amount)
 			                    WHEN plan = 's' THEN (e.net_salary/2)-(t1.requested_amount)
-			                    END AS 'remaining_amount', t1.period, FORMAT_TIMESTAMP(t1.created_at) AS 'request_date' " )
+			                    END AS 'remaining_amount', t1.period, FORMAT_TIMESTAMP(t1.created_at) AS 'request_date', c.id as 'companyId', c.legal_name, c.short_name " )
 			                    ->join ( 'employee_user eu', 'u.id  = eu.user_id', 'inner' )
 			                    ->join ( 'employee e', 'eu.employee_id = e.id', 'inner' )
 			                    ->join ( 'person_user pu', 'u.id = pu.user_id', 'inner' )
@@ -362,7 +358,7 @@ WHERE p.active = 1 and e.status = 1 AND u.active =1 AND u.email IS NULL AND u.pa
 		public function getDashboard ( int $user ): array {
 			$query = "SELECT u.id as userId, p.id as personId, e.id as employeeId,
        p.name, p.last_name, p.sure_name, c.short_name, RoundDown(e.net_salary) AS 'net_salary', e.plan, RoundDown(t1.amount_available) AS 'amount_available', t1.worked_days, t1.available, t1.actual_period,
-       apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as clabe, t1.req_day, t1.req_biweekly, t1.req_month, apr.limit_day, apr.limit_biweekly, apr.limit_month
+       apr.min_amount, apr.max_amount, apr.commission, CONCAT('**** **** ****** ', SUBSTRING(ba.clabe, -4)) as clabe, ba.validated AS 'bankValidated', t1.req_day, t1.req_biweekly, t1.req_month, apr.limit_day, apr.limit_biweekly, apr.limit_month
     FROM users u
         INNER JOIN employee_user eu ON u.id  = eu.user_id
         INNER JOIN employee e ON e.id = eu.employee_id
@@ -610,7 +606,7 @@ WHERE employee_id = $employeeId";
                req_biweekly = IF(DAY(CURRENT_DATE) = 16 OR LAST_DAY(CURRENT_DATE) = CURRENT_DATE, 0, req_biweekly),
                req_month = IF(DAY(CURRENT_DATE) = 1, 0, req_month)
             WHERE employee_id IN (
-                SELECT id FROM employee WHERE company_id = ? )", $company_id);
+                SELECT id FROM employee WHERE company_id = ? )", $company_id );
 		}
 		public function getAdvancePayrollControl ( $employee_id, $user ): array {
 			$query = "SELECT * FROM advancePayroll_control WHERE employee_id = $employee_id";
@@ -767,7 +763,7 @@ ON DUPLICATE KEY UPDATE
 				'bank_id'    => $bankId,
 				'clabe'      => $value[ 'Cuenta' ],
 				'active'     => 1,
-				'validated'  => 1,
+				'validated'  => 0,
 			];
 			$this->db->table ( 'bank_accounts' )->insert ( $bankAccountData );
 			$this->db->table ( 'platform_access' )->insert ( [

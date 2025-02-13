@@ -11,21 +11,23 @@
   },
   "require": {
     "php": "^8.3",
+    "ext-calendar": "*",
     "ext-curl": "*",
     "ext-fileinfo": "*",
+    "ext-gd": "*",
+    "ext-http": "*",
     "ext-json": "*",
     "ext-openssl": "*",
     "ext-pcntl": "*",
     "ext-simplexml": "*",
     "ext-zip": "*",
     "codeigniter4/framework": "4.4.8",
+    "ctwillie/expo-server-sdk-php": "^2.1",
     "dompdf/dompdf": "^3.0",
     "firebase/php-jwt": "^6.10",
+    "guzzlehttp/guzzle": "^7.9",
     "maennchen/zipstream-php": "^2.2",
-    "phpoffice/phpspreadsheet": "^3.3",
-    "ext-calendar": "*",
-    "ext-http": "*",
-    "ext-gd": "*"
+    "phpoffice/phpspreadsheet": "^3.3"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9",

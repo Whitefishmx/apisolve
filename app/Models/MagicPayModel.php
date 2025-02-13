@@ -3,8 +3,8 @@
 	namespace App\Models;
 	class MagicPayModel extends BaseModel {
 		private array $apiKey = [
-			//			'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
-			'development' => 'sk_live_jMMnyG9ZrqKPqCd9SjKzMIdI41ecI7ex',
+						'development' => 'sk_live_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v',
+//			'development' => 'sk_live_jMMnyG9ZrqKPqCd9SjKzMIdI41ecI7ex',
 			'production'  => 'sk_prod_39kdOyJtKEih1XOwTUFlNoJsFYNJo11v' ];
 		public function getBalance (): bool|array {
 			$env = getenv ( 'CI_ENVIRONMENT' );
@@ -48,7 +48,7 @@
 			}
 			return [ TRUE, 'response' => $res[ 'response' ] ];
 		}
-		public function createTransfer ( array $args, $referenceNum = NULL, string $folio = NULL, $user = NULL ): bool|array {
+		public function createTransfer ( array $args, ?string $referenceNum = NULL, ?string $folio = NULL, ?int $user = NULL ): bool|array {
 			$user = $user === NULL ? 2 : $user;
 			$env = getenv ( 'CI_ENVIRONMENT' );
 			if ( $referenceNum === NULL ) {
@@ -59,6 +59,7 @@
 				helper ( 'tetraoctal_helper' );
 				$folio = $this->generateFolio ( 10, 'logs', 2 );
 			}
+			$bank = $this->getBankByClave ( $args[ 'account' ] )[ 1 ];
 			$data = [
 				'apiKey'        => $this->apiKey[ strtolower ( $env ) ],
 				'transferId'    => "$folio",
@@ -66,11 +67,10 @@
 				'account'       => $args[ 'account' ],
 				'numReference'  => "$referenceNum",
 				'amount'        => floatval ( $args[ 'amount' ] ),
-				'bank'          => $args[ 'bank' ],
+				'bank'          => $bank[ 'magicAlias' ],
 				'owner'         => $args[ 'owner' ],
 				'validateOwner' => $args[ 'validateOwner' ],
 			];
-			//			die( var_dump ( $data ) );
 			$res = $this->sendRequest ( 'speiTransfer', $data, 'POST', 'JSON', NULL );
 			saveLog ( $user, 9, $res[ 'code' ], json_encode ( $data ), json_encode ( $res, JSON_FORCE_OBJECT | JSON_ERROR_NONE ) );
 			if ( !$res[ 0 ] ) {

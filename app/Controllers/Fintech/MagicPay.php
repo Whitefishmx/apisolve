@@ -4,6 +4,7 @@
 	
 	use Exception;
 	use App\Models\MagicPayModel;
+	use App\Models\TransactionsModel;
 	use App\Controllers\PagesStatusCode;
 	use CodeIgniter\HTTP\ResponseInterface;
 	
@@ -16,6 +17,8 @@
 			}
 			$this->errCode = 200;
 			$this->input = $this->getRequestLogin ( $this->request );
+			$transaction = new TransactionsModel();
+			$transaction->verifyMagicTransactions ( $this->input);
 			$out = [
 				'error'       => $this->errCode,
 				'description' => 'Información recibida.',
@@ -166,10 +169,11 @@
 				$this->serverError ( 'Error al crear la transferencia', 'No se pudo realizar la transacción' );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
+			//			var_dump ($res);die();
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Datos correctos',
-				'response'    => json_decode ( $res[ 'response' ], TRUE )[ 'result' ] ];
+				'response'    => $res[ 1 ] ];
 			$this->logResponse ( 8 );
 			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
