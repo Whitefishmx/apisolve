@@ -30,7 +30,7 @@
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
 	$routes->add ( 'createCertMass', 'FileController::generateCert' /**@uses \App\Controllers\FileController::generateCert* */ );
 	//========================|| GET ||========================
-	$routes->add ( '/', 'Home' );
+	$routes->get ( '/', 'Home' /**@uses \App\Controllers\Home::index ()* */ );
 	$routes->add ( 'acuseReune', 'Home::acuseReune' );
 	$routes->add ( 'token', 'Auth::login' /**@uses \App\Controllers\Auth::Login* */ );
 	$routes->add ( 'getLawsText', 'Data::getLaws' /**@uses \App\Controllers\Data::getLaws* */ );
@@ -82,7 +82,12 @@
 	$routes->add ( 'excelCompany', 'SolveExpress::excelFileReportCompany' /**@uses \App\Controllers\SolveExpress::excelFileReportCompany */ );
 	$routes->add ( 'sExpressValidateBenefits', 'SolveExpress::ValidateBenefits' /**@uses \App\Controllers\SolveExpress::ValidateBenefits */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
-	
+	//========================|| Notifications ||========================
+	$routes->add ( 'getNotifications', 'Notifications::getNotification' /**@uses \App\Controllers\Notifications::getNotification */ );
+	$routes->add ( 'readNotifications', 'Notifications::readNotification' /**@uses \App\Controllers\Notifications::readNotification */ );
+	$routes->add ( 'insertNotifications', 'Notifications::insertNotification' /**@uses \App\Controllers\Notifications::insertNotification */ );
+	$routes->add ( 'deleteNotifications', 'Notifications::deleteNotification' /**@uses \App\Controllers\Notifications::deleteNotification */ );
+	$routes->add ( 'saveExponentPushToken', 'Notifications::saveExponentPushToken' /**@uses \App\Controllers\Notifications::saveExponentPushToken */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================
