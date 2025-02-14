@@ -83,6 +83,7 @@
 	$routes->add ( 'sExpressValidateBenefits', 'SolveExpress::ValidateBenefits' /**@uses \App\Controllers\SolveExpress::ValidateBenefits */ );
 	$routes->add ( 'sExpressReportCompany', 'SolveExpress::payrollAdvanceReportC' /**@uses \App\Controllers\SolveExpress::payrollAdvanceReportC */ );
 	
+	$routes->add ( 'saveExponentPushToken', 'Notifications::saveExponentPushToken' /**@uses \App\Controllers\Notifications::saveExponentPushToken */ );
 	//========================|| PUT ||========================
 	//========================|| PATCH ||========================
 	//========================|| Profile ||========================

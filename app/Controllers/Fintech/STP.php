@@ -30,8 +30,8 @@
 			for ( $i = 0; $i < count ( $beneficiarios ); $i++ ) {
 				$args[ 'beneficiario' ] = $beneficiarios[ $i ];
 				$args[ 'ordenante' ] = [
-					'clabe'  => '646180546900000003',
-					'nombre' => 'WHITEFISH',
+					'clabe'  => '646180317800000002',
+					'nombre' => 'VATORO',
 				];
 				$responses[] = json_decode ( $stp->sendDispersion ($args,null,  NULL, $this->user ), TRUE );
 			}

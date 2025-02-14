@@ -5,15 +5,18 @@
 	use OpenSSLAsymmetricKey;
 	
 	class StpModel extends BaseModel {
-		//		private string $privateKey = './crypt/llavePrivada.pem';
-		private string $privateKey = 'C:\web\apps\apisolve\public\crypt/llavePrivada.pem';
-		private string $passphrase = '12345678';
+		private string $privateKey = '/var/www/apisolve/public/crypt/stp_vatoro/VATORO.pem';
+		//		private string $privateKey = 'C:\web\apps\apisolve\public\crypt/llavePrivada.pem';
+		private string $passphrase = 'V4tOr0/Stp?CLaV3';
 		private string $stpSandbox = 'https://demo.stpmex.com:7024/speiws/rest/';
 		private string $stpLive    = 'https://demo.stpmex.com:7024/speiws/rest/';
 		/**
 		 * Genera un dispersion de dinero a través de STP
 		 *
-		 * @param string|NULL $env Ambiente en el que se estará trabajando
+		 * @param array       $args
+		 * @param string|null $referenceNum
+		 * @param string|null $folio
+		 * @param int|null    $user
 		 *
 		 * @return bool|string resultado de la petición
 		 */
@@ -28,11 +31,11 @@
 				$folio = $this->generateFolio ( 10, 'logs', 2 );
 			}
 			$bancoBeneficiario = $this->getBankByClave ( $args[ 'beneficiario' ][ 'clabe' ] )[ 1 ];
-			$bancoOrdenante = $this->getBankByClave ( $args[ 'beneficiario' ][ 'clabe' ] )[ 1 ];
+			$bancoOrdenante = $this->getBankByClave ( $args[ 'ordenante' ][ 'clabe' ] )[ 1 ];
 			helper ( 'tools_helper' );
 			$data = [
 				'bancoReceptor'     => $bancoBeneficiario[ 'bnk_code' ],
-				'empresa'           => 'WHITEFISH',
+				'empresa'           => 'VATORO',
 				'fechaOperacion'    => '',
 				'folioOrigen'       => '',
 				'claveRastreo'      => $folio,
@@ -68,8 +71,10 @@
 			];
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||'.$cadenaOriginal.'||';
+//			echo $cadenaOriginal.PHP_EOL;
 			saveLog ( 2, 1, 1, 200, json_encode ( [ 'cadenaOriginal' => $data ] ) );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
+//			echo $cadenaOriginal.PHP_EOL;
 			$body = [
 				"claveRastreo"           => $data[ 'claveRastreo' ],
 				"conceptoPago"           => $data[ 'concepto' ],
@@ -87,9 +92,13 @@
 				"tipoCuentaBeneficiario" => "{$data[ 'tipoCuentaDestino' ]}",
 				"tipoCuentaOrdenante"    => "{$data[ 'tipoCuentaOrigen' ]}",
 				"tipoPago"               => "{$data[ 'tipoPago' ]}",
+				"latitud"                => "19.370312",
+				"longitud"               => "-99.180617",
 				"firma"                  => "$cadenaOriginal",
 			];
+//			var_dump ( json_encode ( $body ) );
 			$res = $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
+//			var_dump ( $res );
 			saveLog ( 2, 1, 1, json_encode ( $body ), json_encode ( $res ) );
 			return $res;
 		}
