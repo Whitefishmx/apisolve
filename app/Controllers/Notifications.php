@@ -109,10 +109,30 @@
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$res = $this->notification->markAsDeleted ( $this->user, $this->input[ 'id' ] );
-			if ( !$res[ 0 ] ) {
-				$this->serverError ( 'Error al cambiar eñ estatus de la notificación', 'No se pudo eliminar la notificación intente nuevamente' );
+			if ( count ( $this->input ) > 1 ) {
+				$counter = 0;
+				foreach ( $this->input as $value ) {
+					$res = $this->notification->markAsDeleted ( $this->user, $value[ 'id' ] );
+					if ( !$res[ 0 ] ) {
+						$counter++;
+					}
+				}
+				if ( $counter > 0 ) {
+					$this->serverError ( 'Error al cambiar eñ estatus de las notificaciónes', "No se pudo eliminar las notificaciónes intente nuevamente" );
+				}else{
+					$this->responseBody = [
+						'error'       => $this->errCode = 200,
+						'description' => 'Notificaciónes eliminadas correctamente',
+						'response'    => 'ok',
+					];
+				}
 				return $this->getResponse ( $this->responseBody, $this->errCode );
+			} else {
+				$res = $this->notification->markAsDeleted ( $this->user, $this->input[ 'id' ] );
+				if ( !$res[ 0 ] ) {
+					$this->serverError ( 'Error al cambiar eñ estatus de la notificación', 'No se pudo eliminar la notificación intente nuevamente' );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
 			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
@@ -120,16 +140,52 @@
 				'response'    => 'ok',
 			];
 			return $this->getResponse ( $this->responseBody, $this->errCode );
+			
+			
+			
+//			$res = $this->notification->markAsDeleted ( $this->user, $this->input[ 'id' ] );
+//
+//			if ( !$res[ 0 ] ) {
+//				$this->serverError ( 'Error al cambiar eñ estatus de la notificación', 'No se pudo eliminar la notificación intente nuevamente' );
+//				return $this->getResponse ( $this->responseBody, $this->errCode );
+//			}
+//			$this->responseBody = [
+//				'error'       => $this->errCode = 200,
+//				'description' => 'Notificación eliminada correctamente',
+//				'response'    => 'ok',
+//			];
+//			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		public function readNotification (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
+//			var_dump ($this->input);die();
 			if ( $this->verifyRules ( 'POST', $this->request, NULL ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$res = $this->notification->markAsRead ( $this->user, $this->input[ 'id' ] );
-			if ( !$res[ 0 ] ) {
-				$this->serverError ( 'Error al cambiar eñ estatus de la notificación', 'No se pudo marcar como leida intente nuevamente' );
+			if ( count ( $this->input ) > 1 ) {
+				$counter = 0;
+				foreach ( $this->input as $value ) {
+					$res = $this->notification->markAsRead ( $this->user, $value[ 'id' ] );
+					if ( !$res[ 0 ] ) {
+						$counter++;
+					}
+				}
+				if ( $counter > 0 ) {
+					$this->serverError ( 'Error al cambiar eñ estatus de las notificaciónes', "No se pudieron actualizar $counter notificaciones" );
+				}else{
+					$this->responseBody = [
+						'error'       => $this->errCode = 200,
+						'description' => 'Estatus de las notificaciónes se cambiaron correctamente',
+						'response'    => 'ok',
+					];
+				}
 				return $this->getResponse ( $this->responseBody, $this->errCode );
+			} else {
+				$res = $this->notification->markAsRead ( $this->user, $this->input[ 'id' ] );
+				if ( !$res[ 0 ] ) {
+					$this->serverError ( 'Error al cambiar eñ estatus de la notificación', 'No se pudo marcar como leida intente nuevamente' );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
 			}
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,

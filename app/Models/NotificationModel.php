@@ -13,7 +13,8 @@ class NotificationModel extends BaseModel {
 		}
 	}
 	public function saveTokenExpo ( $user, $token, $device ): array {
-		$query = "INSERT INTO notifications_token ( user_id, token, device ) VALUES '$user', '$token', '$device' ON DUPLICATE KEY UPDATE token = '$token'";
+		$query = "INSERT INTO notifications_token ( user_id, token, device ) VALUES ('$user', '$token', '$device') ON DUPLICATE KEY UPDATE token = '$token'";
+//		var_dump ($query);die();
 		if ( $this->db->query ( $query ) ) {
 			$id = $this->db->insertId ();
 			saveLog ( $user, 66, 200, json_encode ( [ $user, $token, $device ] ), json_encode ( [ 'id' => $id ], TRUE ) );
@@ -51,7 +52,7 @@ class NotificationModel extends BaseModel {
 	 * @return array|null
 	 */
 	public function getNotifications ( $user ): array|null {
-		$query = "SELECT id ,title, subtitle, body, mobile, web, `read`, FORMAT_TIMESTAMP(create_at) FROM notifications WHERE `deleted` = 0 AND user_id = $user ORDER BY `create_at` DESC";
+		$query = "SELECT id ,title, subtitle, body, mobile, web, `read`, FORMAT_TIMESTAMP(create_at) as `date` FROM notifications WHERE `deleted` = 0 AND user_id = $user ORDER BY `create_at` DESC";
 		if ( !$res = $this->db->query ( $query ) ) {
 			$this->resultsNotFound ( 500, 'Error al obtener notificaciones', 'No se lograron obtener notificaciones' );
 		}
