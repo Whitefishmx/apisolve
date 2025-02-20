@@ -911,4 +911,17 @@ WHERE u.id = $user AND eb.active = 1";
 			}
 			return [ TRUE, $res->getRowArray () ];
 		}
+		public function updateBenefitStatus ($user): bool {
+			$today = date('Y-m-d');
+			$to = date('Y-m-d', strtotime ('+2 months'));
+			$query = "UPDATE employee_benefits eb
+    INNER JOIN employee_user eu ON eb.employee_id = eu.employee_id
+    INNER JOIN users u ON eu.user_id = u.id
+    SET eb.active = 1, eb.since = '$today', eb.to = '$to'
+    WHERE u.id = $user and eb.active = 0";
+			if ( $this->db->query ( $query ) ) {
+				return true;
+			}
+			return FALSE;
+		}
 	}

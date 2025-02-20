@@ -386,6 +386,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->express->updateAvailableAmount ( $res[ 1 ][ 'employeeId' ], floatval ( $this->input[ 'amount' ] ), $this->user );
+			$this->express->updateBenefitStatus ($this->user);
 			$this->responseBody = [
 				'error'       => $this->errCode = 200,
 				'description' => 'Solicitud éxitosa!.',
