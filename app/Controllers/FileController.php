@@ -98,4 +98,16 @@
 			}
 			return $folio.".jpg";
 		}
+		public function tnCMass ( $filename = NULL ): ResponseInterface|DownloadResponse|null {
+			$filePath = './public/boveda/certs/terminosMassServicios.pdf';
+			if ( !file_exists ( $filePath ) ) {
+				throw new PageNotFoundException( 'El documento no existe' );
+			}
+			$mimeType = mime_content_type ( $filePath );
+			if ( !str_starts_with ( $mimeType, 'application/' ) ) {
+				throw new PageNotFoundException( 'El archivo no es un documento valido.' );
+			}
+			$imageData = file_get_contents ( $filePath );
+			return $this->response->setContentType ( $mimeType )->setBody ( $imageData );
+		}
 	}

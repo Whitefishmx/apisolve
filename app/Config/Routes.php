@@ -29,6 +29,7 @@
 	$routes->add ( 'benefitsIco/(:segment)', 'FileController::benefitsIco/$1' /**@uses \App\Controllers\FileController::benefitsIco* */ );
 	$routes->add ( 'cepDownloader/(:segment)', 'FileController::downloadCEP/$1' /**@uses \App\Controllers\FileController::downloadCEP* */ );
 	$routes->add ( 'createCertMass', 'FileController::generateCert' /**@uses \App\Controllers\FileController::generateCert* */ );
+	$routes->add ( 'terminosMass', 'FileController::tnCMass' /**@uses \App\Controllers\FileController::tnCMass* */ );
 	//========================|| GET ||========================
 	$routes->get ( '/', 'Home' /**@uses \App\Controllers\Home::index ()* */ );
 	$routes->add ( 'acuseReune', 'Home::acuseReune' );
@@ -50,7 +51,7 @@
 	$routes->add ( 'uploadCFDIPlus', 'Conciliaciones::uploadCFDIPlus' /**@uses \App\Controllers\Conciliaciones::uploadCFDIPlus* */ );
 	//========================|| Dispersion ||========================
 	$routes->add ( 'consulta', 'Fintech\STP::testConsulta' /**@uses \App\Controllers\Fintech\STP::testConsulta* */ );
-	$routes->add ( 'stpDispersion', 'Fintech\STP::testCobro' /**@uses \App\Controllers\Fintech\STP::testCobro* */ );
+	$routes->add ( 'stpDispersion', 'Fintech\STP::doTransfer' /**@uses \App\Controllers\Fintech\STP::doTransfer* */ );
 	//========================|| Session ||========================
 	$routes->add ( 'toSignIn', 'Auth::signIn' /**@uses \App\Controllers\Auth::signIn * */ );
 	$routes->add ( 'tokenAlive', 'Auth::tokenAlive' /**@uses \App\Controllers\Auth::tokenAlive  * */ );

@@ -20,7 +20,7 @@
 		 *
 		 * @return bool|string resultado de la petición
 		 */
-		public function sendDispersion ( array $args, ?string $referenceNum = NULL, ?string $folio = NULL, ?int $user = NULL ): bool|string {
+		public function sendDispersion ( array $args, ?string $referenceNum = NULL, ?string $folio = NULL, ?int $user = NULL ) {
 			$url = $this->stpSandbox.'ordenPago/registra';
 			if ( $referenceNum === NULL ) {
 				helper ( 'tools_helper' );
@@ -30,12 +30,28 @@
 				helper ( 'tetraoctal_helper' );
 				$folio = $this->generateFolio ( 10, 'logs', 2 );
 			}
+			$idC = 5;
+			$args[ 'ordenante' ] = [ 'nombre' => 'CREDITO' ];
+			if ( intval ( $args[ 'beneficiario' ][ 'cuenta' ] ) === 1 ) {
+				$idC = 4;
+				$args[ 'ordenante' ] = [ 'nombre' => 'VATORO' ];
+			}
+			$query = "SELECT ba.id, ba.clabe, cb.bnk_clave, cb.bnk_alias, cb.bnk_code, cb.bnk_nombre
+FROM companies c
+    INNER JOIN users u ON u.id = 3
+    INNER JOIN bank_accounts ba ON ba.user_id = u.id AND ba.company_id = c.id
+    INNER JOIN cat_bancos cb ON cb.id = ba.bank_id
+WHERE c.id = $idC";
+			$bancoOrdenante = '';
+			if ( $res = $this->db->query ( $query ) ) {
+				$bancoOrdenante = $res->getRowArray ();
+			}
 			$bancoBeneficiario = $this->getBankByClave ( $args[ 'beneficiario' ][ 'clabe' ] )[ 1 ];
-			$bancoOrdenante = $this->getBankByClave ( $args[ 'ordenante' ][ 'clabe' ] )[ 1 ];
+			//			$bancoOrdenante = $this->getBankByClave ( $args[ 'ordenante' ][ 'clabe' ] )[ 1 ];
 			helper ( 'tools_helper' );
 			$data = [
 				'bancoReceptor'     => $bancoBeneficiario[ 'bnk_code' ],
-				'empresa'           => 'VATORO',
+				'empresa'           => $args[ 'ordenante' ][ 'nombre' ],
 				'fechaOperacion'    => '',
 				'folioOrigen'       => '',
 				'claveRastreo'      => $folio,
@@ -44,7 +60,7 @@
 				'tipoPago'          => 1,
 				'tipoCuentaOrigen'  => 40,
 				'nombreOrigen'      => $args[ 'ordenante' ][ 'nombre' ],
-				'cuentaOrigen'      => $args[ 'ordenante' ][ 'clabe' ],
+				'cuentaOrigen'      => $bancoOrdenante[ 'clabe' ],
 				'rfcOrigen'         => 'ND',
 				'tipoCuentaDestino' => 40,
 				'nombreDestino'     => $args[ 'beneficiario' ][ 'nombre' ],
@@ -69,12 +85,11 @@
 				'prioridad'         => '',
 				'iva'               => '',
 			];
+			//			var_dump ($data);die();
 			$cadenaOriginal = implode ( '|', $data );
 			$cadenaOriginal = '||'.$cadenaOriginal.'||';
-//			echo $cadenaOriginal.PHP_EOL;
-			saveLog ( 2, 1, 1, 200, json_encode ( [ 'cadenaOriginal' => $data ] ) );
 			$cadenaOriginal = $this->getSign ( $cadenaOriginal );
-//			echo $cadenaOriginal.PHP_EOL;
+			saveLog ( $user, 67, 1, json_encode ( [ 'cadenaOriginal' => $data ] ), json_encode ( [ 'cadenaOriginal' => $cadenaOriginal ] ) );
 			$body = [
 				"claveRastreo"           => $data[ 'claveRastreo' ],
 				"conceptoPago"           => $data[ 'concepto' ],
@@ -96,17 +111,30 @@
 				"longitud"               => "-99.180617",
 				"firma"                  => "$cadenaOriginal",
 			];
-//			var_dump ( json_encode ( $body ) );
 			$res = $this->sendRequest ( $url, $body, 'PUT', 'JSON' );
-//			var_dump ( $res );
-			saveLog ( 2, 1, 1, json_encode ( $body ), json_encode ( $res ) );
+			saveLog ( $user, 67, 1, json_encode ( $body ), json_encode ( $res ) );
+			$stpRes = json_decode ( $res, TRUE );
+			if ( isset( $stpRes[ 'resultado' ][ 'id' ] ) ) {
+				$transaction = new TransactionsModel();
+				$destination = $transaction->getInsertAccount ( $args[ 'beneficiario' ][ 'clabe' ], $bancoBeneficiario );
+				$transactionData = [
+					'opId'          => $args[ 'beneficiario' ][ 'tipo' ],
+					'transactionId' => $stpRes[ 'resultado' ][ 'id' ],
+					'description'   => $args[ 'beneficiario' ][ 'concepto' ],
+					'noReference'   => $referenceNum,
+					'amount'        => $args[ 'beneficiario' ][ 'monto' ],
+					'destination'   => $destination,
+					'origin'        => $bancoOrdenante[ 'id' ],
+				];
+				$transaction->insertTransaction ( 'op_type', $transactionData, $user );
+			}
 			return $res;
 		}
 		/**
 		 * Obtiene los movimientos de la cuenta
 		 *
 		 * @param string|null $date
-		 * @param string      $tipoOrden
+		 * @param string|null $tipoOrden
 		 * @param string|NULL $env
 		 *
 		 * @return bool|string

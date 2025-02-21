@@ -19,9 +19,9 @@
 		/**
 		 * @throws Exception
 		 */
-		public function testCobro (): ResponseInterface {
+		public function doTransfer (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
-			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$stp = new StpModel();
@@ -29,14 +29,15 @@
 			$responses = [];
 			for ( $i = 0; $i < count ( $beneficiarios ); $i++ ) {
 				$args[ 'beneficiario' ] = $beneficiarios[ $i ];
-				$args[ 'ordenante' ] = [
-					'clabe'  => '646180317800000002',
-					'nombre' => 'VATORO',
-				];
-				$responses[] = json_decode ( $stp->sendDispersion ($args,null,  NULL, $this->user ), TRUE );
+				$responses[] = json_decode ( $stp->sendDispersion ( $args, NULL, NULL, $this->user ), TRUE );
 			}
-			$this->logResponse ( 1 );
-			return $this->getResponse ( $responses );
+			$this->responseBody = [
+				'error'       => $this->errCode = 200,
+				'description' => 'Orden enviada',
+				'response'    => $responses,
+			];
+			$this->logResponse ( 67 );
+			return $this->getResponse ( $this->responseBody, $this->errCode );
 		}
 		public function testConsulta (): ResponseInterface {
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {

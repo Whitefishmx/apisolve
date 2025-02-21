@@ -149,13 +149,35 @@
 			$emailResponse = $emailController->sendPasswordResetEmail ( $email );
 			return $this->response->setJSON ( $emailResponse );
 		}
-		#[NoReturn] public function testFunction (): ResponseInterface {
-			$this->input = $this->getRequestInput ( $this->request );
-			$user = new UserModel();
-			$userData = $user->getDataForAfiliation ( 35 );
-			$mass = new MassServicios;
-			var_dump ( $mass->registroAfiliado ( $userData[ 1 ] ) );
-			die();
+		#[NoReturn] public function testFunction () {
+			$data = [ "CodeCompany" => "VATORO1", "ApiKey" => "60F8E686-D35F-43EA-8BAE-94C968CA8BDE" ];
+			$curl = curl_init ();
+			curl_setopt_array ( $curl, array (
+			
+			CURLOPT_URL => 'https://quantoappservices.azurewebsites.net/API/Account/Token',
+				CURLOPT_RETURNTRANSFER => TRUE,
+				CURLOPT_ENCODING => '',
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => 0,
+				CURLOPT_FOLLOWLOCATION => TRUE,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_CUSTOMREQUEST => 'POST',
+				CURLOPT_POSTFIELDS =>json_encode ($data),
+				CURLOPT_HTTPHEADER => [
+				'Content-Type: application/json',
+			],
+			));
+			
+			$response = curl_exec ( $curl );
+			
+			curl_close ( $curl );
+			echo $response;
+//			$this->input = $this->getRequestInput ( $this->request );
+//			$user = new UserModel();
+//			$userData = $user->getDataForAfiliation ( 43 );
+//			$mass = new MassServicios;
+//			var_dump ( $mass->registroAfiliado ( $userData[ 1 ] ) );
+//			die();
 		}
 		public function validateClabe ( $data ): bool|array {
 			$user = new UserModel();

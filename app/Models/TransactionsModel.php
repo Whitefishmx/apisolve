@@ -172,11 +172,26 @@ WHERE t.cep  IS NULL";
 			}
 			$data = $data->getRowArray ();
 			if ( intval ( $data[ 'op_type' ] ) === 1 && $input[ 'status' ] === 'paid' ) {
-				$res = $this->db->query ( "UPDATE bank_accounts ba SET ba.validated = 1, ba.active = 1 WHERE id = '{$data['account_destination']}'" );
+				$this->db->query ( "UPDATE bank_accounts ba SET ba.validated = 1, ba.active = 1 WHERE id = '{$data['account_destination']}'" );
 			}
 			if ( !$this->db->query ( "UPDATE transactions t SET t.status = '{$input[ 'status' ]}' WHERE id = '{$data['id']}'" ) ) {
 				return FALSE;
 			}
 			return TRUE;
+		}
+		public function getInsertAccount ( mixed $clabe, mixed $bancoBeneficiario ): false|array|int|string {
+			$query = "SELECT * FROM bank_accounts WHERE clabe = '$clabe' AND active = 1";
+//			echo $query;
+			if ( $res = $this->db->query ( $query ) ) {
+				if ( $res->getNumRows () > 0 ) {
+//					var_dump ($res->getRowArray ()[ 'id' ] );
+					return [ $res->getRowArray ()[ 'id' ] ];
+				}
+				$query = "INSERT INTO bank_accounts ( external, bank_id, clabe, active, validated) VALUES (1, '{$bancoBeneficiario['id']}', '$clabe', 1, 1 )";
+				if ( $this->db->query ( $query ) ) {
+					return $this->db->insertID ();
+				}
+			}
+			return FALSE;
 		}
 	}
