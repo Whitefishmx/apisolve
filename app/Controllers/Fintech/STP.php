@@ -54,16 +54,18 @@
 		 * @return ResponseInterface|bool
 		 */
 		public function wbDispersion (): ResponseInterface|bool {
+			$input = $this->getRequestLogin ( $this->request );
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				return ( $data );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$input = $this->getRequestInput ( $this->request );
-			$this->environment ( $input );
-			$res = [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ];
-			if ( !saveLog ( 1, 1, 3, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $res ) ), $this->env ) ) {
-				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+			$out = [
+				'mensaje' => 'recibido' ];
+			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
+				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			return $this->getResponse ( $res );
+			$this->responseBody = $out;
+			return $this->getResponse ( $this->responseBody );
 		}
 		public function AddMovement ( array $args, ?string $env = NULL ): array {
 			$op = new OperationModel ();
@@ -138,91 +140,34 @@
 		 * Webhook para obtener la entrada de recursos en la cuenta de STP
 		 * @return ResponseInterface|bool
 		 */
-		public function wbAbonos (): mixed {
+		public function wbPayments (): ResponseInterface|bool {
+			$input = $this->getRequestLogin ( $this->request );
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				return ( $data );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$input = $this->getRequestInput ( $this->request );
-			$this->environment ( $input );
-			$res = [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ];
-			$code = 200;
-			if ( strval ( $input[ 'cuentaBeneficiario' ] ) === '646180546900000029' ) {
-				$res = [ "mensaje" => "devolver", "id" => 16, "desc" => "Tipo de opera erron" ];
-				$code = 400;
+			$out = [
+				'mensaje' => 'confirmar' ];
+			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
+				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			if ( !saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( $input ) ), utf8_encode ( json_encode ( $res ) ), $this->env ) ) {
-				return $this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+			$this->responseBody = $out;
+			return $this->getResponse ( $this->responseBody );
+		}
+		public function wbReturns (): ResponseInterface|bool {
+			$input = $this->getRequestLogin ( $this->request );
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			return $this->getResponse ( $res, $code );
-			//			die();
-			if ( !function_exists ( 'pcntl' ) ) {
-				return $this->serverError ( 'Proceso incompleto', 'La extensión PCNTL no está disponible en este sistema' );
+			$out = [
+				'mensaje' => 'devolver',
+				"id" => $input['id']];
+			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
+				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$pid = pcntl_fork ();
-			if ( $pid == -1 ) {
-				// Error al crear el proceso hijo
-				return $this->serverError ( 'Proceso incompleto', 'No se pudo crear el proceso hijo' );
-			} else if ( $pid ) {
-				// Este es el proceso padre
-				//				echo "Este es el proceso padre, PID del hijo: $pid\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Este es el proceso padre, PID del hijo: '.$pid ] ) ), NULL, $this->env );
-			} else {
-				// Este es el proceso hijo
-				//				echo "Este es el proceso hijo\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Este es el proceso hijo' ] ) ), NULL, $this->env );
-				// Aquí puedes poner el código que quieres que el hijo ejecute
-				sleep ( 10 ); // Simula una tarea que toma tiempo
-				//				echo "Proceso hijo terminado\n";
-				saveLog ( 1, 1, 4, 200, utf8_encode ( json_encode ( [ 'message' => 'Proceso hijo terminado' ] ) ), NULL, $this->env );
-				exit( 0 );
-			}
-			//validar que se tenga la descripcion o referencia numerica para poder validar
-			$descriptor = $input[ 'descriptor' ] ?? NULL;
-			$refNumber = $input[ 'reference_number' ] ?? NULL;
-			$trackingKey = $input[ 'tracking_key' ] ?? NULL;
-			if ( $refNumber === NULL && $descriptor === NULL ) {
-				return $this->errDataSupplied ( 'No hay referencia numerica, descripcion o clave de rastreo' );
-			}
-			//validar que la transferencia sea a una cuenta clabe que pertenezca a una empresa registrada
-			$clabeDestino = $input[ 'receiverBank' ] ?? NULL;
-			if ( $clabeDestino === NULL ) {
-				return $this->errDataSupplied ( 'Falta clabe de banco origen' );
-			}
-			$stp = new StpModel();
-			$vClabe = $stp->validateClabe ( $clabeDestino, $this->env );
-			if ( $vClabe[ 0 ] === FALSE ) {
-				var_dump ( $vClabe );
-				return $this->rollback ( $input, $vClabe[ 1 ], $this->env );
-			}
-			$op = new OperationModel ();
-			$operation = $op->searchOperations ( $descriptor, $refNumber, $trackingKey, $this->env );
-			if ( isset( $operation[ 0 ] ) ) {
-				var_dump ( $operation );
-				return $this->rollback ( $input, $operation[ 1 ], $this->env );
-			}
-			switch ( $operation[ 'origin' ] ) {
-				case 'conciliacion':
-					$do = $this->makeConciliation ( $operation, $input, $this->env );
-					break;
-				case 'conciliacionCPlus':
-					$do = $this->makeConciliationPlus ( $operation, $input, $this->env );
-					break;
-				case 'dispercionPlus':
-					$do = $this->makeDispersion ( $operation, $input, $this->env );
-					break;
-			}
-			if ( !count ( $operation ) > 0 ) {
-				return $this->getResponse ( $this->rollback ( $input, $this->env ) );
-			}
-			if ( $operation[ 'origin' ] === 'conciliacion' ) {
-				$res = $this->doConciliation ( $operation, $this->env );
-			} else if ( $operation[ 'origin' ] === 'conciliacionPlus' ) {
-				$res = $this->doConciliationPlus ( $operation, $this->env );
-			} else {
-				$res = $this->doDispercionPlus ( $operation, $this->env );
-			}
-			return $this->getResponse ( $res );
-			//			return $this->getResponse ( [ 'status' => 'correcto', "message" => "Información recibida y procesada correctamente" ] );
+			$this->responseBody = $out;
+			return $this->getResponse ( $this->responseBody );
 		}
 		public function doConciliationPlus ( array $operation, string $env ) {
 			$conc = new ConciliacionModel();

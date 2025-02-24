@@ -15,10 +15,12 @@
 	//========================|| Rutas ||========================
 	//========================|| Webhook ||========================
 	$routes->add ( 'stpTransactions', 'Fintech\STP::wbDispersion' /**@uses \App\Controllers\Fintech\STP::wbDispersion* */ );
+	$routes->add ( 'stpPayments', 'Fintech\STP::wbPayments' /**@uses \App\Controllers\Fintech\STP::wbPayments* */ );
+	$routes->add ( 'stpReturns', 'Fintech\STP::wbReturns' /**@uses \App\Controllers\Fintech\STP::wbReturns* */ );
+	
 	$routes->add ( 'metaExpressWH', 'SolveExpress::ExpressWH' /**@uses \App\Controllers\SolveExpress::ExpressWH * */ );
-	$routes->add ( 'MagicWH', 'Fintech\MagicPay::MagicWH' /**@uses \App\Controllers\Fintech\MagicPay::MagicWH* */ );
 	$routes->add ( 'MagicWHPayment', 'Fintech\MagicPay::MagicPayments' /**@uses \App\Controllers\Fintech\MagicPay::MagicPayments* */ );
-	$routes->add ( 'stpAbonos', 'Fintech\STP::wbAbonos' /**@uses \App\Controllers\Fintech\STP::wbAbonos* */ );
+	$routes->add ( 'MagicWH', 'Fintech\MagicPay::MagicWH' /**@uses \App\Controllers\Fintech\MagicPay::MagicWH* */ );
 	//========================|| CRON ||========================
 	$routes->cli ( 'cep', 'Transactions::downloadCep' /**@uses \App\Controllers\Transactions::downloadCep* */ );
 	$routes->cli ( 'updPayControl/(:segment)', 'SolveExpress::updateAdvancePayrollControl/$1' /**@uses \App\Controllers\SolveExpress::updateAdvancePayrollControl* */ );
