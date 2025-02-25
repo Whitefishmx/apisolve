@@ -68,7 +68,8 @@
 			$query = "SELECT operation_number AS number FROM operations WHERE status IN ( 0, 1 )
         UNION SELECT reference_number AS number FROM conciliation_plus WHERE status IN ( 0, 1 )
        	UNION SELECT reference_number AS number FROM dispersions_plus WHERE status IN ( 0, 1 )
-       	UNION SELECT reference_number AS number FROM advance_payroll WHERE status IN ( 0, 1 )";
+       	UNION SELECT reference_number AS number FROM advance_payroll WHERE status IN ( 0, 1 )
+       	UNION SELECT noReference AS number FROM payments_order WHERE status IN ( 0, 1 )";
 			if ( !$res = $this->db->query ( $query ) ) {
 				return MakeOperationNumber ( $id );
 			}
@@ -122,5 +123,19 @@ INNER JOIN person p ON pu.person_id = p.id WHERE u.id = $user";
 				}
 				return [ FALSE, [ 'error' => 'No existe' ] ];
 			}
+		}
+		public function getActiveOperations () {
+			$query = "SELECT operation_number AS number FROM operations WHERE status IN ( 0, 1 )
+        UNION SELECT reference_number AS number FROM conciliation_plus WHERE status IN ( 0, 1 )
+       	UNION SELECT reference_number AS number FROM dispersions_plus WHERE status IN ( 0, 1 )
+       	UNION SELECT reference_number AS number FROM advance_payroll WHERE status IN ( 0, 1 )
+       	UNION SELECT noReference AS number FROM payments_order WHERE status IN ( 0, 1 ) ";
+			if ( $res = $this->db->query ( $query ) ) {
+				if ( $res->numRows () > 0 ) {
+					return [ TRUE, $res->getResultArray () ];
+				}
+				return [ FALSE, [ 'error' => 'No hay operaciones activas' ] ];
+			}
+			return [ FALSE, [ 'error' => 'No se encontraron resultados' ] ];
 		}
 	}

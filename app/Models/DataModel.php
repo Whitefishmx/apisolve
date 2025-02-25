@@ -78,6 +78,7 @@ VALUES ( {$args['user']}, {$args['task']}, {$args['code']}, ";
 			$query .= $args[ 'dataOut' ] === NULL ? " NULL ) " : " '".$args[ 'dataOut' ]."' ) ";
 			$this->db->query ( 'SET NAMES utf8mb4' );
 			$this->db->query ( $query );
+//			var_dump ($this->db->query ( $query ));die();
 			if ( $this->db->affectedRows () === 0 ) {
 				return FALSE;
 			}

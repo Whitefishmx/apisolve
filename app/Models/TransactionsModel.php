@@ -181,10 +181,10 @@ WHERE t.cep  IS NULL";
 		}
 		public function getInsertAccount ( mixed $clabe, mixed $bancoBeneficiario ): false|array|int|string {
 			$query = "SELECT * FROM bank_accounts WHERE clabe = '$clabe' AND active = 1";
-//			echo $query;
+			//			echo $query;
 			if ( $res = $this->db->query ( $query ) ) {
 				if ( $res->getNumRows () > 0 ) {
-//					var_dump ($res->getRowArray ()[ 'id' ] );
+					//					var_dump ($res->getRowArray ()[ 'id' ] );
 					return [ $res->getRowArray ()[ 'id' ] ];
 				}
 				$query = "INSERT INTO bank_accounts ( external, bank_id, clabe, active, validated) VALUES (1, '{$bancoBeneficiario['id']}', '$clabe', 1, 1 )";
@@ -193,5 +193,12 @@ WHERE t.cep  IS NULL";
 				}
 			}
 			return FALSE;
+		}
+		public function validateActiveOperations ( $referenceNumber ): bool {
+//			var_dump ($referenceNumber === '8524561' OR $referenceNumber === 8524561 );die();
+			if ( $referenceNumber === '8524561' OR $referenceNumber === 8524561 ) {
+				return FALSE;
+			}
+			return TRUE;
 		}
 	}

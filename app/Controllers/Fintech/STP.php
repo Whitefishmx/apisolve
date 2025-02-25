@@ -5,6 +5,7 @@
 	use Exception;
 	use App\Models\ConciliacionModel;
 	use App\Models\OperationModel;
+	use App\Models\TransactionsModel;
 	use CodeIgniter\HTTP\ResponseInterface;
 	use App\Controllers\PagesStatusCode;
 	use App\Models\StpModel;
@@ -16,9 +17,6 @@
 			helper ( 'tools_helper' );
 			helper ( 'tetraoctal_helper' );
 		}
-		/**
-		 * @throws Exception
-		 */
 		public function doTransfer (): ResponseInterface {
 			$this->input = $this->getRequestInput ( $this->request );
 			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
@@ -48,24 +46,6 @@
 			$stp = new StpModel();
 			$date = isset( $input[ 'date' ] ) ? strtotime ( $input[ 'date' ] ) : strtotime ( 'now' );
 			return $this->getResponse ( json_decode ( $stp->sendConsulta ( $date, $input[ 'tOrden' ], $this->env ), TRUE ) );
-		}
-		/**
-		 * Webhook para obtener la información de las transferencias por STP
-		 * @return ResponseInterface|bool
-		 */
-		public function wbDispersion (): ResponseInterface|bool {
-			$input = $this->getRequestLogin ( $this->request );
-			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$out = [
-				'mensaje' => 'recibido' ];
-			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
-				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
-				return $this->getResponse ( $this->responseBody, $this->errCode );
-			}
-			$this->responseBody = $out;
-			return $this->getResponse ( $this->responseBody );
 		}
 		public function AddMovement ( array $args, ?string $env = NULL ): array {
 			$op = new OperationModel ();
@@ -136,23 +116,50 @@
 			}
 			return $this->getResponse ( [ 'status' => 'correcto', "message" => $message ] );
 		}
+		public function makeConciliation ( array $operation, array $input, ?string $env = NULL ) {
+		}
+		public function makeConciliationPlus ( array $operation, array $input, string $env ) {
+		}
+		public function makeDispersion ( mixed $operation, mixed $input, string $env ) {
+		}
 		/**
-		 * Webhook para obtener la entrada de recursos en la cuenta de STP
+		 * Webhook para obtener la información de las transferencias por STP
 		 * @return ResponseInterface|bool
 		 */
-		public function wbPayments (): ResponseInterface|bool {
+		public function wbDispersion (): ResponseInterface|bool {
 			$input = $this->getRequestLogin ( $this->request );
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
-			$out = [
-				'mensaje' => 'confirmar' ];
+			$out = [ 'mensaje' => 'recibido' ];
 			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
 				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
+		}
+		/**
+		 * Webhook para obtener la entrada de recursos en la cuenta de STP
+		 * @return ResponseInterface|bool
+		 */
+		public function wbPayments (): ResponseInterface|bool {
+			$this->input = $this->getRequestLogin ( $this->request );
+			$this->errCode = 200;
+			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+				return $this->getResponse ( $this->responseBody, $this->errCode );
+			}
+			$out = [ 'mensaje' => 'confirmar' ];
+			if ( intval ( $this->input[ 'referenciaNumerica' ] ) != 8524561 ) {
+				if ( !$this->logResponse ( 3, $this->input, $out ) ) {
+					$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
+					return $this->getResponse ( $this->responseBody, $this->errCode );
+				}
+				return $this->getResponse ( $out, 200 );
+			}
+			$out = [ "mensaje" => "devolver", "id" => $this->input[ 'id' ] ];
+			$this->logResponse ( 3, $this->input, $out );
+			return $this->getResponse ( $out, 200 );
 		}
 		public function wbReturns (): ResponseInterface|bool {
 			$input = $this->getRequestLogin ( $this->request );
@@ -161,21 +168,12 @@
 			}
 			$out = [
 				'mensaje' => 'devolver',
-				"id" => $input['id']];
+				"id"      => $input[ 'id' ] ];
 			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
 				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$this->responseBody = $out;
 			return $this->getResponse ( $this->responseBody );
-		}
-		public function doConciliationPlus ( array $operation, string $env ) {
-			$conc = new ConciliacionModel();
-		}
-		public function makeConciliation ( array $operation, array $input, ?string $env = NULL ) {
-		}
-		public function makeConciliationPlus ( array $operation, array $input, string $env ) {
-		}
-		public function makeDispersion ( mixed $operation, mixed $input, string $env ) {
 		}
 	}
