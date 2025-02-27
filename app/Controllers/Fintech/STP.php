@@ -127,7 +127,7 @@
 		 * @return ResponseInterface|bool
 		 */
 		public function wbDispersion (): ResponseInterface|bool {
-			$input = $this->getRequestLogin ( $this->request );
+			$this->input = $this->getRequestLogin ( $this->request );
 			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
@@ -157,18 +157,18 @@
 				}
 				return $this->getResponse ( $out, 200 );
 			}
-			$out = [ "mensaje" => "devolver", "id" => $this->input[ 'id' ] ];
+			$out = [ "mensaje" => "devolver", "id" => 27 ];
 			$this->logResponse ( 3, $this->input, $out );
 			return $this->getResponse ( $out, 200 );
 		}
 		public function wbReturns (): ResponseInterface|bool {
-			$input = $this->getRequestLogin ( $this->request );
-			if ( $data = $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
+			$this->input = $this->getRequestLogin ( $this->request );
+			if ( $this->verifyRules ( 'POST', $this->request, 'JSON' ) ) {
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$out = [
 				'mensaje' => 'devolver',
-				"id"      => $input[ 'id' ] ];
+				"id"      =>  $this->input[ 'id' ] ];
 			if ( !$this->logResponse ( 3, $this->input, $out ) ) {
 				$this->serverError ( 'Proceso incompleto', 'No se logró guardar la información' );
 				return $this->getResponse ( $this->responseBody, $this->errCode );

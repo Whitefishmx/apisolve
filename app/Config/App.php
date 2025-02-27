@@ -15,9 +15,20 @@
 		 *
 		 * E.g., http://example.com/
 		 */
-//		public string $baseURL = 'https://api-solve.local/'; //Local URL
-	//public string $baseURL = 'https://sandbox.solvegcm.mx/'; //SandBox_Cloud URL
-		public string $baseURL = 'https://api.solvegcm.mx/';
+		
+		public string $baseURL = '';//'https://api-solve.local/'; //Local URL
+		//public string $baseURL = 'https://sandbox.solvegcm.mx/'; //SandBox_Cloud URL
+		//public string $baseURL = 'https://api.solvegcm.mx/'; //Live_Cloud URL
+		public function __construct () {
+			parent::__construct ();
+			if ( ENVIRONMENT === 'development' ) {
+				$this->baseURL = 'https://api-solve.local/';
+			} else if ( ENVIRONMENT === 'production' ) {
+				$this->baseURL = 'https://api.solvegcm.mx/';
+			} else {
+				$this->baseURL = 'https://sandbox.solvegcm.mx/';
+			}
+		}
 		/**
 		 * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
 		 * If you want to accept multiple Hostnames, set this.
@@ -29,8 +40,7 @@
 		 *
 		 * @var list<string>
 		 */
-		public array $allowedHostnames = [ 'http://api-solve.local', 'http://api-solve.local/', 'https://apisandbox.solve.com.mx/public/' ,
-			'https://compensapay.local', 'https://solveexpress.local/'];
+		public array $allowedHostnames = [ 'https://api-solve.local', 'https://sandbox.solvegcm.mx/', 'https://api.solvegcm.mx/' ];
 		/**
 		 * --------------------------------------------------------------------------
 		 * Index File

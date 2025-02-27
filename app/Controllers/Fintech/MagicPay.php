@@ -150,7 +150,7 @@
 			$validation->setRules ( [
 				'account'     => 'required|max_length[18]|numeric|min_length[16]',
 				'amount'      => 'required|max_length[18]|regex_match[^(0|[1-9]\d*)(\.\d{1,2})?$|^0?\.\d{1,2}$]',
-				'description' => 'max_length[18]',
+				'description' => 'max_length[50]',
 				'owner'       => 'required|max_length[30]',
 			], [
 				'account' => [
