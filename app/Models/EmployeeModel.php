@@ -26,6 +26,7 @@
 			                    ->join ( 'companies c', 'c.id = e.company_id', 'INNER' )
 			                    ->join ( 'bank_accounts ba', 'ba.user_id = u.id AND ba.company_id = c.id AND ba.active = 1', 'INNER' )
 			                    ->where ( 'c.id', $company )
+			                    ->where ( 'u.type', 1 )
 			                    ->orderBy ( 'p.last_name', 'ASC' )->orderBy ( 'p.name', 'ASC' );
 			if ( $fire === 0 ) {
 				$builder->where ( 'e.status', 1 );
