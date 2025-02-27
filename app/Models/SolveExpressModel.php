@@ -692,6 +692,7 @@ WHERE employee_id = $employeeId";
 			return FALSE;
 		}
 		public function insertNomina ( $value, $company, $user, $plan ): void {
+//			var_dump ($value,$company,$user,$plan);die();
 			if ( !isset( $value[ 'Nombre' ] ) || !isset( $value[ 'Cuenta' ] ) ||
 			     $value[ 'Nombre' ] === '' || $value[ 'Cuenta' ] === '' ||
 			     $value[ 'Nombre' ] === NULL || $value[ 'Cuenta' ] === NULL ) {
@@ -752,7 +753,7 @@ ON DUPLICATE KEY UPDATE
 			] );
 			$this->db->table ( 'employee_benefits' )->insert ( [
 				'employee_id' => $employeeId,
-				'id_benefits' => $plan,
+				'id_benefits' => intval ($plan),
 			] );
 			$clabe = preg_replace ( '/\D/', '', $value[ 'Cuenta' ] );
 			$bankId = $this->getBankByClave ( $clabe )[ 1 ][ 'id' ];
@@ -787,6 +788,10 @@ ON DUPLICATE KEY UPDATE
 				"person"   => $personId,
 				"employee" => $employeeId ] ) );
 			$this->db->transComplete ();
+			if ($this->db->transStatus() === FALSE) {
+				log_message('error', 'Error en la transacción: ' . json_encode($this->db->error()));
+				saveLog ( $user, 62, 500, json_encode ( [ 'args' => $value ] ), json_encode($this->db->error()) );
+			}
 		}
 		public function getPayments ( $company ): array {
 			$query = "SELECT c.id AS 'company_id', po.amount, po.concept, cBenef.short_name, ba.clabe, cb.magicAlias, po.noReference, po.folio, po.status, t.cep, po.death_line

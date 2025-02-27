@@ -492,6 +492,7 @@
 				return $this->getResponse ( $this->responseBody, $this->errCode );
 			}
 			$data = $this->checkExists ( $data, $this->input[ 'company' ] );
+//			var_dump ($data);die();
 			$upsert = $this->upsertNomina ( $data, $this->input[ 'company' ], $this->user );
 			$this->updateAdvancePayrollControlUpdN ( $this->input[ 'company' ] );
 			return $this->getResponse ( $upsert[ 0 ], 200 );
